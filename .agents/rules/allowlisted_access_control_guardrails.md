@@ -8,17 +8,19 @@
   - The system maintains strict separation between **Development** and **Production** environments:
     1. **Development Environment**:
        - **GCP Project**: `monaro-risk-dev`
-       - **Git Branch**: `dev`
+       - **Region**: `australia-southeast1` (Sydney)
+       - **Git Branch**: `dev` (Push trigger on `project_dash/**`)
        - **Cloud Run Service**: `monaro-risk-dash-dev`
-       - **Cloud Build Trigger**: `deploy-monaro-risk-dash-dev` (Filter: `project_dash/**`)
+       - **Cloud Build Trigger**: `deploy-monaro-risk-dash-dev`
        - **Access Group**: `monaro-risk-dev@google.com` (Google Group) / `monaro-risk-dev@twosync.google.com`
     2. **Production Environment**:
        - **GCP Project**: `monaro-risk-prod`
-       - **Git Branch**: `main`
-       - **Cloud Run Service**: `monaro-risk-dash`
-       - **Cloud Build Trigger**: `deploy-monaro-risk-dash-prod` (Filter: `project_dash/**`)
+       - **Region**: `australia-southeast1` (Sydney)
+       - **Git Trigger**: Tags on `dev` branch matching `^project_dash/prod-.*$` (e.g. `project_dash/prod-v1.0.0`)
+       - **Cloud Run Service**: `monaro-risk-dash-prod`
+       - **Cloud Build Trigger**: `deploy-monaro-risk-dash-prod`
        - **Access Group**: `monaro-risk-prod@google.com` (Google Group) / `monaro-risk-prod@twosync.google.com`
-  - All deployments must be automated through branch-targeted Cloud Build triggers with path filters (`project_dash/**`).
+  - All deployments must be automated through Cloud Build triggers in `australia-southeast1`.
   - Cloud Build deployments run asynchronously in the background. Do not block or poll after pushes. Use `scripts/check_build_status.py` for on-demand diagnostics.
 
 - **Prohibited Hosting & Sharing Recommendations (STRICT NEGATIVE CONSTRAINT)**:
