@@ -121,13 +121,13 @@
                         <span>Open Sheet ▾</span>
                     </button>
                     <div id="sheetDropdownMenu" class="hidden absolute right-0 mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 divide-y divide-slate-100 text-xs">
-                        <a id="headerJointSheetLink" href="https://docs.google.com/spreadsheets/d/1qR1tEHFs0QC6CGSUpzHgVgolcF0zQNcg99yZgJwoMVY/edit" target="_blank" rel="noreferrer" class="flex items-center gap-2 px-3 py-2 text-slate-800 hover:bg-emerald-50 font-bold transition-all">
-                            <span>📊 Joint Program Register</span>
-                            <span class="ml-auto text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-mono">107 Risks</span>
+                        <a id="headerJointSheetLink" href="#" target="_blank" rel="noreferrer" class="flex items-center gap-2 px-3 py-2 text-slate-800 hover:bg-emerald-50 font-bold transition-all">
+                            <span id="headerJointSheetLabel">📊 Joint Program Register</span>
+                            <span id="headerJointSheetBadge" class="ml-auto text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-mono">107 Risks</span>
                         </a>
-                        <a id="headerTeamGoogleSheetLink" href="https://docs.google.com/spreadsheets/d/1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA/edit" target="_blank" rel="noreferrer" class="flex items-center gap-2 px-3 py-2 text-slate-800 hover:bg-blue-50 font-bold transition-all">
-                            <span>🛡️ Team Google Register</span>
-                            <span class="ml-auto text-[10px] text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-mono">12 Tasks</span>
+                        <a id="headerTeamGoogleSheetLink" href="#" target="_blank" rel="noreferrer" class="flex items-center gap-2 px-3 py-2 text-slate-800 hover:bg-blue-50 font-bold transition-all">
+                            <span id="headerTeamGoogleSheetLabel">🛡️ Team Google Register</span>
+                            <span id="headerTeamGoogleSheetBadge" class="ml-auto text-[10px] text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-mono">12 Tasks</span>
                         </a>
                     </div>
                 </div>
@@ -135,7 +135,7 @@
                 <!-- Open Latest Weekly Report PDF Button -->
                 <a 
                     id="driveReportLink"
-                    href="https://drive.google.com/file/d/1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu/view" 
+                    href="#" 
                     target="_blank" 
                     rel="noreferrer"
                     class="bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-2xs text-xs font-bold transition-all whitespace-nowrap"
@@ -303,7 +303,7 @@
                                         </p>
                                     </div>
                                     <div class="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-bold bg-[#fef2f2] border border-red-200 px-2.5 py-1 rounded-lg text-red-800">
-                                        <span>🎯 Target: Aug 2026 • <a href="https://drive.google.com/file/d/1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu/view" target="_blank" class="underline text-[#0b57d0] hover:text-[#0842a0]">Report Pack ↗</a></span>
+                                        <span>🎯 Target: Aug 2026 • <a id="topItem1ReportLink" href="#" target="_blank" class="underline text-[#0b57d0] hover:text-[#0842a0]">Report Pack ↗</a></span>
                                         <span class="text-amber-800 font-black">⚡ Active Gap Review</span>
                                     </div>
                                 </div>
@@ -364,9 +364,14 @@
                         <div class="flex items-center gap-2">
                             <span id="execSynthesisCounts">Synthesized from: <strong class="text-[#1f1f1f]">107 Risks</strong>, <strong class="text-[#1f1f1f]">29 Issues</strong>, <strong class="text-[#1f1f1f]">24 Driver Gates</strong></span>
                         </div>
-                        <button onclick="copyGeminiParagraph()" id="copyGeminiBtn" class="bg-white hover:bg-[#f0f4f9] text-[#1f1f1f] border border-[#c4c7c5] px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:text-[#0b57d0]">
-                            <span>📋 Copy Synthesis &amp; Top 3</span>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyGeminiParagraph()" id="copyGeminiBtn" class="bg-white hover:bg-[#f0f4f9] text-[#1f1f1f] border border-[#c4c7c5] px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:text-[#0b57d0]">
+                                <span>📋 Copy Synthesis &amp; Top 3</span>
+                            </button>
+                            <button onclick="exportDeckPDF()" id="exportDeckBtn" class="bg-white hover:bg-[#f0f4f9] text-[#1f1f1f] border border-[#c4c7c5] px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:text-[#0b57d0]" title="Export formatted executive summary deck to PDF or Print">
+                                <span>📊 Export Deck (PDF)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -819,7 +824,7 @@
                         <p class="text-xs text-slate-500 mt-0.5">Google Delivery Team internal engineering tasks, infrastructure, and security risks. Click any cell to filter the Explorer below.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
-                        <a href="https://docs.google.com/spreadsheets/d/1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg border border-blue-200 transition-all">
+                        <a id="teamGoogleRegisterSheetLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg border border-blue-200 transition-all">
                             <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                             <span>Open Google Sheet ↗</span>
                         </a>
@@ -1050,8 +1055,8 @@
                             <strong>Tier 0 Objective:</strong> "Deliver a modern, resilient, secure Defence Secret Environment, that enables information and decision advantage for the enterprise and warfighters from the strategic centre to the tactical edge by 2030."
                         </p>
                     </div>
-                    <a id="driverTreeDeckLink" href="https://drive.google.com/file/d/1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu/view" target="_blank" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs shrink-0 transition-all cursor-pointer">
-                        <span id="driverTreeDeckLinkText">📄 View Week 27 Deck ↗</span>
+                    <a id="driverTreeDeckLink" href="#" target="_blank" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs shrink-0 transition-all cursor-pointer">
+                        <span id="driverTreeDeckLinkText">📄 View Report Deck ↗</span>
                     </a>
                 </div>
 
@@ -1131,10 +1136,10 @@
                         <div class="flex items-center gap-2">
                             <label for="notebookSelectorSelect" class="text-xs font-semibold text-slate-500">Notebook:</label>
                             <select id="notebookSelectorSelect" onchange="switchActiveNotebook(this.value)" class="text-xs font-bold text-purple-900 bg-purple-50/80 hover:bg-purple-100 border border-purple-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500 cursor-pointer shadow-2xs transition-all">
-                                <option value="monaro_contracts">Project Monaro Contract Notebook (17 Sources)</option>
+                                <option value="default_notebook">Project Knowledge &amp; Blueprint Notebook</option>
                             </select>
                         </div>
-                        <a id="activeNotebookExternalLink" href="https://notebook.google.com/notebook/acdbb29b-8632-4fc7-9ba8-2357beeff141" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all">
+                        <a id="activeNotebookExternalLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                             <span id="activeNotebookOpenLabel">Open in NotebookLM ↗</span>
                         </a>
@@ -1202,7 +1207,10 @@
             <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-5">
                 <div class="flex justify-between items-center pb-4 border-b border-slate-100">
                     <h2 class="text-lg font-bold text-slate-900">📋 Whole Register Ledger</h2>
-                    <button onclick="exportCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs cursor-pointer">📥 Export CSV</button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs cursor-pointer">📥 Export CSV</button>
+                        <button onclick="exportDeckPDF()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs cursor-pointer">📄 Export Deck (PDF)</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-[650px]">
                     <table class="w-full text-left text-xs text-slate-700">
@@ -1221,7 +1229,7 @@
     <footer class="mt-auto py-3 border-t border-slate-200 bg-white/70 text-center text-[10px] sm:text-[11px] text-slate-400 font-mono">
         <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-                <span>🛡️ Project Monaro Risk Governance Platform</span>
+                <span id="footerPlatformTitle">🛡️ Risk Governance &amp; Intelligence Platform</span>
                 <span>&bull;</span>
                 <span id="footerRegionBadge">Region: <strong class="text-slate-600 font-bold">australia-southeast1</strong></span>
             </div>
@@ -1307,16 +1315,16 @@
                     <div class="flex justify-between items-center">
                         <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-slate-600"></span>
-                            <span>1. Joint Program Risk &amp; Issue Register (Google Sheet):</span>
+                            <span id="modalStream1Label">1. Joint Program Risk &amp; Issue Register (Google Sheet):</span>
                         </label>
-                        <a href="https://docs.google.com/spreadsheets/d/1qR1tEHFs0QC6CGSUpzHgVgolcF0zQNcg99yZgJwoMVY/edit" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                        <a id="modalJointSheetLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
                             <span>Open Sheet</span>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
                     </div>
-                    <input type="text" id="sheetUrlInput" value="https://docs.google.com/spreadsheets/d/1qR1tEHFs0QC6CGSUpzHgVgolcF0zQNcg99yZgJwoMVY/edit" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="sheetUrlInput" value="" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-indigo-500">
                     <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                        <span>Worksheet 0 (107 Joint Risks) • Worksheet 2088295051 (29 Issues)</span>
+                        <span id="modalStream1StatusText">Worksheet 0 (Joint Risks) • Worksheet 1 (Issues)</span>
                         <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">✓ Connected</span>
                     </div>
                 </div>
@@ -1326,16 +1334,16 @@
                     <div class="flex justify-between items-center">
                         <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                            <span>2. Team Google Risk Register (Google Sheet):</span>
+                            <span id="modalStream2Label">2. Team Google Risk Register (Google Sheet):</span>
                         </label>
-                        <a href="https://docs.google.com/spreadsheets/d/1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
+                        <a id="modalTeamGoogleSheetLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
                             <span>Open Sheet</span>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
                     </div>
-                    <input type="text" id="teamGoogleSheetUrlInput" value="https://docs.google.com/spreadsheets/d/1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA/edit?gid=0#gid=0" class="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500">
+                    <input type="text" id="teamGoogleSheetUrlInput" value="" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500">
                     <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                        <span>Google Delivery Team Engineering, Infrastructure &amp; Air-Gap Risks (12 Tasks)</span>
+                        <span id="modalStream2StatusText">Google Delivery Team Engineering, Infrastructure &amp; Security Risks</span>
                         <span class="text-blue-700 font-bold bg-blue-100 px-2 py-0.5 rounded border border-blue-200">✓ Connected</span>
                     </div>
                 </div>
@@ -1347,26 +1355,26 @@
                             <span class="w-2 h-2 rounded-full bg-slate-600"></span>
                             <span>3. Weekly Status Reports Archive (Drive Folder):</span>
                         </label>
-                        <a href="https://drive.google.com/corp/drive/folders/1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
+                        <a id="modalDriveFolderLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
                             <span>Open Folder</span>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
                     </div>
-                    <input type="text" id="driveFolderUrlInput" value="https://drive.google.com/corp/drive/folders/1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="driveFolderUrlInput" value="" placeholder="https://drive.google.com/corp/drive/folders/..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-indigo-500">
                     
                     <div id="uningestedReportAlert" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs text-amber-900"></div>
 
                     <div id="driveReportsModalList" class="space-y-1 max-h-36 overflow-y-auto pt-1 text-xs"></div>
 
                     <div class="flex items-center justify-between text-[11px] pt-1">
-                        <span class="text-slate-600">Verified Latest Ingested: <strong id="verifiedLatestIngestedLabel" class="font-mono text-slate-900">Weekly Reporting - Week 27 - 07 Aug 2026.pdf</strong></span>
+                        <span class="text-slate-600">Verified Latest Ingested: <strong id="verifiedLatestIngestedLabel" class="font-mono text-slate-900">Latest Ingested Report</strong></span>
                         <button onclick="checkDriveSyncStatus()" class="text-indigo-600 font-bold hover:underline cursor-pointer flex items-center gap-1">
                             <span>↻ Scan Drive</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Stream 4: Project Monaro Contract Blueprints -->
+                <!-- Stream 4: Solution Knowledge & Contract Blueprints -->
                 <div class="border border-purple-200 rounded-xl p-4 bg-purple-50/50 space-y-2">
                     <div class="flex justify-between items-center">
                         <label class="block text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -1377,17 +1385,17 @@
                             <button onclick="triggerNotebookSync()" class="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer">
                                 <span>↻ Sync Notebook</span>
                             </button>
-                            <a href="https://notebook.google.com/notebook/acdbb29b-8632-4fc7-9ba8-2357beeff141" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1">
+                            <a id="modalNotebookLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1">
                                 <span>Open in NotebookLM</span>
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                             </a>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="text" id="notebookUrlInput" value="https://notebook.google.com/notebook/acdbb29b-8632-4fc7-9ba8-2357beeff141" class="w-full px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-purple-500" readonly>
+                        <input type="text" id="notebookUrlInput" value="" placeholder="https://notebook.google.com/notebook/..." class="w-full px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-purple-500" readonly>
                     </div>
                     <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                        <span>17 Contract Sources • 10 Solution Blueprint Bundles (A–L / Annexes B–L)</span>
+                        <span id="modalStream4StatusText">Contract Sources &bull; Solution Blueprint Bundles</span>
                         <span class="text-purple-700 font-bold bg-purple-100 px-2 py-0.5 rounded border border-purple-200">✓ Grounded</span>
                     </div>
                 </div>

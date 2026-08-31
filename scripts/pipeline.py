@@ -343,6 +343,11 @@ def ingest_report_file(
         podcast_script = generate_fallback_podcast(metrics, synthesis)
 
     # 4. Construct Snapshot Record
+    if project_name == 'sample':
+        resolved_file_id = f"sample-drive-doc-aurora-w{meta['week_number']}"
+    else:
+        resolved_file_id = file_id or f"mock-drive-id-{meta['week_number']}"
+
     snapshot_entry = {
         'date': report_date,
         'week': week_key,
@@ -353,11 +358,11 @@ def ingest_report_file(
         'top3': synthesis.get('top3', []),
         'sleeperOutlier': synthesis.get('sleeperOutlier', {}),
         'podcastScript': podcast_script,
-        'driveFileId': file_id or f"mock-drive-id-{meta['week_number']}",
+        'driveFileId': resolved_file_id,
         'driveFileName': meta['file_name'],
         'driveFile': {
             'name': meta['file_name'],
-            'id': file_id or f"mock-drive-id-{meta['week_number']}",
+            'id': resolved_file_id,
             'ingestedAt': datetime.now().isoformat()
         }
     }
