@@ -167,6 +167,17 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
   git commit -m "docs: update runbooks [skip ci]"
   git push origin dev
   ```
+### 🧭 Quick Navigation: Live Dashboards & Google Cloud Console
+
+| Resource | Development (`monaro-risk-dev`) | Production (`monaro-risk-prod`) | Local Development |
+| :--- | :--- | :--- | :--- |
+| **Live Deployed Dashboard** | • [👉 Aurora Showcase (Sydney)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=sample)<br>• [👉 Monaro Live (Sydney)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=f-dse)<br>• [👉 US-Central1 Fallback](https://monaro-risk-dash-dev-525025654699.us-central1.run.app/?project=sample) | • [👉 Aurora Showcase (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=sample)<br>• [👉 Monaro Live (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=f-dse) | • [Local Aurora](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)<br>• [Local Monaro](http://uk-bh-cloudtop.c.googlers.com:9000/?project=f-dse) |
+| **Cloud Run Services** | [👉 Cloud Run Console (Dev)](https://pantheon.corp.google.com/run?project=monaro-risk-dev) | [👉 Cloud Run Console (Prod)](https://pantheon.corp.google.com/run?project=monaro-risk-prod) | — |
+| **Cloud Build Triggers** | [👉 Build Triggers (Dev)](https://pantheon.corp.google.com/cloud-build/triggers?project=monaro-risk-dev) | [👉 Build Triggers (Prod)](https://pantheon.corp.google.com/cloud-build/triggers?project=monaro-risk-prod) | — |
+| **Cloud Build History** | [👉 Build History (Dev)](https://pantheon.corp.google.com/cloud-build/builds?project=monaro-risk-dev) | [👉 Build History (Prod)](https://pantheon.corp.google.com/cloud-build/builds?project=monaro-risk-prod) | — |
+| **Artifact Registry** | [👉 Docker Images (Dev)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-dev) | [👉 Docker Images (Prod)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-prod) | — |
+| **Cloud Logging** | [👉 Logs Explorer (Dev)](https://pantheon.corp.google.com/logs/query?project=monaro-risk-dev) | [👉 Logs Explorer (Prod)](https://pantheon.corp.google.com/logs/query?project=monaro-risk-prod) | — |
+
 - **Provisioning & Operations**: See [`deploy/PROD_PROVISIONING_GUIDE.md`](./deploy/PROD_PROVISIONING_GUIDE.md) for full Pantheon Click-Ops instructions, CLI scripts, operator IAM roles, and rollback runbooks.
 
 ---
