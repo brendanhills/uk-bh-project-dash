@@ -169,7 +169,7 @@ git push origin project_dash/prod-v1.0.0
 - **Google Group (Dev):** [https://groups.google.com/a/google.com/g/monaro-risk-dev](https://groups.google.com/a/google.com/g/monaro-risk-dev)
 - **Google Group (Prod):** [https://groups.google.com/a/google.com/g/monaro-risk-prod](https://groups.google.com/a/google.com/g/monaro-risk-prod)
 - **Turnkey Provisioning Script:** [`deploy/provision_environment.sh`](./deploy/provision_environment.sh)
-- **Production Provisioning Guide:** [`deploy/PROD_PROVISIONING_GUIDE.md`](./deploy/PROD_PROVISIONING_GUIDE.md)
+- **Deployment & Operations Guide (Unified):** [`docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md)
 - **CI/CD Pipeline Definition:** [`deploy/cloudbuild.yaml`](./deploy/cloudbuild.yaml)
 - **Build Status Tool:** [`scripts/check_build_status.py`](./scripts/check_build_status.py)
 - **API Server & Sync Handler:** [`server.py`](./server.py)

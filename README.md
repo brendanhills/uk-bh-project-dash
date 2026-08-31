@@ -178,7 +178,7 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
 | **Artifact Registry** | [👉 Docker Images (Dev)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-dev) | [👉 Docker Images (Prod)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-prod) | — |
 | **Cloud Logging** | [👉 Logs Explorer (Dev)](https://pantheon.corp.google.com/logs/query?project=monaro-risk-dev) | [👉 Logs Explorer (Prod)](https://pantheon.corp.google.com/logs/query?project=monaro-risk-prod) | — |
 
-- **Provisioning & Operations**: See [`deploy/PROD_PROVISIONING_GUIDE.md`](./deploy/PROD_PROVISIONING_GUIDE.md) for full Pantheon Click-Ops instructions, CLI scripts, operator IAM roles, and rollback runbooks.
+- **Deployment, Provisioning & Operations**: See [`docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md) for the comprehensive canonical guide: automated CI/CD pipelines, turnkey environment provisioning (`./deploy/provision_environment.sh`), production release tag workflows, and SRE Day-2 runbooks.
 
 ---
 
