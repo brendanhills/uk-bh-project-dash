@@ -42,13 +42,32 @@
   ],
   "sources": {
     "googleSheets": {
-      "enabled": false
+      "enabled": false,
+      "sheetUrl": ""
     },
     "googleDrive": {
-      "enabled": false
+      "enabled": false,
+      "folderId": "sample-drive-folder-aurora",
+      "knownReports": [
+        {
+          "id": "mock-w28-id",
+          "week": "Week 28",
+          "date": "14 Aug 2026",
+          "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
+          "url": "https://example.com/drive/mock-w28-id"
+        },
+        {
+          "id": "sample-drive-doc-aurora-w27",
+          "week": "Week 27",
+          "date": "07 Aug 2026",
+          "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
+          "url": "https://example.com/drive/sample-drive-doc-aurora-w27"
+        }
+      ]
     },
     "geminiNotebooks": {
-      "enabled": false
+      "enabled": false,
+      "notebookIds": []
     }
   },
   "features": {

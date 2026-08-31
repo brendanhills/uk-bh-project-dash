@@ -163,16 +163,34 @@
                 }).catch(() => {});
             } catch(e) {}
 
+            const footTitle = document.getElementById('footerPlatformTitle');
+            if (footTitle) footTitle.innerText = `${p.logoIcon || '🛡️'} ${p.name || 'Project'} Risk Governance Platform`;
+
             const sheetWrapper = document.getElementById('sheetDropdownWrapper');
             const jointSheetLink = document.getElementById('headerJointSheetLink');
             const teamGoogleSheetLink = document.getElementById('headerTeamGoogleSheetLink');
+            const jointSheetLabel = document.getElementById('headerJointSheetLabel');
+            const teamGoogleSheetLabel = document.getElementById('headerTeamGoogleSheetLabel');
             
+            if (jointSheetLabel) jointSheetLabel.innerText = `📊 ${p.primaryRegisterName || 'Joint Program Register'}`;
+            if (teamGoogleSheetLabel) teamGoogleSheetLabel.innerText = `🛡️ ${p.secondaryRegisterName || 'Team Google Register'}`;
+
             if (p.links && p.links.sheets) {
                 if (jointSheetLink) jointSheetLink.href = p.links.sheets;
                 if (teamGoogleSheetLink) teamGoogleSheetLink.href = p.links.teamGoogleSheet || p.links.sheets;
                 if (sheetWrapper) sheetWrapper.classList.remove('hidden');
             } else if (sheetWrapper) {
                 sheetWrapper.classList.add('hidden');
+            }
+
+            const tgRegisterLink = document.getElementById('teamGoogleRegisterSheetLink');
+            if (tgRegisterLink) {
+                if (p.links && (p.links.teamGoogleSheet || p.links.sheets)) {
+                    tgRegisterLink.href = p.links.teamGoogleSheet || p.links.sheets;
+                    tgRegisterLink.classList.remove('hidden');
+                } else {
+                    tgRegisterLink.classList.add('hidden');
+                }
             }
             
             const driveLink = document.getElementById('driveReportLink');
@@ -3171,7 +3189,7 @@
 
         
         const PODCAST_TRANSCRIPT = [
-            { time: '0:00', speaker: 'Alex', role: 'Program Analyst', text: 'Welcome to the F-DSE Executive Briefing for Week 27, ending 7th of August, 2026. I\'m Alex with Jordan, reviewing the key delivery movements, critical path shifts, and executive decisions required for this cycle.' },
+            { time: '0:00', speaker: 'Alex', role: 'Program Analyst', text: 'Welcome to the Executive Briefing for Week 27, ending 7th of August, 2026. I\'m Alex with Jordan, reviewing the key delivery movements, critical path shifts, and executive decisions required for this cycle.' },
             { time: '0:18', speaker: 'Jordan', role: 'Technical Director', text: 'Thank you, Alex. The primary delivery breakthrough this week is the operational enablement of deliverable reference 1.10b — the GDC Enterprise E.01 Test and Development environment, which has now been delivered to Enabling Services.' },
             { time: '0:42', speaker: 'Alex', role: 'Program Analyst', text: 'That is a critical milestone for Capability Drop 1. However, our overall program posture remains Amber. Jordan, what are the primary attention items for the Executive Committee?' },
             { time: '1:05', speaker: 'Jordan', role: 'Technical Director', text: 'The top priority is Commonwealth Acceptance of Milestone 1 artefacts (Ref 1.2b), currently in active gap closure. Additionally, the SRR prioritization glide path (Ref 1.14) is moving towards September baseline alignment.' },
@@ -3523,12 +3541,103 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'f_dse_full_risk_ledger.csv';
+            const slug = (typeof CURRENT_PROJECT !== 'undefined' && CURRENT_PROJECT ? CURRENT_PROJECT : 'project');
+            a.download = `${slug}_full_risk_ledger.csv`;
             a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportDeckPDF() {
+            // Native print-to-PDF presentation generator
+            window.print();
+        }
+
+        function exportExecutiveDeck() {
+            const p = (typeof CONFIG !== 'undefined' && CONFIG.project) ? CONFIG.project : { name: 'Executive Report' };
+            const week = (typeof CURRENT_WEEK !== 'undefined' && CURRENT_WEEK) ? CURRENT_WEEK : 'Current Week';
+            const synthesisEl = document.getElementById('geminiBriefingSynthesis');
+            const synthesisText = synthesisEl ? synthesisEl.innerText : '';
+
+            const payload = {
+                title: `${p.name} - Executive Briefing Deck`,
+                week: week,
+                generatedAt: new Date().toISOString(),
+                kpis: {
+                    commercial: document.getElementById('kpiCommercial')?.innerText || '',
+                    milestone: document.getElementById('kpiIbr')?.innerText || '',
+                    ato: document.getElementById('kpiAto')?.innerText || '',
+                    escalations: document.getElementById('kpiEscalations')?.innerText || ''
+                },
+                synthesis: synthesisText,
+                risksCount: (typeof LIVE_RISKS !== 'undefined') ? LIVE_RISKS.length : 0,
+                issuesCount: (typeof LIVE_ISSUES !== 'undefined') ? LIVE_ISSUES.length : 0
+            };
+
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const slug = (typeof CURRENT_PROJECT !== 'undefined' && CURRENT_PROJECT ? CURRENT_PROJECT : 'project');
+            a.download = `${slug}_executive_deck_${week.replace(/\s+/g, '_')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         async function openSheetsModal() {
             document.getElementById('sheetsModal').classList.remove('hidden');
+
+            // Dynamically populate modal inputs and links from active project CONFIG
+            const cfg = typeof CONFIG !== 'undefined' ? CONFIG : {};
+            const p = cfg.project || {};
+            const sources = cfg.sources || {};
+
+            const m1Label = document.getElementById('modalStream1Label');
+            if (m1Label) m1Label.innerText = `1. ${p.primaryRegisterName || 'Joint Program Risk & Issue Register'} (Google Sheet):`;
+
+            const m2Label = document.getElementById('modalStream2Label');
+            if (m2Label) m2Label.innerText = `2. ${p.secondaryRegisterName || 'Team Google Risk Register'} (Google Sheet):`;
+
+            const jointInput = document.getElementById('sheetUrlInput');
+            const jointLink = document.getElementById('modalJointSheetLink');
+            const jointUrl = p.links?.sheets || (sources.googleSheets?.enabled ? sources.googleSheets.sheetUrl : '') || '';
+            if (jointInput) jointInput.value = jointUrl;
+            if (jointLink) {
+                jointLink.href = jointUrl || '#';
+                if (!jointUrl) jointLink.classList.add('pointer-events-none', 'opacity-50');
+                else jointLink.classList.remove('pointer-events-none', 'opacity-50');
+            }
+
+            const tgInput = document.getElementById('teamGoogleSheetUrlInput');
+            const tgLink = document.getElementById('modalTeamGoogleSheetLink');
+            const tgUrl = p.links?.teamGoogleSheet || '';
+            if (tgInput) tgInput.value = tgUrl;
+            if (tgLink) {
+                tgLink.href = tgUrl || '#';
+                if (!tgUrl) tgLink.classList.add('pointer-events-none', 'opacity-50');
+                else tgLink.classList.remove('pointer-events-none', 'opacity-50');
+            }
+
+            const driveInput = document.getElementById('driveFolderUrlInput');
+            const driveLink = document.getElementById('modalDriveFolderLink');
+            const folderId = sources.googleDrive?.folderId || '';
+            const driveUrl = folderId && !folderId.startsWith('sample-') ? `https://drive.google.com/corp/drive/folders/${folderId}` : '';
+            if (driveInput) driveInput.value = driveUrl;
+            if (driveLink) {
+                driveLink.href = driveUrl || '#';
+                if (!driveUrl) driveLink.classList.add('pointer-events-none', 'opacity-50');
+                else driveLink.classList.remove('pointer-events-none', 'opacity-50');
+            }
+
+            const nbInput = document.getElementById('notebookUrlInput');
+            const nbLink = document.getElementById('modalNotebookLink');
+            const nbUrl = (typeof NOTEBOOK_CATALOG !== 'undefined' && NOTEBOOK_CATALOG?.notebookUrl) ? NOTEBOOK_CATALOG.notebookUrl : '';
+            if (nbInput) nbInput.value = nbUrl;
+            if (nbLink) {
+                nbLink.href = nbUrl || '#';
+                if (!nbUrl) nbLink.classList.add('pointer-events-none', 'opacity-50');
+                else nbLink.classList.remove('pointer-events-none', 'opacity-50');
+            }
+
             await checkDriveSyncStatus();
         }
 
@@ -3777,6 +3886,8 @@ window.setPodcastSpeed = setPodcastSpeed;
 window.togglePodcastPlayback = togglePodcastPlayback;
 window.copyGeminiParagraph = (typeof copyGeminiParagraph === 'function') ? copyGeminiParagraph : function() {};
 window.exportCSV = (typeof exportCSV === 'function') ? exportCSV : function() {};
+window.exportDeckPDF = (typeof exportDeckPDF === 'function') ? exportDeckPDF : function() { window.print(); };
+window.exportExecutiveDeck = (typeof exportExecutiveDeck === 'function') ? exportExecutiveDeck : function() {};
 window.triggerNotebookSync = (typeof triggerNotebookSync === 'function') ? triggerNotebookSync : function() {};
 window.setAiTone = (typeof setAiTone === 'function') ? setAiTone : function() {};
 window.filterRiskExplorerByBundle = (typeof filterRiskExplorerByBundle === 'function') ? filterRiskExplorerByBundle : function() {};

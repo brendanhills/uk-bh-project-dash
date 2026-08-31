@@ -1,6 +1,7 @@
 """Regression tests for Phase 2 bug fixes."""
 
 from pathlib import Path
+import json
 import pytest
 
 
@@ -22,14 +23,22 @@ def test_bug_28_and_35_workspace_sync_modal_4_streams(project_root: Path):
     idx_end = html.find('<!-- SCRIPT CONTROLLERS -->')
     modal_html = html[idx:idx_end]
 
-    # Must include Team Google Sheet link
-    assert "1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA" in modal_html, "sheetsModal must link to Team Google Sheet"
-    # Must include NotebookLM link
-    assert "acdbb29b-8632-4fc7-9ba8-2357beeff141" in modal_html, "sheetsModal must link to NotebookLM"
+    # Must include Team Google Sheet stream
+    assert 'id="teamGoogleSheetUrlInput"' in modal_html, "sheetsModal must provide Team Google Sheet input"
+    assert 'id="modalTeamGoogleSheetLink"' in modal_html, "sheetsModal must provide Team Google Sheet link"
+    # Must include NotebookLM stream
+    assert 'id="notebookUrlInput"' in modal_html, "sheetsModal must provide NotebookLM input"
+    assert 'id="modalNotebookLink"' in modal_html, "sheetsModal must provide NotebookLM link"
     # Must include Notebook sync trigger
     assert "triggerNotebookSync" in modal_html or "syncAllWorkspaceSources" in modal_html, (
         "sheetsModal must provide a trigger to sync NotebookLM and all sources"
     )
+
+    # Monaro dataset must preserve authentic links
+    monaro_cfg = json.loads((project_root / "data" / "monaro" / "config.json").read_text(encoding="utf-8"))
+    assert "1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA" in monaro_cfg["project"]["links"]["teamGoogleSheet"]
+    monaro_k = json.loads((project_root / "data" / "monaro" / "knowledge.json").read_text(encoding="utf-8"))
+    assert "acdbb29b-8632-4fc7-9ba8-2357beeff141" in monaro_k["notebookId"]
 
 
 def test_bug_27_exec_briefing_synthesizes_team_google_and_blueprints(project_root: Path):

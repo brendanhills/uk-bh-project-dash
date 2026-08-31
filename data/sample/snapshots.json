@@ -9,7 +9,7 @@
       "date": "03 Jul 2026",
       "isLatest": false,
       "isCurrent": false,
-      "driveFileId": "1kQiDQPF9DCUZ0vvbivToMoJWeZJoB0eREFnywRxpCHA",
+      "driveFileId": "sample-drive-doc-aurora-w22",
       "driveFileName": "Weekly Reporting - Week 22 - 03 Jul 2026 (Google Doc)",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
@@ -139,7 +139,7 @@
       "date": "10 Jul 2026",
       "isLatest": false,
       "isCurrent": false,
-      "driveFileId": "1YRJuXlIIkYRYEsU41K_nuO9iIwrS9k0e",
+      "driveFileId": "sample-drive-doc-aurora-w23",
       "driveFileName": "Weekly Reporting - Week 23 - 10 Jul 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
@@ -242,7 +242,7 @@
       "date": "17 Jul 2026",
       "isLatest": false,
       "isCurrent": false,
-      "driveFileId": "100xnsVUDdlKVzxTgK26_lmjSYYUWnUhK",
+      "driveFileId": "sample-drive-doc-aurora-w24",
       "driveFileName": "Weekly Reporting - Week 24 - 17 Jul 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
@@ -345,7 +345,7 @@
       "date": "24 Jul 2026",
       "isLatest": false,
       "isCurrent": false,
-      "driveFileId": "13ThXt0QIpS2OFg4NEewfx8ggoD2CItlz",
+      "driveFileId": "sample-drive-doc-aurora-w25",
       "driveFileName": "Weekly Reporting - Week 25 - 24 Jul 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
@@ -448,7 +448,7 @@
       "date": "31 Jul 2026",
       "isLatest": false,
       "isCurrent": false,
-      "driveFileId": "1UlQmROLEbOroFI8neyne3qOUm4wEgCyC",
+      "driveFileId": "sample-drive-doc-aurora-w26",
       "driveFileName": "Weekly Reporting - Week 26 - 31 Jul 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
@@ -551,7 +551,7 @@
       "date": "07 Aug 2026",
       "isLatest": true,
       "isCurrent": true,
-      "driveFileId": "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu",
+      "driveFileId": "sample-drive-doc-aurora-w27",
       "driveFileName": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
@@ -771,12 +771,12 @@
         "text": "Overall risk posture remains stable with clear treatment ownership across all key pillars. Back to you for executive decisions."
       }
     ],
-    "driveFileId": "mock-w28-id",
+    "driveFileId": "sample-drive-doc-aurora-w28",
     "driveFileName": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
     "driveFile": {
       "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
-      "id": "mock-w28-id",
-      "ingestedAt": "2026-08-27T12:55:18.765124"
+      "id": "sample-drive-doc-aurora-w28",
+      "ingestedAt": "2026-09-01T08:48:03.483179"
     }
   },
   "Week 27": {
@@ -873,12 +873,12 @@
         "text": "Overall risk posture remains stable with clear treatment ownership across all key pillars. Back to you for executive decisions."
       }
     ],
-    "driveFileId": "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu",
+    "driveFileId": "sample-drive-doc-aurora-w27",
     "driveFileName": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
     "driveFile": {
       "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
-      "id": "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu",
-      "ingestedAt": "2026-08-27T12:55:18.711202"
+      "id": "sample-drive-doc-aurora-w27",
+      "ingestedAt": "2026-09-01T08:44:50.881919"
     }
   }
 }

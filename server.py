@@ -388,6 +388,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             raw_known = cfg.get('sources', {}).get('googleDrive', {}).get('knownReports')
             if raw_known is not None:
                 configured_reports = list(raw_known)
+            elif proj == 'sample':
+                configured_reports = []
             else:
                 configured_reports = list(DEFAULT_DRIVE_REPORTS)
 

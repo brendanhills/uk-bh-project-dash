@@ -56,7 +56,7 @@ def test_week27_in_known_drive_reports():
 def test_week27_ingestion_pipeline():
     """Verify Week 27 ingest script parses and returns valid snapshot."""
     from scripts.pipeline import ingest_file
-    snapshot = ingest_file("1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu", "Weekly Reporting - Week 27 - 07 Aug 2026.pdf", 27, "07 Aug 2026")
+    snapshot = ingest_file("1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu", "Weekly Reporting - Week 27 - 07 Aug 2026.pdf", 27, "07 Aug 2026", project="monaro")
     assert snapshot['weekNumber'] == 27
     assert snapshot['weekLabel'] == "Week 27"
     assert snapshot['isLatest'] is True
