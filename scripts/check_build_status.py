@@ -216,12 +216,6 @@ def main():
         builds = [build]
     else:
         builds = get_recent_builds(project, args.region, args.limit)
-        if not builds and args.region == "australia-southeast1":
-            # Check us-central1 as fallback for legacy builds
-            legacy_builds = get_recent_builds(project, "us-central1", args.limit)
-            if legacy_builds:
-                builds = legacy_builds
-                args.region = "us-central1"
 
     if args.json:
         print(json.dumps(builds, indent=2))
