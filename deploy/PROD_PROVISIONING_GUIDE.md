@@ -303,8 +303,36 @@ EOF
   rm -f "/tmp/error_alert_policy_${PROJECT_ID}.json"
 fi
 
+echo "=== 7. Enforcing Cloud Run Invoker & IAP Access Control ==="
+PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)" 2>/dev/null || true)
+gcloud run services add-iam-policy-binding "monaro-risk-dash-prod" \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-iap.iam.gserviceaccount.com" \
+  --role="roles/run.invoker" >/dev/null 2>&1 || true
+
+for GRP in "monaro-risk-prod@google.com" "monaro-risk-prod@twosync.google.com"; do
+  gcloud run services add-iam-policy-binding "monaro-risk-dash-prod" \
+    --project="${PROJECT_ID}" \
+    --region="${REGION}" \
+    --member="group:${GRP}" \
+    --role="roles/run.invoker" >/dev/null 2>&1 || true
+
+  gcloud beta iap web add-iam-policy-binding \
+    --project="${PROJECT_ID}" \
+    --resource-type="cloud-run" \
+    --service="monaro-risk-dash-prod" \
+    --region="${REGION}" \
+    --member="group:${GRP}" \
+    --role="roles/iap.httpsResourceAccessor" >/dev/null 2>&1 || true
+done
+
 echo "=== Setup complete for ${PROJECT_ID} in ${REGION}! ==="
 ```
+
+> [!IMPORTANT]
+> **Mandatory IAP Access Policy Requirement (`roles/iap.httpsResourceAccessor`)**:
+> Whenever Identity-Aware Proxy (`--iap`) is enabled on Cloud Run, granting `roles/run.invoker` alone will result in `403 Forbidden` errors at the Google IAP proxy layer. You **must** also grant `roles/iap.httpsResourceAccessor` on the Cloud Run IAP resource via `gcloud beta iap web add-iam-policy-binding` in the deployment region (`australia-southeast1`) for all user and group accounts (`@google.com` and `@twosync.google.com`).
 
 ---
 
