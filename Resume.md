@@ -1,14 +1,14 @@
 # Project Monaro / F-DSE Risk Governance & Intelligence Platform — Session Resume
 
-**Checkpoint Timestamp:** `2026-08-27 13:01:00 AEST`  
+**Checkpoint Timestamp:** `2026-08-31 16:15:00 AEST`  
 **Active Git Branch:** `dev`  
 **Workspace:** `/usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash`  
 **Deployment Region:** **`australia-southeast1`** (Sydney, Australia)  
 **Live Cloud Run Dev Service:** `monaro-risk-dash-dev`  
 **Live Cloud Run Prod Service:** `monaro-risk-dash-prod`  
 **Local Cloudtop Dev Server:** [Monaro Project](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro) | [Aurora Sample](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)  
-**Test Suite Health:** **127 / 127 Tests Passing (100%)** (`python3 -m unittest discover -s tests -p "test_*.py"` or `python3 -m pytest`).  
-**Active Conductor Track:** `modularize_frontend_architecture_20260818` (Status: `[~] In Progress / Active Manual Verification`)
+**Test Suite Health:** **156 / 156 Tests Passing (100%)** (`pytest`).  
+**Active Conductor Track:** `migrate_from_unittest_to_pytest_20260827` (Status: `[x] Completed / Final Verification`)
 
 ---
 
@@ -93,9 +93,9 @@ git push origin project_dash/prod-v1.0.0
 | `audit_and_dynamic_data_all_tabs_20260811` | **[x] Completed** | Dynamic data generation & visualization audit across all tabs. |
 | `customer_feedback_enhancements_20260819` | **[x] Completed** | Customer feedback & strategic advisory enhancements. |
 | `simplify_and_harden_for_handover_20260822` | **[x] Completed** | Consolidated unified pipeline, rationalized REST APIs, self-healing fallbacks. |
-| `modularize_frontend_architecture_20260818` | **[~] In Progress** | Core ES6 modules created under `src/js/`; active manual verification. |
+| `modularize_frontend_architecture_20260818` | **[x] Completed** | Core ES6 modules created under `src/js/`; 127/127 tests passing cleanly. |
 | `ondemand_podcast_generation_20260820` | **[ ] Queued** | Backend on-demand podcast generation and interactive loading states (Bugs #73, #78). |
-| `migrate_from_unittest_to_pytest_20260827` | **[ ] Queued** | Migrate test suite from unittest to idiomatic pytest & shared conftest fixtures. |
+| `migrate_from_unittest_to_pytest_20260827` | **[x] Completed** | Migrate test suite from unittest to idiomatic pytest & shared conftest fixtures. |
 | `tailored_stakeholder_views` | **[ ] Queued** | URL-driven views for Exec, PM, and Tech stakeholders. |
 | `terraform_iac_provisioning_future` | **[ ] Queued** | Terraform Infrastructure as Code (IaC) provisioning. |
 
@@ -132,7 +132,7 @@ Google Group: monaro-risk-dev@google.com (Dev) / monaro-risk-prod@google.com (Pr
 
 ```bash
 # 1. Run local automated tests to verify changes
-python3 -m unittest discover -s tests -p "test_*.py"
+pytest
 
 # 2. Stage and commit changes on dev
 git add .
@@ -155,10 +155,10 @@ git push origin project_dash/prod-v1.0.0
 
 ## 🚀 Immediate Next Steps
 
-1. **Track `ondemand_podcast_generation_20260820`**:
-   - Wire backend `/api/briefing/generate` to trigger neural podcast TTS on demand directly from the UI with an interactive loading spinner.
-2. **Continue verification of `modularize_frontend_architecture_20260818`**:
-   - Complete browser testing across all 7 tabs using ES modules.
+1. **Track `ondemand_podcast_generation_20260820`** (or `tailored_stakeholder_views`):
+   - Wire backend on-demand podcast generation and interactive loading states (Bugs #73, #78).
+2. **Open Bugs Triage & Resolution**:
+   - Address Bug #80 (P1: Audit and eliminate confidential Monaro/F-DSE data leaks from Project Aurora sample dashboard).
 
 ---
 

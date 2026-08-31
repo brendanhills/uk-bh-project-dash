@@ -31,7 +31,7 @@
 - [ ] **Track: On-Demand Backend Podcast Generation**
   *Link: [./tracks/ondemand_podcast_generation_20260820/index.md](./tracks/ondemand_podcast_generation_20260820/index.md)*
 ---
-- [~] **Track: Migrate Test Suite from Unittest to Idiomatic Pytest**
+- [x] **Track: Migrate Test Suite from Unittest to Idiomatic Pytest**
   *Link: [./tracks/migrate_from_unittest_to_pytest_20260827/index.md](./tracks/migrate_from_unittest_to_pytest_20260827/index.md)*
 ---
 - [ ] **Track: Tailored Stakeholder Views (Exec, PM, and Tech URL-Driven Views)** `[Future Enhancement]`

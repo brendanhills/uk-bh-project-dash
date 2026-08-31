@@ -200,7 +200,7 @@ steps:
       - '-c'
       - |
         pip install --no-cache-dir -r requirements.txt
-        python3 -m unittest discover -s tests -p "test_*.py"
+        pytest
 
   # 2. Ensure Artifact Registry repository exists (Idempotent)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -341,7 +341,7 @@ Deployment and access policy binding are completely hands-free:
 ```bash
 # 1. Edit code or data files under project_dash/
 # 2. Run local unit tests to verify
-python3 -m unittest discover -s project_dash/tests -p "test_*.py"
+pytest
 
 # 3. Commit and push to the dev branch
 git add project_dash/
