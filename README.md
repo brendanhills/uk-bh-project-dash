@@ -107,7 +107,7 @@ project_dash/
 │       ├── snapshots.json       # Longitudinal weekly snapshots (W22-W27)
 │       ├── knowledge.json       # Blueprint & contract knowledge sources
 │       └── driver_tree.json     # Contractual milestones & capability drops
-└── tests/                       # Complete automated unit test suite (127 tests)
+└── tests/                       # Complete automated unit test suite (156 tests)
 ```
 
 ---
@@ -141,17 +141,18 @@ To add a new project (e.g. `my-project`):
 
 ## 🧪 Testing & Quality Assurance
 
-Project Dash includes a comprehensive unit test suite covering data integrity, live client calculations, Gemini generation, server endpoints, and frontend decoupling:
+Project Dash includes a comprehensive, idiomatic `pytest` suite covering data integrity, live client calculations, Gemini generation, server endpoints, and frontend decoupling:
 
 ```bash
-# Run all automated unit tests
-python3 -m unittest discover -s tests -p "test_*.py"
+# Run all automated tests (156 tests)
+pytest
 
 # Run specific test suites
-python3 -m unittest tests/test_gemini_generator.py
-python3 -m unittest tests/test_pipeline.py
-python3 -m unittest tests/test_server_parameterized.py
+pytest tests/test_gemini_generator.py
+pytest tests/test_pipeline.py
+pytest tests/test_server_parameterized.py
 ```
+
 
 ---
 
