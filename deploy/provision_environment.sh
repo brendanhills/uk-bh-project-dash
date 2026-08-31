@@ -287,7 +287,9 @@ if [[ -n "${PROJECT_NUMBER}" ]]; then
   echo "  ✓ Granted run.invoker to IAP Service Agent"
 fi
 
-for GRP in "${ACCESS_GROUP}" "monaro-risk-dev@twosync.google.com"; do
+TWOSYNC_GROUP=$(echo "${ACCESS_GROUP}" | sed 's/@google.com/@twosync.google.com/')
+
+for GRP in "${ACCESS_GROUP}" "${TWOSYNC_GROUP}"; do
   gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
     --project="${PROJECT_ID}" \
     --region="${REGION}" \
@@ -306,7 +308,7 @@ for USR in "brendanhills@google.com" "allins@google.com"; do
 done
 
 # Grant IAP-secured Web App User (roles/iap.httpsResourceAccessor)
-for GRP in "${ACCESS_GROUP}" "monaro-risk-dev@twosync.google.com"; do
+for GRP in "${ACCESS_GROUP}" "${TWOSYNC_GROUP}"; do
   gcloud beta iap web add-iam-policy-binding \
     --project="${PROJECT_ID}" \
     --resource-type="cloud-run" \

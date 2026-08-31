@@ -86,69 +86,54 @@ steps:
       - '-c'
       - |
         # 1. Grant Cloud Run Invoker to IAP Service Agent
-        gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-          --project=$PROJECT_ID \
-          --region=${_REGION} \
-          --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com" \
-          --role="roles/run.invoker" || true
+        PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)" 2>/dev/null || true)
+        if [ -n "$$PROJECT_NUMBER" ]; then
+          gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
+            --project=$PROJECT_ID \
+            --region=${_REGION} \
+            --member="serviceAccount:service-$$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com" \
+            --role="roles/run.invoker" || true
+        fi
+
+        TWOSYNC_GROUP=$(echo "${_ACCESS_GROUP}" | sed 's/@google.com/@twosync.google.com/')
 
         # 2. Grant Cloud Run Invoker to Environment Google Group and Designated Leads
-        gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-          --project=$PROJECT_ID \
-          --region=${_REGION} \
-          --member="group:${_ACCESS_GROUP}" \
-          --role="roles/run.invoker" || true
+        for GRP in "${_ACCESS_GROUP}" "$$TWOSYNC_GROUP"; do
+          gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
+            --project=$PROJECT_ID \
+            --region=${_REGION} \
+            --member="group:$$GRP" \
+            --role="roles/run.invoker" || true
+        done
 
-        gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-          --project=$PROJECT_ID \
-          --region=${_REGION} \
-          --member="group:monaro-risk-dev@twosync.google.com" \
-          --role="roles/run.invoker" || true
-
-        gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-          --project=$PROJECT_ID \
-          --region=${_REGION} \
-          --member="user:brendanhills@google.com" \
-          --role="roles/run.invoker" || true
-
-        gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-          --project=$PROJECT_ID \
-          --region=${_REGION} \
-          --member="user:allins@google.com" \
-          --role="roles/run.invoker" || true
+        for USR in "brendanhills@google.com" "allins@google.com"; do
+          gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
+            --project=$PROJECT_ID \
+            --region=${_REGION} \
+            --member="user:$$USR" \
+            --role="roles/run.invoker" || true
+        done
 
         # 3. Grant IAP-secured Web App User role to Google Group and Designated Leads
-        gcloud beta iap web add-iam-policy-binding \
-          --project=$PROJECT_ID \
-          --resource-type="cloud-run" \
-          --service="${_SERVICE_NAME}" \
-          --region="${_REGION}" \
-          --member="group:${_ACCESS_GROUP}" \
-          --role="roles/iap.httpsResourceAccessor" || true
+        for GRP in "${_ACCESS_GROUP}" "$$TWOSYNC_GROUP"; do
+          gcloud beta iap web add-iam-policy-binding \
+            --project=$PROJECT_ID \
+            --resource-type="cloud-run" \
+            --service="${_SERVICE_NAME}" \
+            --region="${_REGION}" \
+            --member="group:$$GRP" \
+            --role="roles/iap.httpsResourceAccessor" || true
+        done
 
-        gcloud beta iap web add-iam-policy-binding \
-          --project=$PROJECT_ID \
-          --resource-type="cloud-run" \
-          --service="${_SERVICE_NAME}" \
-          --region="${_REGION}" \
-          --member="group:monaro-risk-dev@twosync.google.com" \
-          --role="roles/iap.httpsResourceAccessor" || true
-
-        gcloud beta iap web add-iam-policy-binding \
-          --project=$PROJECT_ID \
-          --resource-type="cloud-run" \
-          --service="${_SERVICE_NAME}" \
-          --region="${_REGION}" \
-          --member="user:brendanhills@google.com" \
-          --role="roles/iap.httpsResourceAccessor" || true
-
-        gcloud beta iap web add-iam-policy-binding \
-          --project=$PROJECT_ID \
-          --resource-type="cloud-run" \
-          --service="${_SERVICE_NAME}" \
-          --region="${_REGION}" \
-          --member="user:allins@google.com" \
-          --role="roles/iap.httpsResourceAccessor" || true
+        for USR in "brendanhills@google.com" "allins@google.com"; do
+          gcloud beta iap web add-iam-policy-binding \
+            --project=$PROJECT_ID \
+            --resource-type="cloud-run" \
+            --service="${_SERVICE_NAME}" \
+            --region="${_REGION}" \
+            --member="user:$$USR" \
+            --role="roles/iap.httpsResourceAccessor" || true
+        done
 
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'

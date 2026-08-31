@@ -327,6 +327,22 @@ for GRP in "monaro-risk-prod@google.com" "monaro-risk-prod@twosync.google.com"; 
     --role="roles/iap.httpsResourceAccessor" >/dev/null 2>&1 || true
 done
 
+for USR in "brendanhills@google.com" "allins@google.com"; do
+  gcloud run services add-iam-policy-binding "monaro-risk-dash-prod" \
+    --project="${PROJECT_ID}" \
+    --region="${REGION}" \
+    --member="user:${USR}" \
+    --role="roles/run.invoker" >/dev/null 2>&1 || true
+
+  gcloud beta iap web add-iam-policy-binding \
+    --project="${PROJECT_ID}" \
+    --resource-type="cloud-run" \
+    --service="monaro-risk-dash-prod" \
+    --region="${REGION}" \
+    --member="user:${USR}" \
+    --role="roles/iap.httpsResourceAccessor" >/dev/null 2>&1 || true
+done
+
 echo "=== Setup complete for ${PROJECT_ID} in ${REGION}! ==="
 ```
 
