@@ -35,9 +35,10 @@ def test_bug_28_and_35_workspace_sync_modal_4_streams(project_root: Path):
     )
 
     # Monaro dataset must preserve authentic links
-    monaro_cfg = json.loads((project_root / "data" / "monaro" / "config.json").read_text(encoding="utf-8"))
+    monaro_dir = (project_root / "data" / "monaro") if (project_root / "data" / "monaro").exists() else (project_root / "data" / "f-dse")
+    monaro_cfg = json.loads((monaro_dir / "config.json").read_text(encoding="utf-8"))
     assert "1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA" in monaro_cfg["project"]["links"]["teamGoogleSheet"]
-    monaro_k = json.loads((project_root / "data" / "monaro" / "knowledge.json").read_text(encoding="utf-8"))
+    monaro_k = json.loads((monaro_dir / "knowledge.json").read_text(encoding="utf-8"))
     assert "acdbb29b-8632-4fc7-9ba8-2357beeff141" in monaro_k["notebookId"]
 
 
