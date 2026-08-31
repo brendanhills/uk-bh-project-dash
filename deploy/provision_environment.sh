@@ -165,14 +165,15 @@ fi
 echo ""
 
 # 5. Cloud Build Trigger
-echo "=== 5. Configuring Automated Cloud Build Trigger ==="
-if gcloud builds triggers describe "${TRIGGER_NAME}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
-  echo "ℹ️ Cloud Build trigger '${TRIGGER_NAME}' already exists."
+echo "=== 5. Configuring Automated Cloud Build Trigger in ${REGION} ==="
+if gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  echo "ℹ️ Cloud Build trigger '${TRIGGER_NAME}' already exists in ${REGION}."
 else
   if [[ -n "$TAG_PATTERN" ]]; then
-    echo "Creating Tag-based trigger for pattern '${TAG_PATTERN}'..."
+    echo "Creating Tag-based trigger for pattern '${TAG_PATTERN}' in ${REGION}..."
     gcloud builds triggers create github \
       --project="${PROJECT_ID}" \
+      --region="${REGION}" \
       --name="${TRIGGER_NAME}" \
       --repo-name="uk-bh-experiments" \
       --repo-owner="cloud-gtm" \
@@ -182,9 +183,10 @@ else
       --substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
       --description="Automated Production Deployment on release tags in Sydney"
   else
-    echo "Creating Branch-based trigger for branch '${BRANCH_PATTERN}'..."
+    echo "Creating Branch-based trigger for branch '${BRANCH_PATTERN}' in ${REGION}..."
     gcloud builds triggers create github \
       --project="${PROJECT_ID}" \
+      --region="${REGION}" \
       --name="${TRIGGER_NAME}" \
       --repo-name="uk-bh-experiments" \
       --repo-owner="cloud-gtm" \
@@ -196,7 +198,7 @@ else
       --ignored-files="project_dash/**/*.md,project_dash/docs/**,project_dash/.agents/**,project_dash/conductor/**" \
       --description="Automated Dev Deployment on push to dev in Sydney"
   fi
-  echo "✅ Cloud Build trigger created."
+  echo "✅ Cloud Build trigger created in ${REGION}."
 fi
 echo ""
 
