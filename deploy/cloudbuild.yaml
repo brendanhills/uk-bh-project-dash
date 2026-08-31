@@ -102,6 +102,12 @@ steps:
         gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
           --project=$PROJECT_ID \
           --region=${_REGION} \
+          --member="group:monaro-risk-dev@twosync.google.com" \
+          --role="roles/run.invoker" || true
+
+        gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
+          --project=$PROJECT_ID \
+          --region=${_REGION} \
           --member="user:brendanhills@google.com" \
           --role="roles/run.invoker" || true
 
@@ -118,6 +124,14 @@ steps:
           --service="${_SERVICE_NAME}" \
           --region="${_REGION}" \
           --member="group:${_ACCESS_GROUP}" \
+          --role="roles/iap.httpsResourceAccessor" || true
+
+        gcloud beta iap web add-iam-policy-binding \
+          --project=$PROJECT_ID \
+          --resource-type="cloud-run" \
+          --service="${_SERVICE_NAME}" \
+          --region="${_REGION}" \
+          --member="group:monaro-risk-dev@twosync.google.com" \
           --role="roles/iap.httpsResourceAccessor" || true
 
         gcloud beta iap web add-iam-policy-binding \

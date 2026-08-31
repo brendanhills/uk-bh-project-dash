@@ -275,6 +275,61 @@ EOF
 fi
 echo ""
 
+# 7. Cloud Run Invoker & IAP Access Control
+echo "=== 7. Configuring Cloud Run Invoker & IAP Access Control ==="
+PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)" 2>/dev/null || true)
+if [[ -n "${PROJECT_NUMBER}" ]]; then
+  gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
+    --project="${PROJECT_ID}" \
+    --region="${REGION}" \
+    --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-iap.iam.gserviceaccount.com" \
+    --role="roles/run.invoker" >/dev/null 2>&1 || true
+  echo "  ✓ Granted run.invoker to IAP Service Agent"
+fi
+
+for GRP in "${ACCESS_GROUP}" "monaro-risk-dev@twosync.google.com"; do
+  gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
+    --project="${PROJECT_ID}" \
+    --region="${REGION}" \
+    --member="group:${GRP}" \
+    --role="roles/run.invoker" >/dev/null 2>&1 || true
+  echo "  ✓ Granted run.invoker to group:${GRP}"
+done
+
+for USR in "brendanhills@google.com" "allins@google.com"; do
+  gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
+    --project="${PROJECT_ID}" \
+    --region="${REGION}" \
+    --member="user:${USR}" \
+    --role="roles/run.invoker" >/dev/null 2>&1 || true
+  echo "  ✓ Granted run.invoker to user:${USR}"
+done
+
+# Grant IAP-secured Web App User (roles/iap.httpsResourceAccessor)
+for GRP in "${ACCESS_GROUP}" "monaro-risk-dev@twosync.google.com"; do
+  gcloud beta iap web add-iam-policy-binding \
+    --project="${PROJECT_ID}" \
+    --resource-type="cloud-run" \
+    --service="${SERVICE_NAME}" \
+    --region="${REGION}" \
+    --member="group:${GRP}" \
+    --role="roles/iap.httpsResourceAccessor" >/dev/null 2>&1 || true
+  echo "  ✓ Granted iap.httpsResourceAccessor to group:${GRP}"
+done
+
+for USR in "brendanhills@google.com" "allins@google.com"; do
+  gcloud beta iap web add-iam-policy-binding \
+    --project="${PROJECT_ID}" \
+    --resource-type="cloud-run" \
+    --service="${SERVICE_NAME}" \
+    --region="${REGION}" \
+    --member="user:${USR}" \
+    --role="roles/iap.httpsResourceAccessor" >/dev/null 2>&1 || true
+  echo "  ✓ Granted iap.httpsResourceAccessor to user:${USR}"
+done
+echo "✅ Cloud Run and IAP Access Control configured in ${REGION}."
+echo ""
+
 echo "=============================================================================="
 echo "🎉 Provisioning Complete for ${PROJECT_ID} (${REGION})!"
 echo "=============================================================================="

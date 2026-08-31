@@ -296,7 +296,7 @@ steps:
           --project=$PROJECT_ID \
           --resource-type="cloud-run" \
           --service="monaro-risk-dash-dev" \
-          --region="us-central1" \
+          --region="australia-southeast1" \
           --member="group:monaro-risk-dev@google.com" \
           --role="roles/iap.httpsResourceAccessor"
 
@@ -304,7 +304,7 @@ steps:
           --project=$PROJECT_ID \
           --resource-type="cloud-run" \
           --service="monaro-risk-dash-dev" \
-          --region="us-central1" \
+          --region="australia-southeast1" \
           --member="group:monaro-risk-dev@twosync.google.com" \
           --role="roles/iap.httpsResourceAccessor"
 
@@ -312,7 +312,7 @@ steps:
           --project=$PROJECT_ID \
           --resource-type="cloud-run" \
           --service="monaro-risk-dash-dev" \
-          --region="us-central1" \
+          --region="australia-southeast1" \
           --member="user:brendanhills@google.com" \
           --role="roles/iap.httpsResourceAccessor"
 
@@ -320,17 +320,21 @@ steps:
           --project=$PROJECT_ID \
           --resource-type="cloud-run" \
           --service="monaro-risk-dash-dev" \
-          --region="us-central1" \
+          --region="australia-southeast1" \
           --member="user:allins@google.com" \
           --role="roles/iap.httpsResourceAccessor"
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-dash-dev:$COMMIT_SHA'
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-dash-dev:latest'
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-dash-dev:$COMMIT_SHA'
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-dash-dev:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
 ```
+
+> [!IMPORTANT]
+> **Mandatory IAP Access Requirement for Cloud Run (`roles/iap.httpsResourceAccessor`)**:
+> Whenever Identity-Aware Proxy (`--iap`) is enabled on Cloud Run, granting `roles/run.invoker` alone will result in `403 Forbidden` errors at the Google IAP proxy layer. You **must** also grant `roles/iap.httpsResourceAccessor` on the Cloud Run IAP resource via `gcloud beta iap web add-iam-policy-binding` in the deployment region (`australia-southeast1`) for all user and group accounts (`@google.com` and `@twosync.google.com`).
 
 ---
 

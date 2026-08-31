@@ -1542,5 +1542,40 @@
     "cause": "handle_check_drive_sync only reads hardcoded static knownReports and local directory folders without executing live Google Drive API folder queries against the configured folderId.",
     "plan": "1. Implement live on-demand Drive folder listing in scripts/pipeline.py / server.py using Google Drive API / ADC.\n2. When folderId is configured and ADC is available, dynamically query files from Google Drive and merge them into knownReports.",
     "resolution": "Implemented query_live_drive_folder in server.py using googleapiclient + ADC and integrated live on-demand querying into handle_check_drive_sync when folderId is configured. Defaulted known list to include Week 29 pack and verified with unit tests."
+  },
+  {
+    "id": 86,
+    "type": "Bug",
+    "title": "Remove US-Central1 fallback so all services and deployments run strictly in Australia Southeast region",
+    "description": "remove the us-central1 fallback so it all runs in the australia SE region",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-01",
+    "date_triaged": "",
+    "date_resolved": "",
+    "priority": "",
+    "impact": "",
+    "risk": "",
+    "phase": "",
+    "status": "Reported",
+    "workspace_context": "project_dash"
+  },
+  {
+    "id": 87,
+    "type": "Bug",
+    "title": "Cannot access australian deployment of dev dashboard as brendanhills@google.com due to missing IAM/IAP access for monaro-dash-dev group",
+    "description": "I can access the us-central fallback but not the australian deployment of the dev dashboard as brendanhills@google.com. That probably means the monaro-dash-dev group has not been given the right access",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-01",
+    "date_triaged": "2026-09-01",
+    "date_resolved": "2026-09-01",
+    "priority": "P1",
+    "impact": "High",
+    "risk": "Low",
+    "phase": "Infrastructure & Deployment",
+    "status": "Fix Implemented",
+    "workspace_context": "project_dash",
+    "cause": "Cloud Run service monaro-risk-dash-dev has IAP enabled (run.googleapis.com/iap-enabled=true) in both regions. In us-central1, roles/iap.httpsResourceAccessor is properly bound to group:monaro-risk-dev@google.com, group:monaro-risk-dev@twosync.google.com, and user:brendanhills@google.com. However, in australia-southeast1, the IAP web policy has zero bindings ({'etag': 'ACAB'}). While roles/run.invoker was granted on the underlying Cloud Run service, IAP rejects all requests before they reach Cloud Run because users lack roles/iap.httpsResourceAccessor on the Australian IAP service.",
+    "plan": "1. Grant roles/iap.httpsResourceAccessor on resource-type cloud-run service monaro-risk-dash-dev in region australia-southeast1 to group:monaro-risk-dev@google.com, group:monaro-risk-dev@twosync.google.com, and user:brendanhills@google.com via gcloud beta iap web add-iam-policy-binding.\n2. Update deploy/provision_environment.sh and deploy/cloudbuild.yaml to ensure both group:monaro-risk-dev@google.com and group:monaro-risk-dev@twosync.google.com as well as designated leads are always bound in both roles/run.invoker and roles/iap.httpsResourceAccessor in the target region.\n3. Update deployment documentation (docs/DEPLOYMENT_GUIDE.md and deploy/PROD_PROVISIONING_GUIDE.md) to explicitly document the mandatory roles/iap.httpsResourceAccessor binding requirement on Cloud Run IAP services whenever --iap is enabled.\n4. Verify access via gcloud beta iap web get-iam-policy.",
+    "resolution_notes": "1. Bound roles/iap.httpsResourceAccessor on Cloud Run service monaro-risk-dash-dev in australia-southeast1 to brendanhills@google.com, allins@google.com, monaro-risk-dev@google.com, and monaro-risk-dev@twosync.google.com via gcloud beta iap web add-iam-policy-binding.\n2. Bound roles/run.invoker to monaro-risk-dev@twosync.google.com in australia-southeast1.\n3. Updated deploy/cloudbuild.yaml and deploy/provision_environment.sh to enforce both invoker and IAP access bindings for both group formats.\n4. Updated docs/DEPLOYMENT_GUIDE.md and deploy/PROD_PROVISIONING_GUIDE.md with mandatory IAP requirements."
   }
 ]
