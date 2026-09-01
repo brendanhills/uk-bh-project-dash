@@ -56,3 +56,44 @@ def test_bug_48_podcast_audio_assets_exist(project_root: Path):
         (assets_dir / "podcast_w27.wav").exists()
     )
     assert has_audio, "assets/podcast_w27.wav or .mp3 must exist on disk"
+
+
+def test_bug_91_cloudbuild_pipeline_efficiency(project_root: Path):
+    """FR #91: Cloud Build pipeline must be streamlined with high-throughput worker and no redundant steps."""
+    cb_path = project_root / "deploy" / "cloudbuild.yaml"
+    assert cb_path.exists(), "deploy/cloudbuild.yaml must exist"
+
+    cb_content = cb_path.read_text(encoding="utf-8")
+
+    # 1. High-throughput machine type
+    assert "machineType: 'E2_HIGHCPU_8'" in cb_content, (
+        "options.machineType must be 'E2_HIGHCPU_8' for fast build execution"
+    )
+
+    # 2. No redundant Artifact Registry create/describe in per-commit build
+    assert "artifacts repositories create" not in cb_content, (
+        "Artifact Registry check/creation must not run on every commit build"
+    )
+    assert "artifacts repositories describe" not in cb_content, (
+        "Artifact Registry describe must not run on every commit build"
+    )
+
+    # 3. No redundant repetitive IAM bindings on every commit build
+    assert "roles/iap.httpsResourceAccessor" not in cb_content, (
+        "Static IAP IAM policy bindings must not be repeated on every commit build"
+    )
+
+    # 4. Metadata step reuses cached python image to avoid pulling cloudsdk
+    assert "name: 'python:3.13-slim'" in cb_content
+
+    # 5. Push uses --all-tags
+    assert "'--all-tags'" in cb_content, "Docker push should use --all-tags"
+
+    # 6. Uses pre-warmed gcloud builder
+    assert "name: 'gcr.io/cloud-builders/gcloud'" in cb_content, "Should use gcr.io/cloud-builders/gcloud"
+
+    # 7. Provisioning script retains complete infrastructure setup
+    prov_path = project_root / "deploy" / "provision_environment.sh"
+    prov_content = prov_path.read_text(encoding="utf-8")
+    assert "gcloud artifacts repositories create" in prov_content
+    assert "roles/iap.httpsResourceAccessor" in prov_content
