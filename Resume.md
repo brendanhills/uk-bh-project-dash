@@ -184,8 +184,9 @@ git push origin project_dash/prod-v1.0.0
 
 1. **Track `ondemand_podcast_generation_20260820`** (or `tailored_stakeholder_views`):
    - Wire backend on-demand podcast generation and interactive loading states (Bugs #73, #78).
-2. **Open Bugs Triage & Resolution**:
-   - Address Bug #80 (P1: Audit and eliminate confidential Monaro/F-DSE data leaks from Project Aurora sample dashboard).
+2. **Open Bugs & Feature Requests Triage**:
+   - Address Bug #80 (P1: Audit and eliminate confidential Monaro data leaks from Project Aurora sample dashboard).
+   - FR #95: Support adding and scaffolding new projects dynamically via CLI / automated workflow.
 
 ---
 
