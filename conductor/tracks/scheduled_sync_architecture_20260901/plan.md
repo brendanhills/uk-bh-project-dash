@@ -1,4 +1,4 @@
-# Implementation Plan: Scheduled Ingestion Pipeline, Static Sync Architecture & Gemini 2.5 Upgrade
+# Implementation Plan: Scheduled Ingestion Pipeline & Static Sync Architecture
 
 Following the Spec-Driven Development (SDD) and Test-Driven Development (TDD) workflow, all phases require test implementation before code modification, followed by manual/automated verification checkpoints.
 
