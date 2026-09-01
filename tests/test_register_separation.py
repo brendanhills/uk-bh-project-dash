@@ -7,7 +7,9 @@ import pytest
 
 def test_config_register_names(project_root: Path):
     """Verify primary and secondary register names in project configuration."""
-    config_path = project_root / 'data' / 'f-dse' / 'config.json'
+    config_path = project_root / 'data' / 'monaro' / 'config.json'
+    if not config_path.exists():
+        config_path = project_root / 'data' / 'f-dse' / 'config.json'
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
     project = config.get('project', {})
@@ -17,8 +19,10 @@ def test_config_register_names(project_root: Path):
 
 
 def test_data_counts(project_root: Path):
-    """Verify total, internal, and Team Google risk counts in f-dse risks.json."""
-    risks_path = project_root / 'data' / 'f-dse' / 'risks.json'
+    """Verify total, internal, and Team Google risk counts in monaro/f-dse risks.json."""
+    risks_path = project_root / 'data' / 'monaro' / 'risks.json'
+    if not risks_path.exists():
+        risks_path = project_root / 'data' / 'f-dse' / 'risks.json'
     with open(risks_path, 'r', encoding='utf-8') as f:
         risks = json.load(f)
     assert len(risks) == 119

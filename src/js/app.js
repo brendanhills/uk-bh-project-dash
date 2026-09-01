@@ -5,7 +5,7 @@
 
         
         
-                let CURRENT_PROJECT = 'sample';
+                let CURRENT_PROJECT = 'monaro';
         let CONFIG = null;
         let NOTEBOOK_CATALOG = null;
         let BUNDLE_ANNEX_MAPPING = {};
@@ -35,12 +35,17 @@
 
         async function loadDashboardData() {
             const urlParams = new URLSearchParams(window.location.search);
-            CURRENT_PROJECT = urlParams.get('project') || 'sample';
+            CURRENT_PROJECT = urlParams.get('project') || 'monaro';
             console.log(`[Dashboard] Initializing data for project: ${CURRENT_PROJECT}`);
 
             try {
-                const [cfgRes, snapRes, riskRes, issRes, kbRes, dtRes] = await Promise.all([
-                    fetch(`data/${CURRENT_PROJECT}/config.json`),
+                let cfgRes = await fetch(`data/${CURRENT_PROJECT}/config.json`);
+                if (!cfgRes.ok && CURRENT_PROJECT !== 'sample') {
+                    console.warn(`[Dashboard] Project '${CURRENT_PROJECT}' data unavailable, falling back to 'sample'`);
+                    CURRENT_PROJECT = 'sample';
+                    cfgRes = await fetch(`data/${CURRENT_PROJECT}/config.json`);
+                }
+                const [snapRes, riskRes, issRes, kbRes, dtRes] = await Promise.all([
                     fetch(`data/${CURRENT_PROJECT}/snapshots.json`),
                     fetch(`data/${CURRENT_PROJECT}/risks.json`),
                     fetch(`data/${CURRENT_PROJECT}/issues.json`),
@@ -3648,7 +3653,7 @@
         async function checkForUpdates() {
             showSyncToast('🔍 Checking for pipeline updates...');
             try {
-                const projParam = (typeof CURRENT_PROJECT !== 'undefined' && CURRENT_PROJECT) ? CURRENT_PROJECT : 'sample';
+                const projParam = (typeof CURRENT_PROJECT !== 'undefined' && CURRENT_PROJECT) ? CURRENT_PROJECT : 'monaro';
                 const resp = await fetch(`data/${encodeURIComponent(projParam)}/snapshots.json?t=${Date.now()}`, { cache: 'no-store' });
                 if (resp.ok) {
                     const data = await resp.json();

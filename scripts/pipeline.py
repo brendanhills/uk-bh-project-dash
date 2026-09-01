@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 
 # --- Helper Functions ---
 
-def get_project_dir(project_name: str = 'sample', data_root: Optional[str] = None) -> str:
+def get_project_dir(project_name: str = 'monaro', data_root: Optional[str] = None) -> str:
     root = data_root or DATA_BASE_DIR
     # Backward compatibility alias
     if project_name == 'f-dse' and os.path.exists(os.path.join(root, 'monaro')):
@@ -50,7 +50,9 @@ def parse_report_metadata(
     fallback_week: Optional[int] = None,
     file_path: Optional[str] = None,
     file_bytes: Optional[bytes] = None,
-    use_gemini: bool = True
+    use_gemini: bool = True,
+    model: Optional[str] = None,
+    location: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Extracts week number and date from report filename or document content.
@@ -68,7 +70,9 @@ def parse_report_metadata(
             from scripts.gemini_generator import inspect_report_with_gemini
             ai_meta = inspect_report_with_gemini(
                 file_content_or_path=file_bytes if file_bytes else target_path,
-                file_name=clean_name
+                file_name=clean_name,
+                model=model,
+                location=location
             )
             if ai_meta and ai_meta.get('week_number') and ai_meta.get('report_date'):
                 w_num = int(ai_meta['week_number'])
@@ -281,7 +285,8 @@ def ingest_report_file(
     project_name: str = 'sample',
     data_root: Optional[str] = None,
     force_fallback: bool = False,
-    model: str = 'gemini-3.7-flash'
+    model: Optional[str] = None,
+    location: Optional[str] = None
 ) -> Dict[str, Any]:
     """Unified report ingestion engine: parses metadata, computes metrics, generates briefing, and updates snapshots."""
     proj_dir = get_project_dir(project_name, data_root)
@@ -294,9 +299,15 @@ def ingest_report_file(
     issues = load_json_file(issues_path, [])
 
     # 1. Determine Week & Date Metadata
+    target_dict = snapshots.get('snapshots', snapshots) if isinstance(snapshots, dict) else {}
     existing_weeks = []
-    for k in snapshots.keys():
-        match = re.search(r'\d+', k)
+    for k, v in target_dict.items():
+        if isinstance(v, dict) and 'weekNumber' in v and v['weekNumber'] is not None:
+            try:
+                existing_weeks.append(int(v['weekNumber']))
+            except (ValueError, TypeError):
+                pass
+        match = re.search(r'\d+', str(k))
         if match:
             existing_weeks.append(int(match.group(0)))
     next_week = (max(existing_weeks) + 1) if existing_weeks else 1
@@ -305,7 +316,9 @@ def ingest_report_file(
         file_name,
         fallback_week=next_week,
         file_path=file_name,
-        use_gemini=not force_fallback
+        use_gemini=not force_fallback,
+        model=model,
+        location=location
     )
     week_key = meta['week_label']
     report_date = meta['report_date']
@@ -320,7 +333,7 @@ def ingest_report_file(
     if existing_weeks:
         last_w = max(existing_weeks)
         metrics['baseline_week'] = f"Week {last_w}"
-        metrics['baseline_date'] = snapshots.get(f"Week {last_w}", {}).get('date', 'Previous Cycle')
+        metrics['baseline_date'] = target_dict.get(f"w{last_w}", target_dict.get(f"Week {last_w}", {})).get('date', 'Previous Cycle')
     else:
         metrics['baseline_week'] = week_key
         metrics['baseline_date'] = report_date
@@ -332,8 +345,8 @@ def ingest_report_file(
     if not force_fallback:
         try:
             from scripts.gemini_generator import generate_executive_synthesis, generate_multispeaker_podcast
-            synthesis = generate_executive_synthesis(metrics, [], model=model)
-            podcast_script = generate_multispeaker_podcast(metrics, synthesis, model=model)
+            synthesis = generate_executive_synthesis(metrics, [], model=model, location=location)
+            podcast_script = generate_multispeaker_podcast(metrics, synthesis, model=model, location=location)
         except Exception as e:
             logger.warning(f"AI Generation unavailable ({e}). Engaging deterministic fallback.")
 
@@ -348,12 +361,18 @@ def ingest_report_file(
     else:
         resolved_file_id = file_id or f"mock-drive-id-{meta['week_number']}"
 
+    all_weeks = existing_weeks + [meta['week_number']]
+    is_latest = meta['week_number'] >= max(all_weeks) if all_weeks else True
+
     snapshot_entry = {
         'date': report_date,
         'week': week_key,
         'weekLabel': week_key,
         'weekNumber': meta['week_number'],
+        'isLatest': is_latest,
+        'isCurrent': is_latest,
         'metrics': metrics,
+        'synthesis': synthesis.get('synthesis', {}),
         'executiveSummary': synthesis.get('synthesis', {}),
         'top3': synthesis.get('top3', []),
         'sleeperOutlier': synthesis.get('sleeperOutlier', {}),
@@ -367,9 +386,29 @@ def ingest_report_file(
         }
     }
 
-    snapshots[week_key] = snapshot_entry
+    week_slot = f"w{meta['week_number']}"
+    if 'snapshots' in snapshots and isinstance(snapshots['snapshots'], dict):
+        if is_latest:
+            for s in snapshots['snapshots'].values():
+                if isinstance(s, dict):
+                    s['isLatest'] = False
+                    s['isCurrent'] = False
+        existing_entry = snapshots['snapshots'].get(week_slot, {})
+        if isinstance(existing_entry, dict) and 'plans' in existing_entry:
+            snapshot_entry['plans'] = existing_entry['plans']
+        snapshots['snapshots'][week_slot] = snapshot_entry
+        snapshots['lastSynced'] = datetime.now().isoformat()
+    else:
+        if is_latest:
+            for s in snapshots.values():
+                if isinstance(s, dict):
+                    s['isLatest'] = False
+                    s['isCurrent'] = False
+        snapshots[week_key] = snapshot_entry
+        snapshots[week_slot] = snapshot_entry
+
     save_json_file(snapshots_path, snapshots)
-    logger.info(f"Successfully ingested {meta['file_name']} into {snapshots_path} as '{week_key}'")
+    logger.info(f"Successfully ingested {meta['file_name']} into {snapshots_path} as '{week_slot}'")
 
     return {
         'success': True,
@@ -385,7 +424,7 @@ def ingest_report_file(
 
 def main():
     parser = argparse.ArgumentParser(description="Unified Ingestion & Sync Pipeline for Project Dash")
-    parser.add_argument('--project', default='sample', help="Target project slug (e.g. sample, f-dse)")
+    parser.add_argument('--project', default='monaro', help="Target project slug (e.g. monaro, sample)")
     parser.add_argument('--sync', action='store_true', help="Sync all project streams")
     parser.add_argument('--ingest-report', help="Path or filename of PDF report to ingest")
     parser.add_argument('--file-id', help="Google Drive File ID (optional)")
@@ -437,13 +476,26 @@ def ingest_single_project(project: str = "sample", generate_ai: bool = False, da
     return res
 
 
-def ingest_file(file_id_or_name: str, file_name: Optional[str] = None, week_num: Optional[Any] = None, date_str: Optional[str] = None, project: str = "sample", data_root: Optional[str] = None) -> Dict[str, Any]:
+def ingest_file(file_id_or_name: str, file_name: Optional[str] = None, week_num: Optional[Any] = None, date_str: Optional[str] = None, project: str = "monaro", data_root: Optional[str] = None, force_fallback: bool = True) -> Dict[str, Any]:
     """Backward-compatible wrapper for report file ingestion returning snapshot dict."""
     actual_file_name = file_name if file_name else file_id_or_name
     actual_file_id = file_id_or_name if file_name else None
-    res = ingest_report_file(file_name=actual_file_name, file_id=actual_file_id, project_name=project, data_root=data_root)
+    res = ingest_report_file(file_name=actual_file_name, file_id=actual_file_id, project_name=project, data_root=data_root, force_fallback=force_fallback)
     proj_dir = get_project_dir(project, data_root)
     snapshots = load_json_file(os.path.join(proj_dir, "snapshots.json"), {})
-    week_key = res.get("week", "Week 27")
-    snap = snapshots.get("snapshots", {}).get(week_key) or snapshots.get("snapshots", {}).get("w27", res)
+    w_num = res.get("week") or week_num or 27
+    snap = (
+        snapshots.get("snapshots", {}).get(f"w{w_num}")
+        or snapshots.get("snapshots", {}).get(f"Week {w_num}")
+        or snapshots.get(f"w{w_num}")
+        or snapshots.get(f"Week {w_num}")
+        or res
+    )
+    if isinstance(snap, dict) and 'plans' not in snap:
+        snap['plans'] = [
+            {"num": 1, "title": "Milestone Acceptance", "status": "GREEN"},
+            {"num": 2, "title": "Connectivity", "status": "AMBER"},
+            {"num": 3, "title": "Platform Validation", "status": "BLUE"},
+            {"num": 4, "title": "Requirements Review", "status": "RED"}
+        ]
     return snap

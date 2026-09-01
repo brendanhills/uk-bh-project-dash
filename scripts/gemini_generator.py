@@ -50,27 +50,70 @@ class ReportMetadataInspection(BaseModel):
     title: str = Field(description="Report title or document headline found on the title slide or document header.")
     summary: str = Field(description="Brief 1-sentence summary of the report pack scope or period.")
 
-def get_gemini_client() -> Optional[genai.Client]:
-    """Initializes genai.Client with ADC Vertex AI priority and API Key fallback."""
-    project = os.getenv("GCP_PROJECT_ID")
-    location = os.getenv("GCP_REGION", "us-central1")
+def get_default_gemini_region(override: Optional[str] = None) -> str:
+    """
+    Dynamically resolves the active Vertex AI location for Gemini generation:
+      1. Explicit argument override
+      2. GEMINI_REGION environment variable (e.g. 'us', 'australia-southeast1')
+      3. GCP_REGION / GOOGLE_CLOUD_LOCATION environment variable
+      4. System default fallback ('us' for multi-region US until Sydney deployment arrives)
+    """
+    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "us"
+
+def get_default_gemini_model(override: Optional[str] = None) -> str:
+    """
+    Dynamically resolves the active Gemini model name in order of precedence:
+      1. Explicit argument override
+      2. GEMINI_MODEL environment variable
+      3. System default fallback ('gemini-3.5-flash')
+    """
+    return override or os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
+def get_gemini_client(location: Optional[str] = None) -> Optional[genai.Client]:
+    """Initializes genai.Client with ADC Vertex AI priority and API Key fallback.
     
-    # 1. Try Vertex AI with ADC if project is configured
+    Supports multi-region endpoints ('us', 'eu') with automatic .rep. hostname configuration.
+    """
+    project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
+    loc = get_default_gemini_region(location)
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
+    http_opts = None
+    if loc in ['us', 'eu']:
+        http_opts = types.HttpOptions(base_url=f"https://aiplatform.{loc}.rep.googleapis.com")
+    elif loc == 'global':
+        http_opts = types.HttpOptions(base_url="https://aiplatform.googleapis.com")
+    
+    # 1. Try Vertex AI with ADC if project is explicitly configured in environment
     if project:
         try:
-            return genai.Client(vertexai=True, project=project, location=location)
+            kwargs: Dict[str, Any] = {"vertexai": True, "project": project, "location": loc}
+            if http_opts:
+                kwargs["http_options"] = http_opts
+            return genai.Client(**kwargs)
         except Exception as e:
-            logger.warning(f"Vertex AI ADC initialization failed: {e}")
+            logger.warning(f"Vertex AI ADC initialization failed for region '{loc}': {e}")
 
-    # 2. Try API Key
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    # 2. Try API Key if provided
     if api_key and api_key != "MY_GEMINI_API_KEY":
         try:
             return genai.Client(api_key=api_key)
         except Exception as e:
             logger.warning(f"API Key Client initialization failed: {e}")
 
-    # 3. Default ADC probe
+    # 3. Try ADC fallback with default project discovery
+    try:
+        from google.auth import default
+        _, default_proj = default()
+        if default_proj:
+            kwargs = {"vertexai": True, "project": default_proj, "location": loc}
+            if http_opts:
+                kwargs["http_options"] = http_opts
+            return genai.Client(**kwargs)
+    except Exception:
+        pass
+
+    # 4. Default client probe
     try:
         return genai.Client()
     except Exception as e:
@@ -140,40 +183,64 @@ Provide an exception-first executive briefing based on the following weekly metr
 def generate_executive_synthesis(
     metrics: Dict[str, Any],
     gap_close_plans: List[Dict[str, Any]],
-    model: str = "gemini-3.7-flash"
+    model: Optional[str] = None,
+    location: Optional[str] = None
 ) -> Dict[str, Any]:
-    """Generates structured executive decision synthesis using Gemini 3.7 Flash."""
-    client = get_gemini_client()
+    """Generates structured executive decision synthesis using dynamic Gemini model."""
+    active_model = get_default_gemini_model(model)
+    client = get_gemini_client(location=location)
     if not client:
         raise RuntimeError("Gemini Client could not be initialized. Please configure Google Cloud ADC or GEMINI_API_KEY in .env.")
 
     prompt = build_synthesis_prompt(metrics, gap_close_plans)
     
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=ExecutiveSynthesisResult,
-            temperature=0.2
+    try:
+        response = client.models.generate_content(
+            model=active_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=ExecutiveSynthesisResult,
+                temperature=0.2
+            )
         )
-    )
+    except Exception as e:
+        loc = get_default_gemini_region(location)
+        if "404" in str(e) and loc not in ['us', 'global']:
+            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on multi-region 'us' endpoint...")
+            fallback_client = get_gemini_client(location='us')
+            if not fallback_client:
+                raise
+            response = fallback_client.models.generate_content(
+                model=active_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ExecutiveSynthesisResult,
+                    temperature=0.2
+                )
+            )
+        else:
+            raise
+
     try:
         result = json.loads(response.text)
-        result['generatedBy'] = model
+        result['generatedBy'] = active_model
         return result
     except Exception as e:
-        logger.error(f"Failed to parse JSON output from Gemini: {e}\\nRaw response: {response.text}")
-        raise ValueError(f"Invalid JSON output received from {model}: {e}")
+        logger.error(f"Failed to parse JSON output from Gemini: {e}\nRaw response: {response.text}")
+        raise ValueError(f"Invalid JSON output received from {active_model}: {e}")
 
 def generate_multispeaker_podcast(
     metrics: Dict[str, Any],
     synthesis_result: Dict[str, Any],
-    model: str = "gemini-3.7-flash",
+    model: Optional[str] = None,
+    location: Optional[str] = None,
     audio_out_path: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Generates dual-host dialogue transcript and multi-speaker audio."""
-    client = get_gemini_client()
+    active_model = get_default_gemini_model(model)
+    client = get_gemini_client(location=location)
     if not client:
         raise RuntimeError("Gemini Client could not be initialized. Please configure Google Cloud ADC or GEMINI_API_KEY in .env.")
 
@@ -196,21 +263,40 @@ Return STRICT JSON as an array of dialogue turns:
 ]
 """
 
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=List[PodcastDialogueTurn],
-            temperature=0.3
+    try:
+        response = client.models.generate_content(
+            model=active_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=List[PodcastDialogueTurn],
+                temperature=0.3
+            )
         )
-    )
+    except Exception as e:
+        loc = get_default_gemini_region(location)
+        if "404" in str(e) and loc not in ['us', 'global']:
+            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on multi-region 'us' endpoint...")
+            fallback_client = get_gemini_client(location='us')
+            if not fallback_client:
+                raise
+            response = fallback_client.models.generate_content(
+                model=active_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=List[PodcastDialogueTurn],
+                    temperature=0.3
+                )
+            )
+        else:
+            raise
 
     try:
         script = json.loads(response.text)
     except Exception as e:
         logger.error(f"Failed to parse podcast script JSON: {e}")
-        raise ValueError(f"Invalid podcast script JSON from {model}: {e}")
+        raise ValueError(f"Invalid podcast script JSON from {active_model}: {e}")
 
     # Generate multi-speaker audio if audio_out_path is provided
     if audio_out_path and script:
@@ -273,13 +359,15 @@ def inspect_report_with_gemini(
     file_content_or_path: Any,
     file_name: str = "",
     mime_type: str = "application/pdf",
-    model: str = "gemini-3.7-flash"
+    model: Optional[str] = None,
+    location: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Inspects report content or document files using Gemini Multimodal AI to extract
     the reporting week number, formal date, and title from cover slides or document headers.
     """
-    client = get_gemini_client()
+    active_model = get_default_gemini_model(model)
+    client = get_gemini_client(location=location)
     if not client:
         return None
 
@@ -304,18 +392,38 @@ def inspect_report_with_gemini(
 
         contents.append(prompt_text)
 
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=ReportMetadataInspection,
-                temperature=0.1
+        try:
+            response = client.models.generate_content(
+                model=active_model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ReportMetadataInspection,
+                    temperature=0.1
+                )
             )
-        )
+        except Exception as e:
+            loc = get_default_gemini_region(location)
+            if "404" in str(e) and loc not in ['us', 'global']:
+                logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on multi-region 'us' endpoint...")
+                fallback_client = get_gemini_client(location='us')
+                if not fallback_client:
+                    raise
+                response = fallback_client.models.generate_content(
+                    model=active_model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=ReportMetadataInspection,
+                        temperature=0.1
+                    )
+                )
+            else:
+                raise
+
         if response.text:
             result = json.loads(response.text)
-            result['inspectedBy'] = model
+            result['inspectedBy'] = active_model
             return result
     except Exception as e:
         logger.warning(f"Gemini multimodal report inspection encountered an error: {e}")

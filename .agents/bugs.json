@@ -1697,19 +1697,20 @@
   {
     "id": 94,
     "type": "Bug",
-    "title": "Update project identifier references from 'project=f-dse' to 'project=monaro'",
-    "description": "References to 'project=f-dse' (in default URL query parameters, configuration values, or links) need to be updated to 'project=monaro'.",
-    "cause": "",
-    "plan": "",
+    "title": "Update project identifier from 'project=f-dse' to 'project=monaro' and make 'monaro' the default",
+    "description": "Update all project references from 'project=f-dse' to 'project=monaro' across documentation, navigation links, and tests, and configure 'monaro' as the primary default active project when no query parameter is supplied (with graceful fallback to 'sample' if 'data/monaro' is absent).",
+    "cause": "1. Default Project Resolution: In src/js/app.js (lines 8, 38, 3651) and server.py (line 42), the application hardcodes 'sample' as the fallback when ?project is omitted, rather than defaulting to 'monaro' when data/monaro exists.\n2. Live Navigation & Console Links: README.md (Quick Navigation Table) and docs/DEPLOYMENT_GUIDE.md (Live Deployed Dashboard rows) still publish '?project=f-dse' for Monaro Live in both Dev and Prod.\n3. CLI Flags & Tooling: scripts/pipeline.py parser defaults and help strings reference 'sample' / 'f-dse' instead of 'monaro'.\n4. Test Suites: tests/test_presentation_decoupling.py and tests/test_server_parameterized.py test 'f-dse' directly instead of asserting 'monaro' as the primary canonical project identifier.\n5. Configuration & Metadata Drift: pyproject.toml and Resume.md continue to reference legacy 'F-DSE' project naming.",
+    "plan": "1. Update default project resolution in src/js/app.js and server.py to default to 'monaro' (falling back gracefully to 'sample' if data/monaro is not present).\n2. Update documentation tables in README.md, docs/DEPLOYMENT_GUIDE.md, and Resume.md to link '?project=monaro' as the primary live URL across Dev, Prod, and Local.\n3. Update scripts/pipeline.py argument default and help text to reference 'monaro' as the canonical slug.\n4. Update test suites (tests/test_presentation_decoupling.py, tests/test_server_parameterized.py, tests/conftest.py) to test 'monaro' as default and primary slug while ensuring 'f-dse' backward-compatibility aliasing works.\n5. Update pyproject.toml project description to Project Monaro.\n6. Verify 100% test pass with pytest.",
     "reporter": "Brendan Hills",
     "date_reported": "2026-09-01",
-    "date_triaged": "",
-    "date_resolved": "",
-    "priority": "",
-    "impact": "",
-    "risk": "",
-    "phase": "",
-    "status": "Reported",
-    "workspace_context": "project_dash"
+    "date_triaged": "2026-09-01",
+    "date_resolved": "2026-09-01",
+    "priority": "P1",
+    "impact": "High",
+    "risk": "Low",
+    "phase": "Handover & Cleanliness",
+    "status": "Fix Implemented",
+    "workspace_context": "project_dash",
+    "resolution_notes": "1. Default Project Resolution: Updated src/js/app.js (lines 8, 38, 3656) and server.py (get_default_project, get_startup_banner) to default to 'monaro' with graceful fallback to 'sample' if data/monaro is not present.\n2. Documentation & Quick Navigation: Updated navigation tables in README.md and docs/DEPLOYMENT_GUIDE.md to link '?project=monaro' across Dev, Prod, and Local environments.\n3. CLI Tools: Updated scripts/pipeline.py get_project_dir, ingest_file, and CLI argument --project to default to 'monaro'.\n4. Project Metadata: Updated pyproject.toml description to 'Project Monaro Risk Governance & Intelligence Platform' and .env header.\n5. Automated Verification: Added test_bug_94_default_project_resolution and test_bug_94_pipeline_defaults to tests/test_server_parameterized.py, parametrized tests/test_presentation_decoupling.py with 'monaro', and added Monaro dataset integrity tests in tests/test_phase1_stability.py. All 178 tests pass."
   }
 ]

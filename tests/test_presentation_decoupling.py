@@ -37,9 +37,9 @@ def test_dynamic_client_loader_present(project_root: Path):
     assert 'loadProjectData' in all_content or 'loadDashboardData' in all_content
 
 
-@pytest.mark.parametrize("project", ["sample", "f-dse"])
+@pytest.mark.parametrize("project", ["sample", "monaro", "f-dse"])
 def test_data_directories_support_client_loader(project_root: Path, project: str):
-    """Verify that sample and f-dse directories contain all required files for client fetch."""
+    """Verify that sample, monaro, and f-dse directories contain all required files for client fetch."""
     required_files = [
         'config.json',
         'snapshots.json',

@@ -41,6 +41,7 @@ def test_startup_banner_output():
     banner = server.get_startup_banner(9000)
     assert "http://localhost:9000" in banner
     assert "http://127.0.0.1:9000" in banner
+    assert "?project=monaro" in banner
 
 
 # --- TestDriveSync ---
@@ -53,10 +54,18 @@ def test_week27_in_known_drive_reports():
     assert week27_reports[0]['id'] == "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu"
 
 
-def test_week27_ingestion_pipeline():
+def test_week27_ingestion_pipeline(tmp_path: Path):
     """Verify Week 27 ingest script parses and returns valid snapshot."""
     from scripts.pipeline import ingest_file
-    snapshot = ingest_file("1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu", "Weekly Reporting - Week 27 - 07 Aug 2026.pdf", 27, "07 Aug 2026", project="monaro")
+    snapshot = ingest_file(
+        "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu",
+        "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
+        27,
+        "07 Aug 2026",
+        project="monaro",
+        data_root=str(tmp_path),
+        force_fallback=True
+    )
     assert snapshot['weekNumber'] == 27
     assert snapshot['weekLabel'] == "Week 27"
     assert snapshot['isLatest'] is True

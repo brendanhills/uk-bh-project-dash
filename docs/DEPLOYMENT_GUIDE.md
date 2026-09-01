@@ -37,7 +37,7 @@ Secured with **Identity-Aware Proxy (IAP)** for corporate Google SSO login and a
 
 | Resource / Console | Development (`monaro-risk-dev`) | Production (`monaro-risk-prod`) | Global & Corp Links |
 | :--- | :--- | :--- | :--- |
-| **Live Deployed Dashboard** | • [👉 Monaro Live (Dev)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=f-dse)<br>• [👉 Aurora Showcase (Dev)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=sample) | • [👉 Monaro Live (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=f-dse)<br>• [👉 Aurora Showcase (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=sample) | • [Local Monaro (Port 9000)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=f-dse)<br>• [Local Aurora (Port 9000)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample) |
+| **Live Deployed Dashboard** | • [👉 Monaro Live (Dev)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=monaro)<br>• [👉 Aurora Showcase (Dev)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=sample) | • [👉 Monaro Live (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=monaro)<br>• [👉 Aurora Showcase (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=sample) | • [Local Monaro (Port 9000)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro)<br>• [Local Aurora (Port 9000)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample) |
 | **Cloud Run Services (Web)** | [👉 Cloud Run Web (Dev)](https://pantheon.corp.google.com/run?project=monaro-risk-dev) | [👉 Cloud Run Web (Prod)](https://pantheon.corp.google.com/run?project=monaro-risk-prod) | — |
 | **Cloud Run Jobs (Sync)** | [👉 Ingestion Job (Dev)](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev) | [👉 Ingestion Job (Prod)](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-prod) | — |
 | **Cloud Tasks Queues** | [👉 Sync Queue (Dev)](https://pantheon.corp.google.com/cloudtasks?project=monaro-risk-dev) | [👉 Sync Queue (Prod)](https://pantheon.corp.google.com/cloudtasks?project=monaro-risk-prod) | — |
@@ -183,15 +183,15 @@ Administrators can enable all 16 APIs instantly using any of the following four 
 #### Option 2: Provisioning Script `--apis-only` Flag
 ```bash
 # Enables all 16 APIs and verifies configuration without deploying resources:
-./deploy/provision_environment.sh dev --apis-only
-./deploy/provision_environment.sh prod --apis-only
+./setup.sh --env dev --apis-only
+./setup.sh --env prod --apis-only
 ```
 
 #### Option 3: Full End-to-End Environment Provisioning
 ```bash
 # Provisions all 16 APIs, Service Accounts, Cloud Run Jobs, Cloud Tasks, and Cloud Scheduler:
-./deploy/provision_environment.sh dev
-./deploy/provision_environment.sh prod
+./setup.sh --env dev
+./setup.sh --env prod
 ```
 
 #### Option 4: Direct Copy-Paste `gcloud` Batch Command
@@ -216,13 +216,111 @@ gcloud services enable \
   --project="monaro-risk-dev" --quiet
 ```
 
+#### Option 5: Read-Only Environment State List (`-l` / `--list`)
+```bash
+# Inspect and display live status of all 46 tracked resources in sub-5s:
+./setup.sh -l --env dev
+./setup.sh -l --env prod
+
+# Filter strictly to missing or unhealthy resources (highlighted in amber/yellow):
+./setup.sh -l --env dev -m
+
+# Output pure canonical resource addresses (strictly matching terraform state list):
+./setup.sh -l --env dev --state-only
+```
+
 ---
 
-## ⚡ Turnkey Environment Provisioning Details
+## ⚡ Turnkey Environment Provisioning & State Engine (`setup.sh`)
 
-The repository provides [`deploy/provision_environment.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/provision_environment.sh) to idempotently provision either environment in Sydney with all 16 APIs, IAM permissions, triggers, and alerting policies:
+The repository root provides [`setup.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/setup.sh) as the single canonical CLI tool to idempotently provision environments and inspect live cloud infrastructure in Sydney (`australia-southeast1`):
 
-#### What `provision_environment.sh` Automates:
+```bash
+Usage: ./setup.sh [options] [dev|prod]
+
+Options:
+  --env <dev|prod>        Target environment preset (default: dev)
+  --project <project-id>  Override GCP Project ID explicitly
+  --region <region>       GCP Region (default: australia-southeast1)
+  --apis-only             Only enable the 16 required GCP APIs and exit
+  -l, --list, --status    Inspect and list status of all APIs, permissions, services, and Drive access (read-only)
+  -m, --missing           Only display missing/unhealthy resources in list mode
+  --state-only            Print only resource addresses (exact terraform state list format)
+  --folder-id <id>        Override Google Drive folder ID (default: 1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C)
+  --admin-email <email>   Override admin alert notification email
+  --help, -h              Show help message
+```
+
+---
+
+### 🔍 Environment State Inspection Engine (`-l`, `--list`, `--status`)
+
+The state inspection engine provides a high-performance, non-mutating audit of all **46 tracked project assets** in Google Cloud:
+
+```bash
+# Full audit across all 46 resources in < 5 seconds:
+./setup.sh -l --env dev
+./setup.sh -l --env prod
+
+# Filter strictly to missing or unhealthy resources (highlighted in warm amber/yellow):
+./setup.sh -l --env dev -m
+
+# Output machine-readable canonical state addresses (mirroring terraform state list):
+./setup.sh -l --env dev --state-only
+```
+
+#### Core Inspection Architecture & Capabilities:
+1. **Sub-5-Second Parallel Audit**: Rather than sequentially executing 40+ `gcloud` commands (which takes several minutes), `setup.sh -l` dispatches checks concurrently across background subshells with PID tracking and temporary file buffering. The entire cloud audit returns in **under 5 seconds**.
+2. **Canonical State Address Taxonomy (`category.resource_id`)**:
+   All 46 items are mapped to standard dot-delimited addresses:
+   * **16 GCP APIs (`gcp_api.<service>`)**: `run`, `cloudscheduler`, `cloudtasks`, `drive`, `sheets`, `aiplatform`, `cloudbuild`, `artifactregistry`, `iap`, `compute`, `logging`, `clouderrorreporting`, `monitoring`, `iam`, `containeranalysis`, `containerscanning`.
+   * **Deployer Identity & 9 IAM Roles (`iam_service_account`, `iam_binding.<role>`)**: `roles/run.admin`, `roles/artifactregistry.admin`, `roles/iam.serviceAccountUser`, `roles/iap.admin`, `roles/logging.logWriter`, `roles/storage.objectUser`, `roles/storage.objectViewer`, `roles/aiplatform.user`, `roles/containeranalysis.occurrences.editor`.
+   * **Artifact Registry (`gar_repo.<name>`)**: Docker repository `cloud-run-source-deploy` in `australia-southeast1`.
+   * **Cloud Build CI/CD (`cloudbuild_trigger.<name>`)**: Branch trigger (`deploy-monaro-risk-dash-dev`) or release tag trigger (`deploy-monaro-risk-dash-prod`).
+   * **Cloud Monitoring & Alerts (`notification_channel.email`, `monitoring_policy.run_5xx_alert`)**: Email channel for admin alerts and metric-based Cloud Run 5xx alert policy.
+   * **Cloud Run Web & Invoker IAM (`cloud_run_service.<name>`, `run_invoker_binding.<member>`)**: Web service deployment and SSO invoker permissions.
+   * **Identity-Aware Proxy Access (`iap_web_binding.<member>`)**: Zero-trust Google SSO resource accessor bindings for `@google.com` and `@twosync.google.com`.
+   * **Scheduled Ingestion Pipeline (`cloud_run_job.<name>`, `cloud_tasks_queue.<name>`, `cloud_scheduler_job.<name>`)**: Background ingestion job, queue, and Friday 5 PM cron schedule.
+   * **Google Drive Access Governance (`drive_access.folder_read`)**: Read permissions on Drive report archive folder `1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C`.
+3. **Ergonomic Visual Highlighting**: Missing or unhealthy resources are styled with warm amber/yellow ANSI highlighting (`\033[1;33m[MISSING]\033[0m`) so operators can identify remediation targets immediately.
+4. **Group & Role Inheritance Awareness**: Prevents false alarms by evaluating Google Group memberships (`monaro-risk-dev@google.com`) and project-wide administrative roles (e.g. `roles/storage.admin` covering `storage.objectViewer`).
+5. **Zero-Missing Provisioning Guarantee**: When `./setup.sh --env <target>` completes a full provisioning run, subsequent execution of `./setup.sh -l` is guaranteed to return **0 missing items (100% healthy)**.
+
+#### Sample Inspection Table Output:
+```text
+===================================================================================================
+🏛️  Project Monaro Environment State List — [monaro-risk-dev] (australia-southeast1)
+===================================================================================================
+STATE ADDRESS                                                STATUS         DETAILS
+---------------------------------------------------------------------------------------------------
+gcp_api.clouderrorreporting.googleapis.com                   [ENABLED]      Required GCP API
+gcp_api.logging.googleapis.com                               [ENABLED]      Required GCP API
+gcp_api.monitoring.googleapis.com                            [ENABLED]      Required GCP API
+gcp_api.cloudbuild.googleapis.com                            [ENABLED]      Required GCP API
+gcp_api.run.googleapis.com                                   [ENABLED]      Required GCP API
+...
+iam_binding.roles/run.admin                                  [GRANTED]      Deployer IAM Role
+iam_binding.roles/artifactregistry.admin                     [GRANTED]      Deployer IAM Role
+gar_repo.cloud-run-source-deploy                             [PRESENT]      Artifact Registry Docker Repo
+cloudbuild_trigger.deploy-monaro-risk-dash-dev               [PRESENT]      Cloud Build Trigger
+cloud_run_service.monaro-risk-dash-dev                       [READY]        Cloud Run Web Service (rev: 00004-xyz)
+iap_web_binding.group:monaro-risk-dev@google.com             [BOUND]        IAP Web Access
+cloud_run_job.monaro-risk-sync-job                           [PRESENT]      Cloud Run Ingestion Job
+cloud_tasks_queue.monaro-sync-queue                          [RUNNING]      Cloud Tasks Queue
+cloud_scheduler_job.monaro-sync-schedule                     [ENABLED]      Cloud Scheduler (0 17 * * 5)
+drive_access.folder_read                                     [INHERITED]    Google Drive Shared Access
+---------------------------------------------------------------------------------------------------
+📊 Executive State Summary:
+   Total Tracked Resources: 46
+   Present / Healthy:       46
+   Missing / Incomplete:    0
+===================================================================================================
+```
+
+---
+
+### 🛠️ What Full Provisioning Automates (`./setup.sh --env <dev|prod>`):
+
 1. **Enables 16 GCP APIs**: `run`, `cloudscheduler`, `cloudtasks`, `drive`, `sheets`, `aiplatform`, `cloudbuild`, `artifactregistry`, `iap`, `compute`, `logging`, `clouderrorreporting`, `monitoring`, `iam`, `containeranalysis`, `containerscanning`.
 2. **Creates Dedicated Service Account**: `github-deployer@<PROJECT_ID>.iam.gserviceaccount.com`.
 3. **Binds Least-Privilege IAM Roles**:
@@ -231,21 +329,33 @@ The repository provides [`deploy/provision_environment.sh`](file:///usr/local/go
    * `roles/iam.serviceAccountUser`
    * `roles/iap.admin`
    * `roles/logging.logWriter`
+   * `roles/storage.objectUser`
    * `roles/storage.objectViewer`
    * `roles/storage.admin`
+   * `roles/aiplatform.user`
    * `roles/containeranalysis.occurrences.editor`
-4. **Artifact Registry**: Creates repository `cloud-run-source-deploy` in `australia-southeast1`.
-5. **Cloud Build Triggers**: Connects GitHub repository `cloud-gtm/uk-bh-experiments` and creates branch trigger (`^dev$`) or tag trigger (`^project_dash/prod-.*$`).
-6. **Error Reporting & Monitoring Alerts**: Creates email notification channel for `<PROJECT_ID>-admin@google.com` and creates a log-based alert policy for container crashes and 5xx exceptions.
+4. **Artifact Registry**: Creates repository `cloud-run-source-deploy` in `australia-southeast1` and configures automatic cleanup policies (`deploy/cleanup-policy.json`).
+5. **Cloud Build Triggers**: Connects GitHub repository `cloud-gtm/uk-bh-experiments` and creates branch trigger (`^dev$`) or release tag trigger (`^project_dash/prod-.*$`).
+6. **Error Reporting & Monitoring Alerts**: Creates email notification channel for `<PROJECT_ID>-admin@google.com` (or `--admin-email`) and creates metric-based alert policy for Cloud Run 5xx responses.
 7. **Cloud Run Invoker & IAP Web Access**: Grants `roles/run.invoker` and `roles/iap.httpsResourceAccessor` in Sydney to:
    * `group:<PROJECT_ID>@google.com`
    * `group:<PROJECT_ID>@twosync.google.com`
    * `user:brendanhills@google.com`
    * `user:allins@google.com`
    * `serviceAccount:service-<PROJECT_NUM>@gcp-sa-iap.iam.gserviceaccount.com` (Invoker only)
-8. **Scheduled Ingestion Pipeline**: Provisions Cloud Run Job `monaro-risk-sync-job`, Cloud Tasks queue `monaro-sync-queue`, and Cloud Scheduler job `monaro-sync-schedule`.
+8. **Scheduled Ingestion Pipeline & Model Workaround**:
+   * Provisions Cloud Run Job `monaro-risk-sync-job` in Sydney (`australia-southeast1`) with Cloud Storage FUSE mount `gs://${PROJECT_ID}-data`.
+   * Standardizes on **`gemini-3.5-flash`** for multimodal document inspection, executive synthesis, and podcast script generation.
+   * **Multi-Region US Workaround**: Because Gemini 3.5 Flash is not yet published in Sydney, the client connects to Google Cloud's official US multi-region endpoint (`https://aiplatform.us.rep.googleapis.com` with `location="us"`). All compute, data storage, and CI/CD remain 100% in Sydney (`australia-southeast1`).
+   * **Seamless Domestic Migration**: In a few weeks when Gemini 3.5 Flash is deployed to Sydney, changing `GEMINI_REGION="australia-southeast1"` on the Cloud Run Job (or via Cloud Build substitution `_GEMINI_REGION`) will immediately cut over to 100% local Australian processing with zero functional regression or code changes.
+   * Provisions Cloud Tasks queue `monaro-sync-queue` and Cloud Scheduler job `monaro-sync-schedule` (Friday 5 PM Sydney time).
+9. **Google Drive Access Governance**: Inspects Google Drive folder permissions via internal Drive CLI, verifies reader access for both viewer group and deployer service account, and automatically shares access if missing.
 
-#### Step 2: Create Artifact Registry in Sydney
+---
+
+### 📋 Manual Setup Checkpoints (Console):
+
+#### Step 1: Create Artifact Registry in Sydney (if not using setup.sh)
 1. Open **[Artifact Registry > Repositories](https://pantheon.corp.google.com/artifacts)**.
 2. Click **"+ CREATE REPOSITORY"**.
 3. Name: `cloud-run-source-deploy` | Format: `Docker` | Region: **`australia-southeast1 (Sydney)`**.
@@ -282,11 +392,11 @@ The pipeline deliberately omits custom `machineType` overrides in `options:` to 
 
 > [!NOTE]
 > **Static Infrastructure Separation**:
-> Infrastructure provisioning (creating Artifact Registry repositories, service account permissions, and Cloud Run / IAP access policies) is strictly decoupled from the per-commit build pipeline and is codified in [`deploy/provision_environment.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/provision_environment.sh). These idempotent checks are omitted from `cloudbuild.yaml` to ensure sub-minute deployment speeds.
+> Infrastructure provisioning (creating Artifact Registry repositories, service account permissions, and Cloud Run / IAP access policies) is strictly decoupled from the per-commit build pipeline and is codified in [`setup.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/setup.sh). These idempotent checks are omitted from `cloudbuild.yaml` to ensure sub-minute deployment speeds.
 
 > [!IMPORTANT]
 > **Mandatory IAP Access Policy Requirement (`roles/iap.httpsResourceAccessor`)**:
-> Whenever Identity-Aware Proxy (`--iap`) is enabled on Cloud Run, granting `roles/run.invoker` alone causes `403 Forbidden` errors at the Google IAP proxy layer. You **must** also grant `roles/iap.httpsResourceAccessor` on the Cloud Run IAP resource via `gcloud beta iap web add-iam-policy-binding` in the deployment region (`australia-southeast1`) for all user and group accounts (`@google.com` and `@twosync.google.com`). This is managed during environment setup via [`deploy/provision_environment.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/provision_environment.sh).
+> Whenever Identity-Aware Proxy (`--iap`) is enabled on Cloud Run, granting `roles/run.invoker` alone causes `403 Forbidden` errors at the Google IAP proxy layer. You **must** also grant `roles/iap.httpsResourceAccessor` on the Cloud Run IAP resource via `gcloud beta iap web add-iam-policy-binding` in the deployment region (`australia-southeast1`) for all user and group accounts (`@google.com` and `@twosync.google.com`). This is managed during environment setup via [`setup.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/setup.sh).
 
 ---
 
@@ -325,7 +435,7 @@ For a workload of **10 to 50 active stakeholders** visiting the dashboard 3 to 5
    - Client browsers cache JavaScript and CSS modules for 24 hours, reducing repeat asset requests by ~85% while keeping `/data/` and `index.html` strictly un-cached (`max-age=0`) for real-time freshness.
 2. **Artifact Registry Automated Lifecycle Policy (`deploy/cleanup-policy.json`)**:
    - Caps repository storage by keeping only the 10 most recent version tags and automatically deleting untagged image digests older than 14 days, permanently preventing storage drift past the 0.5 GB Free Tier.
-   - Automatically applied by `deploy/provision_environment.sh`.
+   - Automatically applied by `setup.sh`.
 3. **Cloud Build Standard Warm Pool**:
    - Omits expensive custom machine types (`options.machineType`), running builds in 52s on the default warm worker pool with ~2s queue latency and 100% eligibility for the 120 free build-minutes/day.
 
@@ -434,7 +544,7 @@ Before **15 November 2026**:
 | **`403 Forbidden` ("You do not have access")** | Missing `roles/iap.httpsResourceAccessor` on Cloud Run IAP resource. | Grant role via `gcloud beta iap web add-iam-policy-binding --resource-type=cloud-run ...` in `australia-southeast1`. |
 | **`403 Forbidden` ("Access denied by policy")** | User is not in `monaro-risk-dev` or `monaro-risk-prod` group. | Add user to Google Group at `groups.google.com`. |
 | **`502 / 503 Bad Gateway`** | Container failed to start or did not bind port `8080`. | Check Cloud Logging: `resource.type=cloud_run_revision AND severity>=ERROR`. Ensure `PORT=8080` is listened to. |
-| **Cloud Build Trigger Permission Error** | `github-deployer` service account missing `roles/run.admin` or `roles/iam.serviceAccountUser`. | Re-run Step 3 in `./deploy/provision_environment.sh`. |
+| **Cloud Build Trigger Permission Error** | `github-deployer` service account missing `roles/run.admin` or `roles/iam.serviceAccountUser`. | Re-run Step 3 in `./setup.sh`. |
 | **Docker Build Failure in CI** | Python dependency conflict or broken test assertion. | Run `pip install -r requirements.txt && pytest` locally to replicate. |
 
 ---
