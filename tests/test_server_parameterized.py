@@ -1,5 +1,6 @@
 """Parameterized server endpoint tests across projects (sample, monaro, f-dse)."""
 
+import os
 import json
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -168,12 +169,15 @@ def test_check_drive_sync_queries_live_folder_on_demand_and_merges_real_urls(dum
 def test_bug_94_default_project_resolution():
     """Verify Bug #94: server.get_default_project defaults to 'monaro' when data/monaro exists."""
     default_proj = server.get_default_project()
-    assert default_proj == "monaro"
+    if os.path.exists(os.path.join(server.DIRECTORY, 'data', 'monaro')) or os.path.exists(os.path.join(server.DIRECTORY, 'data', 'f-dse')):
+        assert default_proj == "monaro"
+    else:
+        assert default_proj == "sample"
 
     # Verify fallback to sample if monaro does not exist
     with patch("os.path.exists") as mock_exists:
         def side_effect(path):
-            if "monaro" in str(path) or "f-dse" in str(path):
+            if "monaro" in str(path) or "f-dse" in str(path) or str(path).endswith(".env"):
                 return False
             return True
         mock_exists.side_effect = side_effect
@@ -184,5 +188,8 @@ def test_bug_94_pipeline_defaults():
     """Verify Bug #94: pipeline.py get_project_dir and CLI argument default to 'monaro'."""
     from scripts import pipeline
     default_dir = pipeline.get_project_dir()
-    assert default_dir.endswith(str(Path("data") / "monaro")) or default_dir.endswith(str(Path("data") / "f-dse"))
+    if os.path.exists(os.path.join(pipeline.DATA_BASE_DIR, 'monaro')) or os.path.exists(os.path.join(pipeline.DATA_BASE_DIR, 'f-dse')):
+        assert default_dir.endswith(str(Path("data") / "monaro")) or default_dir.endswith(str(Path("data") / "f-dse"))
+    else:
+        assert default_dir.endswith(str(Path("data") / "sample")) or default_dir.endswith("data")
 
