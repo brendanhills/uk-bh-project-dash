@@ -49,8 +49,8 @@
 - [-] **Track: Simplify Dashboard (4-View Architecture & Progressive Disclosure)** `[Merged into Feedback & Audit Tracks]`
   *Link: [./tracks/simplify_dashboard_20260807/index.md](./tracks/simplify_dashboard_20260807/index.md)*
 ---
-- [ ] **Track: Terraform Infrastructure as Code (IaC) Provisioning** `[Future Enhancement]`
-  *Link: [./tracks/terraform_iac_provisioning_future/index.md](./tracks/terraform_iac_provisioning_future/index.md)*
+- [ ] **Track: Terraform Infrastructure as Code (IaC) Migration**
+  *Link: [./tracks/terraform_iac_migration_20260901/index.md](./tracks/terraform_iac_migration_20260901/index.md)*
 ---
 - [x] **Track: Scheduled Ingestion Pipeline & Static Sync Architecture**
   *Link: [./tracks/scheduled_sync_architecture_20260901/index.md](./tracks/scheduled_sync_architecture_20260901/index.md)*
