@@ -26,7 +26,8 @@ Secured with **Identity-Aware Proxy (IAP)** for corporate Google SSO login and a
 | **Artifact Registry Repo** | `cloud-run-source-deploy` (Sydney) | `cloud-run-source-deploy` (Sydney) |
 | **IAP Google SSO Group** | `monaro-risk-dev@google.com`<br>`monaro-risk-dev@twosync.google.com` | **`monaro-risk-prod@google.com`**<br>**`monaro-risk-prod@twosync.google.com`** |
 | **Deployer Service Account** | `github-deployer@monaro-risk-dev.iam...` | **`github-deployer@monaro-risk-prod.iam...`** |
-| **Live Data Sync Method** | In-Dashboard **"Sync Workspace"** | In-Dashboard **"Sync Workspace"** |
+| **Data Sync & Ingestion** | Scheduled Ingestion Job (`monaro-risk-sync-job`) | Scheduled Ingestion Job (`monaro-risk-sync-job`) |
+| **Client Refresh Method** | Static Cache-Busting Check (`checkForUpdates()`) | Static Cache-Busting Check (`checkForUpdates()`) |
 
 ---
 
@@ -35,7 +36,10 @@ Secured with **Identity-Aware Proxy (IAP)** for corporate Google SSO login and a
 | Resource / Console | Development (`monaro-risk-dev`) | Production (`monaro-risk-prod`) | Global & Corp Links |
 | :--- | :--- | :--- | :--- |
 | **Live Deployed Dashboard** | • [👉 Monaro Live (Dev)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=f-dse)<br>• [👉 Aurora Showcase (Dev)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=sample) | • [👉 Monaro Live (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=f-dse)<br>• [👉 Aurora Showcase (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=sample) | • [Local Monaro (Port 9000)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=f-dse)<br>• [Local Aurora (Port 9000)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample) |
-| **Cloud Run Services** | [👉 Cloud Run (Dev)](https://pantheon.corp.google.com/run?project=monaro-risk-dev) | [👉 Cloud Run (Prod)](https://pantheon.corp.google.com/run?project=monaro-risk-prod) | — |
+| **Cloud Run Services (Web)** | [👉 Cloud Run Web (Dev)](https://pantheon.corp.google.com/run?project=monaro-risk-dev) | [👉 Cloud Run Web (Prod)](https://pantheon.corp.google.com/run?project=monaro-risk-prod) | — |
+| **Cloud Run Jobs (Sync)** | [👉 Ingestion Job (Dev)](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev) | [👉 Ingestion Job (Prod)](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-prod) | — |
+| **Cloud Tasks Queues** | [👉 Sync Queue (Dev)](https://pantheon.corp.google.com/cloudtasks?project=monaro-risk-dev) | [👉 Sync Queue (Prod)](https://pantheon.corp.google.com/cloudtasks?project=monaro-risk-prod) | — |
+| **Cloud Scheduler** | [👉 Schedules (Dev)](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev) | [👉 Schedules (Prod)](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-prod) | — |
 | **Cloud Build Triggers** | [👉 Build Triggers (Dev)](https://pantheon.corp.google.com/cloud-build/triggers?project=monaro-risk-dev) | [👉 Build Triggers (Prod)](https://pantheon.corp.google.com/cloud-build/triggers?project=monaro-risk-prod) | [Connected Repositories](https://pantheon.corp.google.com/cloud-build/repositories) |
 | **Cloud Build History** | [👉 Build History (Dev)](https://pantheon.corp.google.com/cloud-build/builds?project=monaro-risk-dev) | [👉 Build History (Prod)](https://pantheon.corp.google.com/cloud-build/builds?project=monaro-risk-prod) | — |
 | **Artifact Registry** | [👉 Docker Registry (Dev)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-dev) | [👉 Docker Registry (Prod)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-prod) | — |
@@ -333,35 +337,203 @@ Before day 90 of sandbox project creation:
 
 ---
 
-### Runbook 7: Triggering On-Demand & Scheduled Data Ingestion Sync
-The risk intelligence platform utilizes an automated, scheduled ingestion worker (`monaro-risk-sync-job`) running as a Cloud Run Job. Developers and administrators can trigger synchronization through three mechanisms:
+### Runbook 7: Data Synchronization, Scheduled Task Management & Client Refresh
 
-#### 1. Cloud Console (1-Click Web UI)
-1. **Cloud Run Jobs**: Open **[Cloud Run Jobs Console](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev)**, select `monaro-risk-sync-job`, and click **Execute**.
-2. **Cloud Scheduler**: Open **[Cloud Scheduler Console](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev)** and click **Force Run** on the scheduled sync job.
+The Project Dash platform operates a fully decoupled data architecture where data ingestion, AI processing, and presentation are independently managed:
+- **Presentation**: Pure static web application served via Nginx on Cloud Run (`monaro-risk-dash-dev` / `monaro-risk-dash-prod`).
+- **Ingestion Worker**: Containerized batch processor (`deploy/Dockerfile.sync`) executing as a Cloud Run Job (`monaro-risk-sync-job`).
+- **Orchestration**: Cloud Scheduler triggers the ingestion job on a recurring weekly schedule, with Cloud Tasks managing execution throttling and retries.
 
-#### 2. Developer / Admin CLI (`scripts/trigger_sync.py`)
+```mermaid
+flowchart TD
+    subgraph ScheduledOrchestration["1. Orchestration & Trigger Layer"]
+        Cron["Cloud Scheduler\n(Weekly Friday 5 PM AEST)"]
+        Queue["Cloud Tasks Queue\n(monaro-sync-queue)"]
+        ConsoleTrigger["Cloud Console (1-Click 'Execute')"]
+        CLITrigger["Admin CLI (scripts/trigger_sync.py)"]
+    end
+
+    subgraph IngestionWorker["2. Ingestion Processing (Cloud Run Job: monaro-risk-sync-job)"]
+        DriveScan["Drive API v3 Scanner\n(Folder 1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C)"]
+        Filter["Incremental Report Filter\n(Compare against snapshots.json)"]
+        GeminiAI["Google Gemini 3.7 Flash\n(Multimodal PDF Inspection & Synthesis)"]
+        SnapshotCommit["Atomic Update to\ndata/monaro/snapshots.json"]
+    end
+
+    subgraph PresentationServing["3. Static Serving & Client Refresh"]
+        CloudRunWeb["Cloud Run Nginx Container\n(monaro-risk-dash-dev)"]
+        Browser["User Browser / SPA"]
+        FreshnessCheck["Client Cache-Busting Refresh\n(fetch snapshots.json?t=now)"]
+    end
+
+    Cron --> Queue --> IngestionWorker
+    ConsoleTrigger --> IngestionWorker
+    CLITrigger --> IngestionWorker
+
+    DriveScan --> Filter --> GeminiAI --> SnapshotCommit
+    SnapshotCommit -.-> CloudRunWeb
+    Browser --> FreshnessCheck --> CloudRunWeb
+```
+
+---
+
+#### 7.1 How Data is Synced (Ingestion Lifecycle)
+The standalone ingestion script ([`scripts/sync_drive.py`](../scripts/sync_drive.py)) and pipeline ([`scripts/pipeline.py`](../scripts/pipeline.py)) execute the following steps:
+
+1. **Google Drive Live Discovery**:
+   - Queries Google Drive API v3 for all status reports in folder `1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C` using Application Default Credentials (ADC) or the deployer service account (`github-deployer@...`).
+   - Identifies weekly reporting packs (PDF/Docs), extracting week identifiers (e.g. `Week 29`, `Week 30`) and publication dates.
+
+2. **Incremental Ingestion Filtering**:
+   - Inspects the existing [`data/monaro/snapshots.json`](../data/monaro/snapshots.json) dataset.
+   - Any report whose week number already exists in `snapshots.json` is safely skipped, avoiding redundant API calls and model latency.
+
+3. **Multimodal AI Analysis with Gemini 3.7 Flash**:
+   - Unprocessed PDF reports are sent to **`gemini-3.7-flash`** via Google GenAI SDK.
+   - Extracts structured executive briefings (Executive, Technical, Governance perspectives), Top 3 critical action items, and sleeper outlier warnings.
+   - Computes inherent and residual risk delta distributions across the 5×5 matrix.
+
+4. **Atomic Snapshot Update**:
+   - New weekly snapshots are appended to `snapshots.json` and saved atomically.
+   - In production, updated data files are synchronized to Cloud Storage or deployed directly into the web container.
+
+---
+
+#### 7.2 How Data is Refreshed in the Client UI
+Users viewing the live dashboard do not need to refresh their browser or trigger backend server operations:
+
+1. **Read-Only Data Provenance Hub**:
+   - Clicking **"Workspace Sync"** in the top navigation bar opens the **Data Provenance Hub** modal (`#sheetsModal`).
+   - Displays direct links to all authoritative Google Workspace streams:
+     - **Stream 1**: Joint Program Risk & Issue Register (Google Sheet)
+     - **Stream 2**: Team Google Delivery Register (Google Sheet)
+     - **Stream 3**: Weekly Status Reports Archive (Google Drive Folder)
+     - **Stream 4**: Project Knowledge Base & Contract Blueprints (NotebookLM)
+   - Displays the **Verified Ingested Report** badge indicating the active reporting week.
+
+2. **Client-Side Cache-Busting Freshness Check**:
+   - In the modal, clicking **"↻ Check for Updates"** invokes the client-side `checkForUpdates()` function.
+   - Issues a non-cached fetch:
+     ```javascript
+     fetch(`data/${CURRENT_PROJECT}/snapshots.json?t=${Date.now()}`, { cache: 'no-store' })
+     ```
+   - If a new week has been published by the ingestion worker, the in-memory state (`TIME_MACHINE_SNAPSHOTS`) updates dynamically and re-renders the 5×5 heatmap, KPI pills, and trends charts without tearing down current UI interactions.
+
+---
+
+#### 7.3 Managing the Scheduled Task (Cloud Scheduler & Cloud Tasks)
+
+##### Viewing and Modifying Ingestion Frequency
+The ingestion job is governed by **Cloud Scheduler** in `australia-southeast1`:
+
 ```bash
-# Trigger remote Cloud Run Job in GCP
-python scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
+# List scheduled jobs
+gcloud scheduler jobs list \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev
 
-# Or trigger directly with gcloud:
+# View schedule details
+gcloud scheduler jobs describe monaro-sync-schedule \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev
+
+# Update schedule frequency (e.g. run every Friday at 5:00 PM Sydney time)
+gcloud scheduler jobs update http monaro-sync-schedule \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev \
+  --schedule="0 17 * * 5" \
+  --time-zone="Australia/Sydney"
+```
+
+##### Pausing and Resuming the Scheduled Task
+To pause automatic ingestion during maintenance or change freezes:
+
+```bash
+# Pause scheduled ingestion
+gcloud scheduler jobs pause monaro-sync-schedule \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev
+
+# Resume scheduled ingestion
+gcloud scheduler jobs resume monaro-sync-schedule \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev
+```
+
+##### Managing Cloud Run Job Executions & Logs
+The background processing container runs as a Cloud Run Job:
+
+```bash
+# View Job configuration
+gcloud run jobs describe monaro-risk-sync-job \
+  --region=australia-southeast1 \
+  --project=monaro-risk-dev
+
+# List historical job executions
+gcloud run jobs executions list \
+  --job=monaro-risk-sync-job \
+  --region=australia-southeast1 \
+  --project=monaro-risk-dev
+
+# Stream logs for the latest job execution
+gcloud logging read "resource.type=cloud_run_job AND resource.labels.job_name=monaro-risk-sync-job" \
+  --project=monaro-risk-dev \
+  --limit=50 \
+  --format="table(timestamp,severity,textPayload)"
+```
+
+##### Managing the Cloud Tasks Queue
+The `monaro-sync-queue` regulates concurrency and retries for ingestion tasks:
+
+```bash
+# Inspect queue status and depth
+gcloud tasks queues describe monaro-sync-queue \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev
+
+# Adjust max concurrent dispatches (prevent duplicate simultaneous Gemini calls)
+gcloud tasks queues update monaro-sync-queue \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev \
+  --max-concurrent-dispatches=1 \
+  --max-attempts=3 \
+  --min-backoff=15s
+```
+
+---
+
+#### 7.4 On-Demand Ingestion Triggers (Dev & Admin)
+
+When new files are added to Google Drive out-of-cycle, developers and administrators can trigger synchronization immediately through three methods:
+
+##### 1. Google Cloud Console (1-Click Web UI)
+- **Cloud Run Jobs**: Navigate to **[Cloud Run Jobs in Pantheon](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev)** $\rightarrow$ select `monaro-risk-sync-job` $\rightarrow$ click **Execute**.
+- **Cloud Scheduler**: Navigate to **[Cloud Scheduler in Pantheon](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev)** $\rightarrow$ find `monaro-sync-schedule` $\rightarrow$ click **Force Run**.
+
+##### 2. Developer / Admin CLI Tool (`scripts/trigger_sync.py`)
+```bash
+# Trigger remote Cloud Run Job in Google Cloud:
+python3 scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
+
+# Or trigger directly using gcloud:
 gcloud run jobs execute monaro-risk-sync-job \
   --project=monaro-risk-dev \
   --region=australia-southeast1 \
   --wait
 
-# Run local standalone ingestion:
-python scripts/trigger_sync.py --mode=local
+# Run local standalone ingestion test:
+python3 scripts/trigger_sync.py --mode=local
 ```
 
-#### 3. Cloud Tasks Queue
+##### 3. Cloud Tasks HTTP Enqueue
 ```bash
 gcloud tasks create-http-task \
   --queue=monaro-sync-queue \
   --location=australia-southeast1 \
   --project=monaro-risk-dev \
-  --url="https://monaro-risk-sync-job..." \
+  --url="https://australia-southeast1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/monaro-risk-dev/jobs/monaro-risk-sync-job:run" \
+  --oauth-service-account-email="github-deployer@monaro-risk-dev.iam.gserviceaccount.com" \
   --header="Content-Type:application/json"
 ```
+
 
