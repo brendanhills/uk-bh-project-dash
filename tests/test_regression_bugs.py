@@ -205,7 +205,11 @@ def test_bug_97_podcast_audio_availability_gating(full_html: str):
     assert "cursor-not-allowed" in full_html
     assert 'id="podcastTranscriptBtn"' in full_html
     assert "Transcript unavailable" in full_html
-    # Ensure nativePodcastAudio does NOT hardcode stale week 27 audio
+    # Ensure dynamic audio resolution and metadata probing without hardcoded week checks
+    assert "resolvePodcastAudioSrc" in full_html
+    assert "onloadedmetadata" in full_html
+    assert "PODCAST_AUDIO_CACHE" in full_html
+    # Ensure nativePodcastAudio does NOT hardcode stale week 27 audio in static HTML
     assert 'src="assets/podcast_w27.mp3?v=au3"' not in full_html
 
 

@@ -277,23 +277,38 @@ def test_drive_folder_live_querying_and_error_handling():
 
 
 def test_filter_uningested_reports_and_incremental_sync(tmp_path: Path):
-    """Verify uningested report filtering and incremental sync workflow."""
-    existing_snapshots = {"snapshots": {"w28": {"weekNumber": 28}}}
+    """Verify uningested report filtering, file ID deduplication, and max latest_week sync workflow."""
+    existing_snapshots = {
+        "snapshots": {
+            "w28": {"weekNumber": 28, "driveFileId": "f28", "driveFileName": "W28.pdf"},
+            "w10": {"weekNumber": 10, "driveFileId": "f-enabling-10", "driveFileName": "FDSE Enabling Services.pdf"}
+        }
+    }
     drive_files = [
         {'id': 'f28', 'name': 'W28.pdf', 'week_number': 28},
         {'id': 'f29', 'name': 'W29.pdf', 'week_number': 29},
+        # File with None week_number but matching driveFileId should be skipped
+        {'id': 'f-enabling-10', 'name': 'FDSE Enabling Services.pdf', 'week_number': None},
+        # File with None week_number but new ID should be included
+        {'id': 'f-new-report', 'name': 'FDSE New Report.pdf', 'week_number': None},
     ]
     new_reps = filter_uningested_reports(drive_files, existing_snapshots)
-    assert len(new_reps) == 1
-    assert new_reps[0]['week_number'] == 29
+    assert len(new_reps) == 2
+    assert {r['id'] for r in new_reps} == {'f29', 'f-new-report'}
 
     proj_dir = tmp_path / "monaro"
     proj_dir.mkdir(parents=True)
-    (proj_dir / "snapshots.json").write_text(json.dumps({"snapshots": {}}), encoding="utf-8")
+    # Existing snapshot database has Week 30
+    (proj_dir / "snapshots.json").write_text(json.dumps({
+        "snapshots": {
+            "w30": {"weekNumber": 30, "weekLabel": "Week 30"}
+        }
+    }), encoding="utf-8")
 
-    with patch('scripts.sync_drive.query_drive_folder_live', return_value=[{'id': 'f30', 'name': 'W30.pdf', 'week_number': 30}]):
+    # Ingest an out-of-order backfill report (Week 10)
+    with patch('scripts.sync_drive.query_drive_folder_live', return_value=[{'id': 'f10', 'name': 'Backfill_W10.pdf', 'week_number': 10}]):
         with patch('scripts.sync_drive.ingest_report_file') as mock_ingest:
-            mock_ingest.return_value = {'week': 'Week 30', 'status': 'success'}
+            mock_ingest.return_value = {'week': 10, 'status': 'success'}
             summary = sync_drive_reports(
                 folder_id='test-folder',
                 project_name='monaro',
@@ -304,6 +319,8 @@ def test_filter_uningested_reports_and_incremental_sync(tmp_path: Path):
             assert summary['status'] == 'success'
             mock_ingest.assert_called_once()
             assert mock_ingest.call_args.kwargs['location'] == 'us'
+            # latest_week must reflect the true max week (Week 30), NOT the backfill loop item (10)
+            assert summary['latest_week'] == 'Week 30'
 
 
 def test_run_preflight_diagnostics_success_and_failure(tmp_path: Path):
