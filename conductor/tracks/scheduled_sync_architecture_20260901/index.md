@@ -1,6 +1,6 @@
-# Track: Scheduled Ingestion Pipeline, Static Sync Architecture & Gemini 2.5 Upgrade
+# Track: Scheduled Ingestion Pipeline & Static Sync Architecture
 
-- **Track ID**: `scheduled_sync_and_gemini_25_20260901`
+- **Track ID**: `scheduled_sync_architecture_20260901`
 - **Type**: Architecture
 - **Status**: New
 - **Created**: 2026-09-01

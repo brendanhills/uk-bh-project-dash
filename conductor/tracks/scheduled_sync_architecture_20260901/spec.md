@@ -1,4 +1,4 @@
-# Specification: Scheduled Ingestion Pipeline, Static Sync Architecture & Gemini 2.5 Upgrade
+# Specification: Scheduled Ingestion Pipeline & Static Sync Architecture
 
 ## 1. Overview
 This architecture track transitions `project_dash` from a fragile hybrid model—where the frontend attempted to trigger live server-side ETL operations against a static Nginx container—to a robust, decoupled **Scheduled Ingestion Pipeline & Static Sync Architecture (Option B)**.
