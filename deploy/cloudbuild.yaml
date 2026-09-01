@@ -9,17 +9,9 @@ steps:
         pip install --no-cache-dir -r requirements.txt
         pytest
 
-  # 2. Ensure Artifact Registry repository exists in Australia region
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        gcloud artifacts repositories describe cloud-run-source-deploy --location=${_REGION} --project=$PROJECT_ID || \
-        gcloud artifacts repositories create cloud-run-source-deploy --repository-format=docker --location=${_REGION} --description="Cloud Run source deployments" --project=$PROJECT_ID
-
-  # 3. Inject dynamic build metadata into data/build_info.json for dashboard footer
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  # 2. Inject dynamic build metadata into data/build_info.json for dashboard footer
+  # Reuses cached python:3.13-slim image from step 1 for instant 0-second start
+  - name: 'python:3.13-slim'
     dir: 'project_dash'
     entrypoint: 'bash'
     args:
@@ -45,7 +37,7 @@ steps:
         echo "=== Generated data/build_info.json ==="
         cat data/build_info.json
 
-  # 4. Build container image using custom Dockerfile
+  # 3. Build container image using custom Dockerfile
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'project_dash'
     args:
@@ -58,20 +50,15 @@ steps:
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
       - '.'
 
-  # 5. Push container image to Artifact Registry
+  # 4. Push container image tags to Artifact Registry concurrently
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}'
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
-
-  # 6. Deploy to Cloud Run (Private Mode + Native IAP Enabled in Australia)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
+  # 5. Deploy to Cloud Run (Private Mode + Native IAP Enabled in Australia)
+  - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
@@ -91,62 +78,6 @@ steps:
       - '--set-env-vars'
       - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION}'
 
-  # 7. Enforce IAM Invoker and IAP Group Policies via CLI
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        # 1. Grant Cloud Run Invoker to IAP Service Agent
-        PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)" 2>/dev/null || true)
-        if [ -n "$$PROJECT_NUMBER" ]; then
-          gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-            --project=$PROJECT_ID \
-            --region=${_REGION} \
-            --member="serviceAccount:service-$$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com" \
-            --role="roles/run.invoker" || true
-        fi
-
-        TWOSYNC_GROUP=$(echo "${_ACCESS_GROUP}" | sed 's/@google.com/@twosync.google.com/')
-
-        # 2. Grant Cloud Run Invoker to Environment Google Group and Designated Leads
-        for GRP in "${_ACCESS_GROUP}" "$$TWOSYNC_GROUP"; do
-          gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-            --project=$PROJECT_ID \
-            --region=${_REGION} \
-            --member="group:$$GRP" \
-            --role="roles/run.invoker" || true
-        done
-
-        for USR in "brendanhills@google.com" "allins@google.com"; do
-          gcloud run services add-iam-policy-binding ${_SERVICE_NAME} \
-            --project=$PROJECT_ID \
-            --region=${_REGION} \
-            --member="user:$$USR" \
-            --role="roles/run.invoker" || true
-        done
-
-        # 3. Grant IAP-secured Web App User role to Google Group and Designated Leads
-        for GRP in "${_ACCESS_GROUP}" "$$TWOSYNC_GROUP"; do
-          gcloud beta iap web add-iam-policy-binding \
-            --project=$PROJECT_ID \
-            --resource-type="cloud-run" \
-            --service="${_SERVICE_NAME}" \
-            --region="${_REGION}" \
-            --member="group:$$GRP" \
-            --role="roles/iap.httpsResourceAccessor" || true
-        done
-
-        for USR in "brendanhills@google.com" "allins@google.com"; do
-          gcloud beta iap web add-iam-policy-binding \
-            --project=$PROJECT_ID \
-            --resource-type="cloud-run" \
-            --service="${_SERVICE_NAME}" \
-            --region="${_REGION}" \
-            --member="user:$$USR" \
-            --role="roles/iap.httpsResourceAccessor" || true
-        done
-
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
@@ -160,3 +91,4 @@ substitutions:
 options:
   logging: CLOUD_LOGGING_ONLY
   requestedVerifyOption: VERIFIED
+  machineType: 'E2_HIGHCPU_8'
