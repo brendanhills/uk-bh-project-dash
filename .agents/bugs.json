@@ -1712,5 +1712,23 @@
     "status": "Fix Implemented",
     "workspace_context": "project_dash",
     "resolution_notes": "1. Default Project Resolution: Updated src/js/app.js (lines 8, 38, 3656) and server.py (get_default_project, get_startup_banner) to default to 'monaro' with graceful fallback to 'sample' if data/monaro is not present.\n2. Documentation & Quick Navigation: Updated navigation tables in README.md and docs/DEPLOYMENT_GUIDE.md to link '?project=monaro' across Dev, Prod, and Local environments.\n3. CLI Tools: Updated scripts/pipeline.py get_project_dir, ingest_file, and CLI argument --project to default to 'monaro'.\n4. Project Metadata: Updated pyproject.toml description to 'Project Monaro Risk Governance & Intelligence Platform' and .env header.\n5. Automated Verification: Added test_bug_94_default_project_resolution and test_bug_94_pipeline_defaults to tests/test_server_parameterized.py, parametrized tests/test_presentation_decoupling.py with 'monaro', and added Monaro dataset integrity tests in tests/test_phase1_stability.py. All 178 tests pass."
+  },
+  {
+    "id": 95,
+    "type": "FR",
+    "title": "Support adding and scaffolding new projects dynamically",
+    "description": "Provide a streamlined CLI command or automated scaffolding workflow to add new project configurations (e.g. data/<my-project>/ with config.json, risks.json, issues.json, snapshots.json, driver_tree.json, knowledge.json) and integrate them into the ingestion pipeline and dashboard navigation.",
+    "cause": "",
+    "plan": "",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-01",
+    "date_triaged": "",
+    "date_resolved": "",
+    "priority": "",
+    "impact": "",
+    "risk": "",
+    "phase": "",
+    "status": "Reported",
+    "workspace_context": "project_dash"
   }
 ]

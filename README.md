@@ -13,11 +13,8 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
 
 2. **Gemini Ingestion & Decision Synthesis Engine**:
    - Ingestion CLI (`scripts/sync_drive.py` and `scripts/pipeline.py`) automatically ingests Google Sheets, Google Drive PDF report packs, and knowledge documents into standardized project datasets (`snapshots.json`, `risks.json`, `issues.json`).
-   - Uses **Gemini 3.5 Flash** to generate structured executive syntheses tailored for 3 executive stakeholder perspectives:
-     - 👔 **Executive**: Focus on milestones, strategic delivery blockers, and board actions.
-     - ⚙️ **Technical**: Focus on infrastructure, security enclaves, API SLAs, and telemetry.
-     - ⚖️ **Governance**: Focus on commercial gates, contractual IBR audits, and ATO accreditation.
-   - Highlights **Top 3 Critical Action Cards** and early warning **Sleeper Outliers**.
+   - Uses **Gemini 3.5 Flash** to generate authoritative, exception-first executive decision syntheses covering overall program posture, core health milestones, and active delivery blockers.
+   - Automatically surfaces **Top 3 Critical Action Cards** (Action / Impact / Outcome) and early-warning **Sleeper Outliers** with operational rationale and interactive drill-downs.
 
 3. **Neural Dual-Speaker Audio Briefing**:
    - Synthesizes dual-host executive discussion podcasts using Gemini TTS (`MultiSpeakerVoiceConfig` with `Puck` and `Aoede`).
@@ -57,7 +54,21 @@ cp .env.example .env
 gcloud auth application-default login
 ```
 
-### 3. Run the Development Server
+### 3. Deployment Environments & Operational Tiers
+
+Project Dash runs across **three distinct environments** with strict separation of access, deployment mechanics, and operational risk:
+
+| Tier & Environment | Hosting & Live Endpoint | Access & Audience | Deployment Trigger | Impact of a Change or Bug |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Cloud Run Production** (`monaro-risk-dash-prod`) | **Sydney (`australia-southeast1`)**<br>[👉 Prod Dashboard](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=monaro) | **Production Stakeholders Only**<br>Restricted via Google Cloud Identity-Aware Proxy (IAP) with Google SSO (`monaro-risk-prod@google.com`). For executive leadership, program directors, and steering committee members. | **Git Release Tags Only**<br>Triggered strictly when a production release tag is pushed on `dev` (e.g. `git tag project_dash/prod-v1.0.0 && git push origin project_dash/prod-v1.0.0`). | 🔴 **Critical / High Impact**<br>Directly impacts live executive governance decisions, contractual milestone tracking, and steering committee reporting. |
+| **2. Cloud Run Development** (`monaro-risk-dash-dev`) | **Sydney (`australia-southeast1`)**<br>[👉 Dev Dashboard](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=monaro) | **Developers & Testers Only**<br>Restricted via Google Cloud Identity-Aware Proxy (IAP) with Google SSO (`monaro-risk-dev@google.com`). For engineering operators, dashboard testers, and staging validation. | **Push to `dev` Branch**<br>Triggered automatically by Cloud Build on every push to the `dev` branch (runs automated unit tests, builds container, and updates Cloud Run). | 🟡 **Low / Contained Impact**<br>Isolated staging sandbox to validate new features, ingestion pipelines, and GCS volume mounts before tagging production. |
+| **3. Local Development Server** (`server.py`) | **Local Workstation / Cloudtop**<br>`http://localhost:9000/?project=monaro`<br>`http://uk-bh-cloudtop.c.googlers.com:9000` | **Developer Only (Local Only)**<br>Bound to localhost / Cloudtop session. **Strictly viewable by the active developer**; cannot be accessed by external users or project stakeholders. | **Manual Execution**<br>Run on-demand by the developer via `python3 server.py` or `./run_server.sh`. | 🟢 **Zero External Impact**<br>Sandboxed entirely to local iteration, rapid debugging, offline UI development, and running unit tests (`pytest`). |
+
+### 4. Run the Local Development Server (Developer Only)
+
+> [!NOTE]
+> **Developer-Only Local Session**: The local Python server runs on port 9000 and is **local only and viewable exclusively by the developer**. External users and stakeholders cannot access this server. For shared or formal access, stakeholders use the IAP-secured Cloud Run Production or Development environments above.
+
 ```bash
 # Start the local development server on port 9000 (serves static assets with no-cache headers)
 python3 server.py
@@ -66,14 +77,14 @@ python3 server.py
 ./run_server.sh
 ```
 
-### 4. Open in Browser & Freshness Verification
+### 5. Open in Browser & Freshness Verification (Local)
 1. Open your browser at:
+   - 👉 **Monaro Live**: `http://localhost:9000/?project=monaro` (or `http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro`)
    - 👉 **Sample Showcase**: `http://localhost:9000/?project=sample`
-   - 👉 **Monaro Live**: `http://localhost:9000/?project=monaro`
 2. **Data Provenance Hub**: Click **"Workspace Sync"** in the top navigation header to view verified data provenance across Google Sheets, Drive status report archives, and NotebookLM blueprints.
 3. **Checking for Updates**: In the Provenance Hub, click **"↻ Check for Updates"** (`checkForUpdates()`). The browser checks `snapshots.json` using non-cached query timestamps, smoothly reloading the dashboard if new weekly data was published by the ingestion pipeline.
 
-### 5. Environment Setup & State Inspection Engine (`setup.sh`)
+### 6. Environment Setup & State Inspection Engine (`setup.sh`)
 
 The repository root includes [`setup.sh`](./setup.sh), an idempotent CLI tool for both **turnkey infrastructure provisioning** and **sub-5s parallel state inspection** across Development (`monaro-risk-dev`) and Production (`monaro-risk-prod`) environments in Sydney (`australia-southeast1`).
 
@@ -298,39 +309,12 @@ project_dash/
 
 ---
 
-## 🛠️ Adding a New Project
-
-To add a new project (e.g. `my-project`):
-
-1. **Create project directory**:
-   ```bash
-   mkdir -p data/my-project
-   cp -r data/sample/* data/my-project/
-   ```
-
-2. **Customize `data/my-project/config.json`**:
-   - Update `project.name`, `project.title`, `project.logoIcon`, and `theme.primaryColor`.
-   - Configure data source links (`sources.googleSheets.riskRegisterUrl`, etc.).
-
-3. **Populate your data**:
-   - Update `risks.json`, `issues.json`, `snapshots.json`, `driver_tree.json`, and `knowledge.json`.
-
-4. **Run ingestion**:
-   ```bash
-   python3 scripts/pipeline.py --project=my-project
-   ```
-
-5. **View in browser**:
-   Navigate to `http://localhost:9000/?project=my-project`.
-
----
-
 ## 🧪 Testing & Quality Assurance
 
 Project Dash includes a comprehensive, idiomatic `pytest` suite covering data integrity, live client calculations, Gemini generation, server endpoints, and frontend decoupling:
 
 ```bash
-# Run all automated tests (165 tests)
+# Run all automated tests (181 tests)
 pytest
 
 # Run specific test suites
@@ -378,7 +362,7 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
 
 ## 🔒 Security & Privacy
 
-- **Strict Isolation**: Proprietary datasets (such as `data/f-dse/` or `data/local/`) and secret keys (`.env`) are excluded in `.gitignore`.
+- **Strict Isolation**: Proprietary datasets (such as `data/monaro/` or `data/local/`) and secret keys (`.env`) are excluded in `.gitignore`.
 - **Zero Hardcoded Secrets**: Gemini API calls support standard Google Cloud Application Default Credentials (ADC) or environment-managed keys.
 
 ---
