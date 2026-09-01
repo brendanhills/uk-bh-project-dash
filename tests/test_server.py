@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 import pytest
 
 import server
@@ -95,7 +96,8 @@ def test_sync_sheet_handler_includes_snapshots(dummy_handler: DummyHandler):
 
 def test_check_drive_sync_handler_includes_week27(dummy_handler: DummyHandler):
     """Verify DashboardHandler handle_check_drive_sync recognizes Week 27."""
-    server.DashboardHandler.handle_check_drive_sync(dummy_handler)
+    with patch("server.query_live_drive_folder", return_value=[]):
+        server.DashboardHandler.handle_check_drive_sync(dummy_handler)
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data is not None
     assert 'allReports' in dummy_handler.sent_data
