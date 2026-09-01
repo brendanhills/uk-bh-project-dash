@@ -166,8 +166,10 @@ def test_check_drive_sync_queries_live_folder_on_demand_and_merges_real_urls(dum
         assert any(r.get("week") == "Week 29" for r in uningested)
 
 
-def test_bug_94_default_project_resolution():
+def test_bug_94_default_project_resolution(monkeypatch):
     """Verify Bug #94: server.get_default_project defaults to 'monaro' when data/monaro exists."""
+    monkeypatch.delenv("DEFAULT_PROJECT", raising=False)
+    monkeypatch.delenv("DEFAULT_PROJECTS", raising=False)
     default_proj = server.get_default_project()
     if os.path.exists(os.path.join(server.DIRECTORY, 'data', 'monaro')) or os.path.exists(os.path.join(server.DIRECTORY, 'data', 'f-dse')):
         assert default_proj == "monaro"
