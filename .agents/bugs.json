@@ -1693,5 +1693,23 @@
     "phase": "",
     "status": "Reported",
     "workspace_context": "project_dash"
+  },
+  {
+    "id": 94,
+    "type": "Bug",
+    "title": "Update project identifier references from 'project=f-dse' to 'project=monaro'",
+    "description": "References to 'project=f-dse' (in default URL query parameters, configuration values, or links) need to be updated to 'project=monaro'.",
+    "cause": "",
+    "plan": "",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-01",
+    "date_triaged": "",
+    "date_resolved": "",
+    "priority": "",
+    "impact": "",
+    "risk": "",
+    "phase": "",
+    "status": "Reported",
+    "workspace_context": "project_dash"
   }
 ]
