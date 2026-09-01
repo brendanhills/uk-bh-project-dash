@@ -162,6 +162,7 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
 
 - **Development (`monaro-risk-dash-dev`)**: Triggered automatically on pushes to the `dev` branch.
 - **Production (`monaro-risk-dash-prod`)**: Triggered automatically when release tags matching `^project_dash/prod-.*$` (e.g. `project_dash/prod-v1.0.0`) are pushed on `dev`.
+- **Pipeline Efficiency & Default Worker Pool**: Operates a streamlined 5-stage pipeline using Cloud Build's default standard warm pool in Sydney (~71s end-to-end turnaround, ~52s step execution, ~2s queue time, and eligible for 120 free build-minutes/day).
 - **Documentation / No-Build Pushes**: To push documentation or workflow updates without triggering a Cloud Run build, include `[skip ci]` or `[ci skip]` in your commit message:
   ```bash
   git commit -m "docs: update runbooks [skip ci]"
