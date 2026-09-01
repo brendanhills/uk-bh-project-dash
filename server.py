@@ -8,8 +8,11 @@ import re
 import sys
 import subprocess
 import logging
+import threading
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+_sync_lock = threading.Lock()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
@@ -200,6 +203,15 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_sync(self, query_or_params=''):
         """POST /api/sync?project=<slug> or GET /api/sync"""
+        # Non-blocking lock to prevent multiple concurrent syncs
+        if not _sync_lock.acquire(blocking=False):
+            self.send_json({
+                'status': 'in_progress',
+                'updated': False,
+                'message': 'A data sync is already running in the background. Please wait a moment.'
+            }, 200)
+            return
+
         try:
             params = parse_request_params(query_or_params)
             proj = params.get('project') or get_default_project()
@@ -217,10 +229,22 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             risks = load_json_file(os.path.join(p_dir, 'risks.json'), [])
             issues = load_json_file(os.path.join(p_dir, 'issues.json'), [])
 
+            new_ingested = 0
+            if sync_result and isinstance(sync_result, dict):
+                new_ingested = sync_result.get('new_ingested_count', 0)
+
+            is_updated = new_ingested > 0
+            if is_updated:
+                msg = f'Synchronized project "{proj}": {new_ingested} new report(s) ingested.'
+            else:
+                msg = f'Live data synchronized for project "{proj}". Dashboard is already up to date.'
+
             resp = {
                 'status': 'ok',
                 'project': proj,
-                'message': f'Live data synchronized successfully for project "{proj}"',
+                'updated': is_updated,
+                'new_ingested_count': new_ingested,
+                'message': msg,
                 'timestamp': datetime.now().isoformat(),
                 'summary': {
                     'snapshots': len(snaps.get('snapshots', snaps) if isinstance(snaps, dict) else {}),
@@ -233,6 +257,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(resp)
         except Exception as e:
             self.send_json({'error': str(e)}, 500)
+        finally:
+            _sync_lock.release()
 
     def handle_ingest(self, query_or_params=''):
         """POST /api/ingest?project=<slug>"""

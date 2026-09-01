@@ -1004,19 +1004,41 @@
 
         function toggleTranscriptModal() {
             const modal = document.getElementById('transcriptModal');
-            if (modal) {
-                modal.classList.toggle('hidden');
-                if (!modal.classList.contains('hidden')) {
-                    renderPodcastTranscript();
-                }
+            if (!modal) return;
+
+            // Always allow closing an open modal
+            if (!modal.classList.contains('hidden')) {
+                modal.classList.add('hidden');
+                return;
             }
+
+            // Gating: The transcript should never be available if audio is not available
+            const activeKey = activeTimeMachineWeek || getLatestWeekKey();
+            const snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[activeKey]) ? TIME_MACHINE_SNAPSHOTS[activeKey] : {};
+            const transcriptBtn = document.getElementById('podcastTranscriptBtn');
+            if ((transcriptBtn && transcriptBtn.disabled) || !hasAudioForWeek(activeKey, snap)) {
+                return;
+            }
+
+            modal.classList.remove('hidden');
+            renderPodcastTranscript();
         }
 
         function renderPodcastTranscript() {
             const container = document.getElementById('podcastTranscriptContainer');
+            const subtitleEl = document.getElementById('podcastModalSubtitle');
             if (!container) return;
 
-            const script = getPodcastScriptForWeek(activeTimeMachineWeek);
+            const activeKey = activeTimeMachineWeek || getLatestWeekKey();
+            const snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[activeKey]) ? TIME_MACHINE_SNAPSHOTS[activeKey] : {};
+            const weekLabel = snap.week || snap.weekLabel || ('Week ' + (snap.weekNumber || (activeKey ? activeKey.replace(/\D/g, '') : '')));
+            const title = snap.podcastTitle || 'The I-129 Breakthrough & SRR Glide Path';
+
+            if (subtitleEl) {
+                subtitleEl.innerText = `${weekLabel}: ${title} (Alex & Jordan)`;
+            }
+
+            const script = getPodcastScriptForWeek(activeKey);
             if (!script || script.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs italic">No transcript available for this reporting cycle.</div>';
                 return;
@@ -1070,52 +1092,53 @@
             const playBtn = document.getElementById('podcastPlayBtn');
             const timeLabel = document.getElementById('podcastTimeLabel');
 
+            // Defensive availability guard: If button disabled or week has no audio asset, do nothing
+            const activeKey = activeTimeMachineWeek || getLatestWeekKey();
+            const snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[activeKey]) ? TIME_MACHINE_SNAPSHOTS[activeKey] : {};
+            if ((playBtn && playBtn.disabled) || !hasAudioForWeek(activeKey, snap)) {
+                return;
+            }
+
             if (isPodcastPlaying) {
                 isPodcastPlaying = false;
                 if (audioEl && !audioEl.paused) audioEl.pause();
-                if (window.speechSynthesis) window.speechSynthesis.cancel();
                 if (playBtn) playBtn.innerText = '▶';
                 if (timeLabel) timeLabel.innerText = 'Paused';
                 animateWaveform(false);
                 return;
             }
 
+            if (!audioEl || !audioEl.src) return;
+
             isPodcastPlaying = true;
             if (playBtn) playBtn.innerText = '⏸';
             animateWaveform(true);
 
-            // Prioritize high-fidelity studio audio file (Alex & Jordan natural voices)
-            if (audioEl) {
-                audioEl.playbackRate = podcastPlaybackSpeed;
-                const playPromise = audioEl.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        audioEl.ontimeupdate = () => {
-                            if (timeLabel && isPodcastPlaying) {
-                                const cur = formatAudioTime(audioEl.currentTime);
-                                const dur = formatAudioTime(audioEl.duration || 105);
-                                timeLabel.innerText = `${cur} / ${dur}`;
-                            }
-                        };
-                        audioEl.onended = () => {
-                            isPodcastPlaying = false;
-                            if (playBtn) playBtn.innerText = '▶';
-                            if (timeLabel) timeLabel.innerText = 'Finished (1:45)';
-                            animateWaveform(false);
-                        };
-                    }).catch(err => {
-                        console.warn("Studio audio file autoplay fallback to SpeechSynthesis:", err);
-                        if ('speechSynthesis' in window) {
-                            playPodcastFromIndex(0);
+            audioEl.playbackRate = podcastPlaybackSpeed;
+            const playPromise = audioEl.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    audioEl.ontimeupdate = () => {
+                        if (timeLabel && isPodcastPlaying) {
+                            const cur = formatAudioTime(audioEl.currentTime);
+                            const dur = formatAudioTime(audioEl.duration || 42);
+                            timeLabel.innerText = `${cur} / ${dur}`;
                         }
-                    });
-                    return;
-                }
-            }
-
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                playPodcastFromIndex(0);
+                    };
+                    audioEl.onended = () => {
+                        isPodcastPlaying = false;
+                        if (playBtn) playBtn.innerText = '▶';
+                        const dur = formatAudioTime(audioEl.duration || 42);
+                        if (timeLabel) timeLabel.innerText = `Finished (${dur})`;
+                        animateWaveform(false);
+                    };
+                }).catch(err => {
+                    console.warn("Studio audio playback error:", err);
+                    isPodcastPlaying = false;
+                    if (playBtn) playBtn.innerText = '▶';
+                    if (timeLabel) timeLabel.innerText = 'Playback unavailable';
+                    animateWaveform(false);
+                });
             }
         }
 
@@ -1506,12 +1529,25 @@
             updatePodcastAudioForWeek(weekKey);
         }
 
+        function hasAudioForWeek(weekKey, snap) {
+            if (!snap) snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[weekKey]) ? TIME_MACHINE_SNAPSHOTS[weekKey] : {};
+            if (snap.audioUrl && typeof snap.audioUrl === 'string' && snap.audioUrl.trim().length > 0) {
+                return true;
+            }
+            // Verified pre-recorded studio audio asset is strictly Week 26
+            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/^w/i, '') : '');
+            return String(weekNum) === '26';
+        }
+
         function updatePodcastAudioForWeek(weekKey) {
             const audioEl = document.getElementById('nativePodcastAudio');
             const titleEl = document.getElementById('podcastTitleText');
             const downloadEl = document.getElementById('podcastDownloadLink');
             const playBtn = document.getElementById('podcastPlayBtn');
             const timeLabel = document.getElementById('podcastTimeLabel');
+            const speedControls = document.getElementById('podcastSpeedControls');
+            const waveformContainer = document.getElementById('waveformContainer');
+            const transcriptBtn = document.getElementById('podcastTranscriptBtn');
 
             if (!audioEl) return;
 
@@ -1523,31 +1559,124 @@
                 animateWaveform(false);
             }
 
-            const snap = TIME_MACHINE_SNAPSHOTS[weekKey] || {};
-            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/^w/i, '') : '27');
+            const snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[weekKey]) ? TIME_MACHINE_SNAPSHOTS[weekKey] : {};
+            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/^w/i, '') : '26');
             const weekLabel = snap.week || snap.weekLabel || `Week ${weekNum}`;
             const pName = (CONFIG && CONFIG.project && CONFIG.project.name) || 'Project';
 
-            const audioSrc = snap.audioUrl || `assets/podcast_w${weekNum}.mp3`;
             const audioTitle = snap.podcastTitle || `${weekLabel} Executive Briefing & Milestone Analysis`;
-            const audioDuration = (weekKey === 'w26') ? '0:00 / 0:42' : '0:00 / 1:45';
-            const downloadName = `${pName.replace(/\s+/g, '_')}_Executive_Podcast_${weekLabel.replace(/\s+/g, '_')}.mp3`;
-
             if (titleEl) titleEl.innerText = audioTitle;
-            if (timeLabel) timeLabel.innerText = audioDuration;
-            if (downloadEl) {
-                downloadEl.href = audioSrc;
-                downloadEl.download = downloadName;
-            }
 
-            const srcSource = document.getElementById('nativePodcastSourceMp3');
-            if (srcSource) srcSource.src = audioSrc;
-            audioEl.src = audioSrc;
-            audioEl.onerror = () => {
-                // When pre-rendered studio MP3 is unavailable for a week, gracefully fall back to Web Speech Synthesis
-                console.info(`[Audio] Pre-recorded studio MP3 ${audioSrc} not found on disk; will use dual-voice speech synthesis fallback.`);
-            };
-            audioEl.load();
+            const hasAudio = hasAudioForWeek(weekKey, snap);
+
+            if (hasAudio) {
+                const audioSrc = snap.audioUrl || `assets/podcast_w${weekNum}.mp3`;
+                const audioDuration = (String(weekNum) === '26') ? '0:00 / 0:42' : '0:00 / 1:45';
+                const downloadName = `${pName.replace(/\s+/g, '_')}_Executive_Podcast_${weekLabel.replace(/\s+/g, '_')}.mp3`;
+
+                if (timeLabel) {
+                    timeLabel.innerText = audioDuration;
+                    timeLabel.className = 'font-mono font-bold text-indigo-700';
+                }
+
+                if (playBtn) {
+                    playBtn.disabled = false;
+                    playBtn.className = 'w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center text-lg shadow-sm transition-all cursor-pointer shrink-0';
+                    playBtn.innerText = '▶';
+                    playBtn.title = `Play ${weekLabel} Executive Briefing`;
+                }
+
+                if (downloadEl) {
+                    downloadEl.href = audioSrc;
+                    downloadEl.download = downloadName;
+                    downloadEl.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-pointer';
+                    downloadEl.title = 'Download executive podcast audio file';
+                    downloadEl.style.display = '';
+                }
+
+                if (transcriptBtn) {
+                    transcriptBtn.disabled = false;
+                    transcriptBtn.className = 'text-indigo-700 hover:text-indigo-900 font-bold bg-white border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 cursor-pointer text-xs flex items-center gap-1';
+                    transcriptBtn.title = `View ${weekLabel} podcast transcript`;
+                }
+
+                if (speedControls) {
+                    speedControls.classList.remove('opacity-40', 'pointer-events-none');
+                }
+                if (waveformContainer) {
+                    waveformContainer.classList.remove('opacity-30');
+                }
+
+                const srcSource = document.getElementById('nativePodcastSourceMp3');
+                if (srcSource) srcSource.src = audioSrc;
+                audioEl.src = audioSrc;
+                audioEl.onerror = () => {
+                    console.info(`[Audio] Audio file ${audioSrc} failed to load. Disabling player.`);
+                    if (playBtn) {
+                        playBtn.disabled = true;
+                        playBtn.className = 'w-10 h-10 rounded-xl bg-slate-300 text-slate-400 flex items-center justify-center text-lg shadow-sm transition-all cursor-not-allowed opacity-50 shrink-0';
+                        playBtn.title = `Audio briefing unavailable for ${weekLabel}`;
+                    }
+                    if (timeLabel) {
+                        timeLabel.innerText = 'Audio unavailable';
+                        timeLabel.className = 'font-mono text-xs text-slate-400';
+                    }
+                    if (downloadEl) {
+                        downloadEl.removeAttribute('href');
+                        downloadEl.className = 'bg-slate-200 text-slate-400 font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-not-allowed pointer-events-none opacity-50';
+                    }
+                    if (transcriptBtn) {
+                        transcriptBtn.disabled = true;
+                        transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-50 pointer-events-none text-xs flex items-center gap-1';
+                        transcriptBtn.title = `Transcript unavailable (audio briefing not available for ${weekLabel})`;
+                    }
+                };
+                audioEl.load();
+            } else {
+                // Audio is NOT available for this week (e.g. Weeks 27-30 without studio recording)
+                // Grey out and disable audio player and transcript completely. Never use robotic browser speech synthesis.
+                if (timeLabel) {
+                    timeLabel.innerText = 'Audio briefing unavailable';
+                    timeLabel.className = 'font-mono text-xs text-slate-400';
+                }
+
+                if (playBtn) {
+                    playBtn.disabled = true;
+                    playBtn.className = 'w-10 h-10 rounded-xl bg-slate-300 text-slate-400 flex items-center justify-center text-lg shadow-sm transition-all cursor-not-allowed opacity-50 shrink-0';
+                    playBtn.innerText = '▶';
+                    playBtn.title = `Audio briefing unavailable for ${weekLabel}`;
+                }
+
+                if (downloadEl) {
+                    downloadEl.removeAttribute('href');
+                    downloadEl.removeAttribute('download');
+                    downloadEl.className = 'bg-slate-200 text-slate-400 font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-not-allowed pointer-events-none opacity-50';
+                    downloadEl.title = `Audio briefing unavailable for ${weekLabel}`;
+                }
+
+                if (transcriptBtn) {
+                    transcriptBtn.disabled = true;
+                    transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-50 pointer-events-none text-xs flex items-center gap-1';
+                    transcriptBtn.title = `Transcript unavailable (audio briefing not available for ${weekLabel})`;
+                }
+
+                const transcriptModal = document.getElementById('transcriptModal');
+                if (transcriptModal && !transcriptModal.classList.contains('hidden')) {
+                    transcriptModal.classList.add('hidden');
+                }
+
+                if (speedControls) {
+                    speedControls.classList.add('opacity-40', 'pointer-events-none');
+                }
+                if (waveformContainer) {
+                    waveformContainer.classList.add('opacity-30');
+                    animateWaveform(false);
+                }
+
+                const srcSource = document.getElementById('nativePodcastSourceMp3');
+                if (srcSource) srcSource.removeAttribute('src');
+                audioEl.removeAttribute('src');
+            }
         }
 
         function returnToPresent() {
@@ -3650,27 +3779,86 @@
             document.getElementById('sheetsModal').classList.add('hidden');
         }
 
+        let isCheckingForUpdates = false;
+
         async function checkForUpdates() {
+            if (isCheckingForUpdates) return;
+            isCheckingForUpdates = true;
+
+            const checkBtn = document.getElementById('btnCheckUpdates');
+            const checkIcon = document.getElementById('btnCheckUpdatesIcon');
+            const checkText = document.getElementById('btnCheckUpdatesText');
+
+            if (checkBtn) {
+                checkBtn.disabled = true;
+                checkBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            }
+            if (checkIcon) checkIcon.classList.add('animate-spin');
+            if (checkText) checkText.innerText = 'Checking for updates...';
+
             showSyncToast('🔍 Checking for pipeline updates...');
             try {
                 const projParam = (typeof CURRENT_PROJECT !== 'undefined' && CURRENT_PROJECT) ? CURRENT_PROJECT : 'monaro';
+
+                // Baseline in-memory state before check
+                const prevSnaps = TIME_MACHINE_SNAPSHOTS || {};
+                const prevKeys = Object.keys(prevSnaps);
+                const prevCount = prevKeys.length;
+                const prevLatestKey = (typeof getLatestWeekKey === 'function') ? getLatestWeekKey() : (prevKeys[0] || 'w26');
+                const prevLatestSnap = prevSnaps[prevLatestKey] || {};
+                const prevLatestNum = parseInt(prevLatestSnap.weekNumber || prevLatestKey.replace(/\D/g, '')) || 0;
+
                 const resp = await fetch(`data/${encodeURIComponent(projParam)}/snapshots.json?t=${Date.now()}`, { cache: 'no-store' });
                 if (resp.ok) {
                     const data = await resp.json();
-                    if (data.snapshots && Object.keys(data.snapshots).length > 0) {
-                        TIME_MACHINE_SNAPSHOTS = data.snapshots;
-                        if (typeof activateTimeMachine === 'function' && typeof getLatestWeekKey === 'function') {
-                            activateTimeMachine(getLatestWeekKey());
-                        }
+                    const newSnaps = data.snapshots || {};
+                    const newKeys = Object.keys(newSnaps);
+                    const newCount = newKeys.length;
+
+                    // Sort new keys descending to find latest week
+                    const sortedNewKeys = newKeys.slice().sort((a, b) => {
+                        const na = parseInt(newSnaps[a]?.weekNumber || a.replace(/\D/g, '')) || 0;
+                        const nb = parseInt(newSnaps[b]?.weekNumber || b.replace(/\D/g, '')) || 0;
+                        return nb - na;
+                    });
+                    const newLatestKey = sortedNewKeys[0] || prevLatestKey;
+                    const newLatestSnap = newSnaps[newLatestKey] || {};
+                    const newLatestNum = parseInt(newLatestSnap.weekNumber || newLatestKey.replace(/\D/g, '')) || 0;
+                    const newLatestLabel = newLatestSnap.week || newLatestSnap.weekLabel || `Week ${newLatestNum}`;
+
+                    // Detect if anything changed / new weeks added
+                    const hasNewWeeks = newCount > prevCount || newLatestNum > prevLatestNum;
+                    const hasNewKeys = newKeys.some(k => !prevKeys.includes(k));
+                    const isUpdated = hasNewWeeks || hasNewKeys;
+
+                    if (newCount > 0) {
+                        TIME_MACHINE_SNAPSHOTS = newSnaps;
                     }
-                    showSyncToast('✓ Dashboard data is current and verified!');
-                    checkDriveSyncStatus();
+
+                    if (isUpdated) {
+                        if (typeof activateTimeMachine === 'function') {
+                            activateTimeMachine(newLatestKey);
+                        }
+                        showSyncToast(`🎉 Updated: Ingested ${newLatestLabel}! (Total ${newCount} reports)`);
+                    } else {
+                        // Clear, explicit feedback when already up to date
+                        showSyncToast(`✓ Already up to date: No new reports found (Latest: ${newLatestLabel})`);
+                    }
+                    await checkDriveSyncStatus();
                 } else {
                     showSyncToast('✓ Verified current dashboard state.');
                 }
             } catch (e) {
                 console.warn('Freshness check fallback:', e);
                 showSyncToast('✓ Dashboard running with active static cache.');
+            } finally {
+                isCheckingForUpdates = false;
+                if (checkBtn) {
+                    checkBtn.disabled = false;
+                    checkBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+                if (checkIcon) checkIcon.classList.remove('animate-spin');
+                if (checkText) checkText.innerText = 'Check for Updates';
             }
         }
 
@@ -3845,8 +4033,9 @@ window.syncGoogleSheet = syncGoogleSheet;
 window.checkDriveSyncStatus = (typeof checkDriveSyncStatus === 'function') ? checkDriveSyncStatus : function() {};
 window.toggleTranscriptModal = (typeof toggleTranscriptModal === 'function') ? toggleTranscriptModal : function() { const m = document.getElementById('transcriptModal'); if (m) m.classList.toggle('hidden'); };
 window.copyPodcastScript = copyPodcastScript;
-window.setPodcastSpeed = setPodcastSpeed;
 window.togglePodcastPlayback = togglePodcastPlayback;
+window.hasAudioForWeek = (typeof hasAudioForWeek === 'function') ? hasAudioForWeek : function() { return false; };
+window.updatePodcastAudioForWeek = (typeof updatePodcastAudioForWeek === 'function') ? updatePodcastAudioForWeek : function() {};
 window.copyGeminiParagraph = (typeof copyGeminiParagraph === 'function') ? copyGeminiParagraph : function() {};
 window.exportCSV = (typeof exportCSV === 'function') ? exportCSV : function() {};
 window.exportDeckPDF = (typeof exportDeckPDF === 'function') ? exportDeckPDF : function() { window.print(); };

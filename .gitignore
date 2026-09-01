@@ -32,3 +32,5 @@ data/*/*.wav
 /tmp/
 *.zip
 *.log
+*.cover
+.coverage
