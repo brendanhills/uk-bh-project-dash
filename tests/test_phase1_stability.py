@@ -20,6 +20,32 @@ def html_content(project_root: Path) -> str:
     return load_full_html(project_root)
 
 
+def test_monaro_data_files_exist_and_valid(project_root: Path):
+    """Verify all Monaro project raw data files exist and parse as valid JSON."""
+    monaro_dir = project_root / 'data' / 'monaro'
+    required_files = [
+        'config.json', 'risks.json', 'issues.json', 'snapshots.json',
+        'driver_tree.json', 'knowledge.json'
+    ]
+    for filename in required_files:
+        file_path = monaro_dir / filename
+        assert file_path.exists(), f"Missing data file: {filename}"
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            assert data is not None
+
+
+def test_monaro_knowledge_sources_has_annexes(project_root: Path):
+    """Verify Monaro knowledge.json contains solution blueprint annexes."""
+    k_file = project_root / 'data' / 'monaro' / 'knowledge.json'
+    with open(k_file, 'r', encoding='utf-8') as f:
+        k = json.load(f)
+
+    sources = k.get('sources', [])
+    blueprints = [s for s in sources if s.get('bundle')]
+    assert len(blueprints) >= 10, "Expected at least 10 blueprint bundle sources in Monaro knowledge"
+
+
 def test_fdse_data_files_exist_and_valid(project_root: Path):
     """Verify all F-DSE project raw data files exist and parse as valid JSON."""
     fdse_dir = project_root / 'data' / 'f-dse'
@@ -44,6 +70,7 @@ def test_fdse_knowledge_sources_has_annexes(project_root: Path):
     sources = k.get('sources', [])
     blueprints = [s for s in sources if s.get('bundle')]
     assert len(blueprints) >= 10, "Expected at least 10 blueprint bundle sources in F-DSE knowledge"
+
 
 
 def test_driver_tree_normalization_in_html(html_content: str):

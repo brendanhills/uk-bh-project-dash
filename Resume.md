@@ -1,13 +1,13 @@
 # Project Monaro / F-DSE Risk Governance & Intelligence Platform — Session Resume
 
-**Checkpoint Timestamp:** `2026-08-31 16:15:00 AEST`  
+**Checkpoint Timestamp:** `2026-09-01 17:16:00 AEST`  
 **Active Git Branch:** `dev`  
 **Workspace:** `/usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash`  
 **Deployment Region:** **`australia-southeast1`** (Sydney, Australia)  
 **Live Cloud Run Dev Service:** `monaro-risk-dash-dev`  
 **Live Cloud Run Prod Service:** `monaro-risk-dash-prod`  
-**Local Cloudtop Dev Server:** [Monaro Project](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro) | [Aurora Sample](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)  
-**Test Suite Health:** **156 / 156 Tests Passing (100%)** (`pytest`).  
+**Local Cloudtop Dev Server:** [Monaro Project (Default)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro) | [Aurora Sample](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)  
+**Test Suite Health:** **181 / 181 Tests Passing (100%)** (`pytest` in 9.59s).  
 **Active Conductor Track:** `migrate_from_unittest_to_pytest_20260827` (Status: `[x] Completed / Final Verification`)
 
 ---
@@ -16,9 +16,19 @@
 
 ### 0. Ensure `monaro-risk-prod` GCP Project is Created
 * If not yet provisioned, create `monaro-risk-prod` via **[go/nexus](http://go/nexus)** or **[Pantheon > New Project](https://pantheon.corp.google.com/projectcreate)** with an attached billing account.
-* Run `./deploy/provision_environment.sh --env prod` to provision all APIs, service accounts, Artifact Registry, triggers, and alerting policies in Sydney (`australia-southeast1`).
+* Run `./setup.sh --env prod` to provision all APIs, service accounts, Artifact Registry, triggers, and alerting policies in Sydney (`australia-southeast1`).
 
-### 1. Verify Cloud Build Status & Health via CLI Tool
+### 1. Inspect Live Environment State & Drive Access (State List)
+```bash
+# View live status of all 16 APIs, IAM permissions, Cloud Run, IAP, and Drive access in sub-5s:
+./setup.sh -l --env dev
+./setup.sh -l --env prod
+
+# Output bare canonical resource addresses (mirroring terraform state list):
+./setup.sh -l --env dev --state-only
+```
+
+### 2. Verify Cloud Build Status & Health via CLI Tool
 ```bash
 # Check latest build in Australia region (Dev)
 python3 scripts/check_build_status.py --env dev
@@ -27,13 +37,13 @@ python3 scripts/check_build_status.py --env dev
 python3 scripts/check_build_status.py --env prod
 ```
 
-### 2. Verify Access Groups in Google Groups
+### 3. Verify Access Groups in Google Groups
 * **Dev Viewer Group**: **[Google Groups > monaro-risk-dev](https://groups.google.com/a/google.com/g/monaro-risk-dev/members)**
 * **Dev Admin / Alerts Group**: **[Google Groups > monaro-risk-dev-admin](https://groups.google.com/a/google.com/g/monaro-risk-dev-admin/members)**
 * **Prod Viewer Group**: **[Google Groups > monaro-risk-prod](https://groups.google.com/a/google.com/g/monaro-risk-prod/members)**
 * **Prod Admin / Alerts Group**: **[Google Groups > monaro-risk-prod-admin](https://groups.google.com/a/google.com/g/monaro-risk-prod-admin/members)**
 
-### 3. How to Deploy to Production (Release Tag on `dev`)
+### 4. How to Deploy to Production (Release Tag on `dev`)
 ```bash
 # 1. Create a production release tag on the dev branch
 git tag project_dash/prod-v1.0.0
@@ -42,9 +52,9 @@ git tag project_dash/prod-v1.0.0
 git push origin project_dash/prod-v1.0.0
 ```
 
-### 4. How End Users Sync Live Data in the Dashboard (Hands-Free)
+### 5. How End Users Sync Live Data in the Dashboard (Hands-Free)
 * Open the dashboard in browser.
-* Click **"Sync Workspace"** $\\rightarrow$ **"Sync Live Data Now"**.
+* Click **"Sync Workspace"** $\rightarrow$ **"Sync Live Data Now"**.
 * The Cloud Run backend (`/api/sync` or `/api/sync-all`) ingests Google Sheets and Drive PDF reports on the fly with zero code redeployments.
 
 ---
@@ -78,6 +88,23 @@ git push origin project_dash/prod-v1.0.0
    - Reduced workspace root clutter from 19 top-level items down to 7 core canonical directories.
    - Maintained **100% automated test pass rate** (127/127 tests passing) and zero runtime regression.
    - Built and packaged the `workspace_cleanup` skill and automated clutter audit tooling in `custom_harness/`.
+
+6. **Canonical Project Defaults & Bug #94 Resolution**:
+   - Configured `monaro` as the primary default project across backend server (`server.py`), frontend client (`src/js/app.js`), and CLI tools (`scripts/pipeline.py`), with graceful self-healing fallback to `sample` for clean checkouts.
+   - Updated all navigation and console tables across `README.md` and `docs/DEPLOYMENT_GUIDE.md` to link `?project=monaro`.
+   - Maintained bidirectional backward-compatibility aliasing for `f-dse` $\leftrightarrow$ `monaro`.
+
+7. **Test Performance Optimization & Sandbox Isolation Invariant**:
+   - Diagnosed and resolved 10.35s delay in `tests/test_server.py::test_week27_ingestion_pipeline` by introducing `force_fallback=True` and hermetic `tmp_path` data isolation, resulting in a >2,000x speedup (<0.005s call duration) and reducing full suite execution time to 9.59s.
+   - Codified and persisted workspace rule `.agents/rules/test_performance_and_isolation_standards.md` to guarantee zero-network test execution and ephemeral sandbox data isolation.
+
+8. **Gemini 3.5 Flash Integration & Cross-Region Multi-Region US Architecture**:
+   - Standardized strictly on **Gemini 3.5 Flash** across multimodal report parsing, executive decision synthesis, and multi-speaker podcast generation.
+   - Preserved 100% Sydney (`australia-southeast1`) hosting for all core infrastructure (Cloud Run Web Service, Cloud Run Ingestion Job, Cloud Storage data bucket, Artifact Registry, and Cloud Build triggers).
+   - Configured cross-region workaround targeting Google Cloud's official multi-region US endpoint (`https://aiplatform.us.rep.googleapis.com`, `location="us"`), with automatic 404 retry fallback.
+   - Future-proofed zero-code domestic migration: when Gemini 3.5 Flash deploys to Sydney in a few weeks, switching `GEMINI_REGION="australia-southeast1"` enables immediate local AI execution without code changes or container rebuilds.
+   - Verified live end-to-end connectivity via pre-flight doctor diagnostics, updated Cloud Run Job environment variables in GCP, and expanded unit test suite to 181 passing tests (100%).
+
 
 ---
 
@@ -168,7 +195,7 @@ git push origin project_dash/prod-v1.0.0
 - **IAP Console (Prod):** [https://pantheon.corp.google.com/security/iap?project=monaro-risk-prod](https://pantheon.corp.google.com/security/iap?project=monaro-risk-prod)
 - **Google Group (Dev):** [https://groups.google.com/a/google.com/g/monaro-risk-dev](https://groups.google.com/a/google.com/g/monaro-risk-dev)
 - **Google Group (Prod):** [https://groups.google.com/a/google.com/g/monaro-risk-prod](https://groups.google.com/a/google.com/g/monaro-risk-prod)
-- **Turnkey Provisioning Script:** [`deploy/provision_environment.sh`](./deploy/provision_environment.sh)
+- **Turnkey Provisioning & State Script:** [`setup.sh`](./setup.sh)
 - **Deployment & Operations Guide (Unified):** [`docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md)
 - **CI/CD Pipeline Definition:** [`deploy/cloudbuild.yaml`](./deploy/cloudbuild.yaml)
 - **Build Status Tool:** [`scripts/check_build_status.py`](./scripts/check_build_status.py)

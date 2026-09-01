@@ -13,7 +13,7 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
 
 2. **Gemini Ingestion & Decision Synthesis Engine**:
    - Ingestion CLI (`scripts/sync_drive.py` and `scripts/pipeline.py`) automatically ingests Google Sheets, Google Drive PDF report packs, and knowledge documents into standardized project datasets (`snapshots.json`, `risks.json`, `issues.json`).
-   - Uses **Gemini 3.7 Flash** to generate structured executive syntheses tailored for 3 executive stakeholder perspectives:
+   - Uses **Gemini 3.5 Flash** to generate structured executive syntheses tailored for 3 executive stakeholder perspectives:
      - 👔 **Executive**: Focus on milestones, strategic delivery blockers, and board actions.
      - ⚙️ **Technical**: Focus on infrastructure, security enclaves, API SLAs, and telemetry.
      - ⚖️ **Governance**: Focus on commercial gates, contractual IBR audits, and ATO accreditation.
@@ -42,7 +42,7 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
 
 ### 1. Prerequisites
 - **Python 3.12+**
-- **Google Cloud ADC** (`gcloud auth application-default login`) or **`GEMINI_API_KEY`** (Required for Gemini 3.7 Flash AI decision synthesis and neural podcast audio generation)
+- **Google Cloud ADC** (`gcloud auth application-default login`) or **`GEMINI_API_KEY`** (Required for Gemini 3.5 Flash AI decision synthesis and neural podcast audio generation)
 
 ### 2. Setup
 ```bash
@@ -73,6 +73,53 @@ python3 server.py
 2. **Data Provenance Hub**: Click **"Workspace Sync"** in the top navigation header to view verified data provenance across Google Sheets, Drive status report archives, and NotebookLM blueprints.
 3. **Checking for Updates**: In the Provenance Hub, click **"↻ Check for Updates"** (`checkForUpdates()`). The browser checks `snapshots.json` using non-cached query timestamps, smoothly reloading the dashboard if new weekly data was published by the ingestion pipeline.
 
+### 5. Environment Setup & State Inspection Engine (`setup.sh`)
+
+The repository root includes [`setup.sh`](./setup.sh), an idempotent CLI tool for both **turnkey infrastructure provisioning** and **sub-5s parallel state inspection** across Development (`monaro-risk-dev`) and Production (`monaro-risk-prod`) environments in Sydney (`australia-southeast1`).
+
+#### A. Read-Only State Inspection Mode (`-l`, `--list`, `--status`)
+Run `./setup.sh -l` to instantly inspect and verify the live state of all 46 tracked project assets without mutating cloud resources:
+
+```bash
+# Inspect all 46 resources (APIs, IAM, Cloud Run, IAP, Monitoring, Drive) in < 5 seconds:
+./setup.sh -l --env dev
+./setup.sh -l --env prod
+
+# Filter strictly to missing or unhealthy resources (highlighted in amber/yellow):
+./setup.sh -l --env dev -m
+
+# Output canonical machine-readable state addresses (matching terraform state list format):
+./setup.sh -l --env dev --state-only
+```
+
+**Key Inspection Features**:
+- **High-Speed Parallel Execution**: Dispatches audit checks simultaneously across background subshells, auditing 46 cloud resources in under 5 seconds rather than minutes.
+- **Structured Address Schema**: Resources follow standard canonical addresses (`category.resource_id`):
+  - `gcp_api.<service>` (16 required Google Cloud APIs)
+  - `iam_service_account.<email>` & `iam_binding.<role>` (Deployer identity and 9 least-privilege roles)
+  - `gar_repo.<name>` (Artifact Registry repository in Sydney)
+  - `cloudbuild_trigger.<name>` (Automated CI/CD build triggers)
+  - `notification_channel.<type>` & `monitoring_policy.<name>` (Admin alerting channels & 5xx error policies)
+  - `cloud_run_service.<name>` & `run_invoker_binding.<member>` (Web service and SSO invoker bindings)
+  - `iap_web_binding.<member>` (Identity-Aware Proxy Google SSO access policies)
+  - `cloud_run_job.<name>`, `cloud_tasks_queue.<name>`, `cloud_scheduler_job.<name>` (Ingestion cron pipeline)
+  - `drive_access.folder_read` (Google Drive report pack folder reader access)
+- **Visual Ergonomics**: Missing resources and status counts are visually emphasized with warm amber/yellow highlighting for rapid diagnosis.
+- **Inherited Access Awareness**: Correctly accounts for group memberships (`@google.com`) and broad parent roles (`roles/storage.admin`) so inherited permissions are accurately evaluated.
+
+#### B. Turnkey Environment Provisioning Mode
+```bash
+# Provision all 46 resources end-to-end (idempotent, self-healing, guarantees 0 missing items):
+./setup.sh --env dev
+./setup.sh --env prod
+
+# Enable only the 16 required Google Cloud APIs:
+./setup.sh --env dev --apis-only
+
+# Override notification email or Google Drive folder ID:
+./setup.sh --env dev --admin-email "alerts@example.com" --folder-id "<DRIVE_FOLDER_ID>"
+```
+
 ---
 
 ## 🔄 Data Synchronization, Scheduled Ingestion & Refresh Architecture
@@ -81,7 +128,7 @@ Project Dash separates **data ingestion** from **web presentation** for security
 
 ```
 [Google Drive Status Reports] ──> [Cloud Run Job: monaro-risk-sync-job]
-[Google Sheets Risk Register]        │ (scripts/sync_drive.py + Gemini 3.7 Flash)
+[Google Sheets Risk Register]        │ (scripts/sync_drive.py + Gemini 3.5 Flash)
                                      ▼
                       [data/monaro/snapshots.json]
                                      │
@@ -95,7 +142,7 @@ Project Dash separates **data ingestion** from **web presentation** for security
 ### 1. How Data is Ingested and Synced
 - **Automated Drive Discovery**: The worker script (`scripts/sync_drive.py`) interfaces with Google Drive API v3 to scan the active reports folder (`1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C`).
 - **Incremental Filtering**: Reports are matched by week number against `data/monaro/snapshots.json`. Already-ingested weeks are skipped.
-- **Multimodal AI Analysis**: Newly published weekly PDF packs are processed with **`gemini-3.7-flash`** to extract structured executive summaries, risk delta distributions, top 3 critical action cards, and sleeper outlier alerts.
+- **Multimodal AI Analysis**: Newly published weekly PDF packs are processed with **`gemini-3.5-flash`** to extract structured executive summaries, risk delta distributions, top 3 critical action cards, and sleeper outlier alerts.
 - **Atomic Snapshots**: Updates are committed to `data/monaro/snapshots.json` and `config.json`.
 
 ### 2. How Data is Refreshed in the Client UI
@@ -166,27 +213,25 @@ gcloud scheduler jobs run monaro-sync-schedule \
 # Trigger remote Cloud Run Job in GCP via Python helper:
 python3 scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
 
+# Run pre-flight diagnostics (verifies Drive, Vertex AI Gemini, Storage, and Schemas):
+python3 scripts/sync_drive.py --doctor
+
 # Run local standalone ingestion using local ADC credentials:
-python3 scripts/sync_drive.py --projects monaro
+python3 scripts/sync_drive.py --project monaro
 ```
 
 ---
 
 #### 🔧 How to Update the Process When Needed
 
-1. **Updating Python Ingestion Logic or Prompts**:
-   - Edit [`scripts/sync_drive.py`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/scripts/sync_drive.py) or [`scripts/gemini_generator.py`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/scripts/gemini_generator.py).
-   - Verify locally: `pytest tests/test_sync_drive.py`.
-   - Rebuild and push the sync container to Artifact Registry:
+1. **Updating Ingestion Logic, Prompts, or Dashboard Frontend**:
+   - Edit scripts or frontend assets.
+   - Verify locally: `pytest`.
+   - Push to `dev`: `git push origin dev`.
+   - The unified Cloud Build trigger in Sydney automatically runs unit tests, builds both container images (`monaro-risk-dash-dev` and `monaro-risk-sync`) with Docker layer caching, deploys the web service, and updates the sync job.
+   - Alternatively, trigger manually in Sydney:
      ```bash
-     gcloud builds submit --config=deploy/cloudbuild_sync.yaml --project=monaro-risk-dev
-     ```
-   - Point the Cloud Run Job to the new image:
-     ```bash
-     gcloud run jobs update monaro-risk-sync-job \
-       --image=australia-southeast1-docker.pkg.dev/monaro-risk-dev/cloud-run-source-deploy/monaro-risk-sync:latest \
-       --region=australia-southeast1 \
-       --project=monaro-risk-dev
+     gcloud builds submit --config=deploy/cloudbuild.yaml --region=australia-southeast1 --project=monaro-risk-dev
      ```
 
 2. **Changing the Schedule Timing**:
@@ -220,12 +265,11 @@ project_dash/
 ├── index.html                   # Zero-build single-file frontend presentation engine
 ├── server.py                    # Static development server with no-cache headers
 ├── .env.example                 # Environment configuration template
-├── .gitignore                   # Strict sanitization rules
+├── setup.sh                     # Canonical turnkey provisioning & sub-5s state inspection (-l) tool
 ├── deploy/                      # Infrastructure & Container deployment configs
 │   ├── Dockerfile               # Static Nginx Cloud Run web service container
 │   ├── Dockerfile.sync          # Python 3.13 Cloud Run Job ingestion worker container
 │   ├── cloudbuild.yaml          # 5-stage automated Cloud Build CI/CD pipeline
-│   └── provision_environment.sh # Turnkey GCP, IAP, Cloud Run Job & Cloud Tasks provisioning
 ├── docs/                        # Project operator manuals & guides
 │   ├── HANDOVER_GUIDE.md        # Turnkey operator & handover manual
 │   ├── TEAM_PRESENTATION_GUIDE.md # 5-minute showcase narrative
@@ -237,7 +281,7 @@ project_dash/
 │   ├── sync_drive.py            # Turnkey standalone Google Drive & Sheets ingestion engine
 │   ├── trigger_sync.py          # Admin/Dev CLI trigger tool for Cloud Run Job & local sync
 │   ├── pipeline.py              # Ingestion, Drive report parsing & Gemini synthesis pipeline
-│   ├── gemini_generator.py      # Gemini 3.7 Flash synthesis & TTS audio generator
+│   ├── gemini_generator.py      # Gemini 3.5 Flash synthesis & TTS audio generator
 │   └── check_build_status.py    # Cloud Build CI/CD status query tool
 ├── src/
 │   └── js/                      # Modular ES6 frontend architecture (api.js, state.js, analytics.js, app.js)
@@ -314,14 +358,14 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
 
 | Resource | Development (`monaro-risk-dev`) | Production (`monaro-risk-prod`) | Local Development |
 | :--- | :--- | :--- | :--- |
-| **Live Deployed Dashboard** | • [👉 Aurora Showcase (Sydney)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=sample)<br>• [👉 Monaro Live (Sydney)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=f-dse) | • [👉 Aurora Showcase (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=sample)<br>• [👉 Monaro Live (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=f-dse) | • [Local Aurora](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)<br>• [Local Monaro](http://uk-bh-cloudtop.c.googlers.com:9000/?project=f-dse) |
+| **Live Deployed Dashboard** | • [👉 Monaro Live (Sydney)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=monaro)<br>• [👉 Aurora Showcase (Sydney)](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=sample) | • [👉 Monaro Live (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=monaro)<br>• [👉 Aurora Showcase (Prod)](https://monaro-risk-dash-prod-525025654699.australia-southeast1.run.app/?project=sample) | • [Local Monaro](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro)<br>• [Local Aurora](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample) |
 | **Cloud Run Services** | [👉 Cloud Run Console (Dev)](https://pantheon.corp.google.com/run?project=monaro-risk-dev) | [👉 Cloud Run Console (Prod)](https://pantheon.corp.google.com/run?project=monaro-risk-prod) | — |
 | **Cloud Build Triggers** | [👉 Build Triggers (Dev)](https://pantheon.corp.google.com/cloud-build/triggers?project=monaro-risk-dev) | [👉 Build Triggers (Prod)](https://pantheon.corp.google.com/cloud-build/triggers?project=monaro-risk-prod) | — |
 | **Cloud Build History** | [👉 Build History (Dev)](https://pantheon.corp.google.com/cloud-build/builds?project=monaro-risk-dev) | [👉 Build History (Prod)](https://pantheon.corp.google.com/cloud-build/builds?project=monaro-risk-prod) | — |
 | **Artifact Registry** | [👉 Docker Images (Dev)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-dev) | [👉 Docker Images (Prod)](https://pantheon.corp.google.com/artifacts?project=monaro-risk-prod) | — |
 | **Cloud Logging** | [👉 Logs Explorer (Dev)](https://pantheon.corp.google.com/logs/query?project=monaro-risk-dev) | [👉 Logs Explorer (Prod)](https://pantheon.corp.google.com/logs/query?project=monaro-risk-prod) | — |
 
-- **Deployment, Provisioning & Operations**: See [`docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md) for the comprehensive canonical guide: automated CI/CD pipelines, turnkey environment provisioning (`./deploy/provision_environment.sh`), production release tag workflows, and SRE Day-2 runbooks.
+- **Deployment, Provisioning & Operations**: See [`docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md) for the comprehensive canonical guide: automated CI/CD pipelines, turnkey environment provisioning (`./setup.sh`), production release tag workflows, and SRE Day-2 runbooks.
 - **Cloud Services, APIs & Running Costs**: See [`docs/CLOUD_COSTS_AND_API_REVIEW.md`](./docs/CLOUD_COSTS_AND_API_REVIEW.md) for an audit of all 14 GCP APIs, workload modeling for 10–50 daily users, itemized Sydney running costs (<$1.00/month), and cost optimization recommendations.
 
 ### 💰 Cloud Running Costs & Free Tier Economics

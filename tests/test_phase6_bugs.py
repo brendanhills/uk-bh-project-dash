@@ -93,7 +93,9 @@ def test_bug_91_cloudbuild_pipeline_efficiency(project_root: Path):
     assert "name: 'gcr.io/cloud-builders/gcloud'" in cb_content, "Should use gcr.io/cloud-builders/gcloud"
 
     # 7. Provisioning script retains complete infrastructure setup
-    prov_path = project_root / "deploy" / "provision_environment.sh"
+    prov_path = project_root / "setup.sh"
+    if not prov_path.exists():
+        prov_path = project_root / "deploy" / "provision_environment.sh"
     prov_content = prov_path.read_text(encoding="utf-8")
     assert "gcloud artifacts repositories create" in prov_content
     assert "roles/iap.httpsResourceAccessor" in prov_content

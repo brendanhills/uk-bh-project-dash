@@ -26,6 +26,7 @@ def test_get_project_dir_helper():
     # Default fallback
     default_dir = server.get_project_dir("")
     assert Path(default_dir).exists()
+    assert default_dir.endswith(str(Path("data") / "monaro")) or default_dir.endswith(str(Path("data") / "f-dse"))
 
 
 @pytest.mark.parametrize("project_query, min_risks", [
@@ -162,3 +163,26 @@ def test_check_drive_sync_queries_live_folder_on_demand_and_merges_real_urls(dum
         # Week 29 is uningested so uningestedReports includes it
         uningested = dummy_handler.sent_data.get("uningestedReports", [])
         assert any(r.get("week") == "Week 29" for r in uningested)
+
+
+def test_bug_94_default_project_resolution():
+    """Verify Bug #94: server.get_default_project defaults to 'monaro' when data/monaro exists."""
+    default_proj = server.get_default_project()
+    assert default_proj == "monaro"
+
+    # Verify fallback to sample if monaro does not exist
+    with patch("os.path.exists") as mock_exists:
+        def side_effect(path):
+            if "monaro" in str(path) or "f-dse" in str(path):
+                return False
+            return True
+        mock_exists.side_effect = side_effect
+        assert server.get_default_project() == "sample"
+
+
+def test_bug_94_pipeline_defaults():
+    """Verify Bug #94: pipeline.py get_project_dir and CLI argument default to 'monaro'."""
+    from scripts import pipeline
+    default_dir = pipeline.get_project_dir()
+    assert default_dir.endswith(str(Path("data") / "monaro")) or default_dir.endswith(str(Path("data") / "f-dse"))
+

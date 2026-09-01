@@ -37,7 +37,7 @@ steps:
         echo "=== Generated data/build_info.json ==="
         cat data/build_info.json
 
-  # 3. Build container image using custom Dockerfile
+  # 3. Build Web Dashboard Container Image
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'project_dash'
     args:
@@ -50,14 +50,43 @@ steps:
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
       - '.'
 
-  # 4. Push container image tags to Artifact Registry concurrently
+  # 4. Pull previous sync image for Docker layer caching (non-blocking)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest || true
+
+  # 5. Build Sync Worker Container Image with Docker layer caching
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'project_dash'
+    args:
+      - 'build'
+      - '--cache-from'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest'
+      - '-f'
+      - 'deploy/Dockerfile.sync'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:$COMMIT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest'
+      - '.'
+
+  # 6. Push container images to Artifact Registry concurrently
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '--all-tags'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}'
 
-  # 5. Deploy to Cloud Run (Private Mode + Native IAP Enabled in Australia)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync'
+
+  # 7. Deploy Web Service to Cloud Run (Private Mode + IAP + GCS Volume Mount)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
@@ -73,20 +102,50 @@ steps:
       - '--iap'
       - '--port'
       - '8080'
+      - '--execution-environment'
+      - 'gen2'
+      - '--add-volume'
+      - 'name=data-volume,type=cloud-storage,bucket=$PROJECT_ID-data,readonly=true'
+      - '--add-volume-mount'
+      - 'volume=data-volume,mount-path=/usr/share/nginx/html/data'
       - '--update-labels'
       - 'commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID'
       - '--set-env-vars'
       - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION}'
 
+  # 8. Update Ingestion Sync Job in Cloud Run (Gen2 + GCS Volume Mount)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'jobs'
+      - 'update'
+      - 'monaro-risk-sync-job'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--execution-environment'
+      - 'gen2'
+      - '--add-volume'
+      - 'name=data-volume,type=cloud-storage,bucket=$PROJECT_ID-data'
+      - '--add-volume-mount'
+      - 'volume=data-volume,mount-path=/app/data'
+      - '--set-env-vars'
+      - 'DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL},GEMINI_REGION=${_GEMINI_REGION}'
+
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:$COMMIT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest'
 
 substitutions:
   _SERVICE_NAME: 'monaro-risk-dash-dev'
   _IMAGE_NAME: 'monaro-risk-dash-dev'
   _ACCESS_GROUP: 'monaro-risk-dev@google.com'
   _REGION: 'australia-southeast1'
+  _GEMINI_MODEL: 'gemini-3.5-flash'
+  _GEMINI_REGION: 'us'
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -103,8 +103,8 @@ def test_parse_structured_synthesis_json():
         assert result['generatedBy'] == 'gemini-3.7-flash'
 
 
-def test_default_model_is_gemini_37_flash():
-    """Verify generate_executive_synthesis and generate_multispeaker_podcast default to gemini-3.7-flash."""
+def test_default_model_is_gemini_35_flash():
+    """Verify generate_executive_synthesis and generate_multispeaker_podcast default to gemini-3.5-flash."""
     mock_synthesis_response = MagicMock()
     mock_synthesis_response.text = json.dumps({
         'synthesis': {'executive': 'Exec.', 'technical': 'Tech.', 'governance': 'Gov.'},
@@ -118,13 +118,13 @@ def test_default_model_is_gemini_37_flash():
         mock_get_client.return_value = mock_client
 
         res = generate_executive_synthesis({}, [])
-        assert res['generatedBy'] == 'gemini-3.7-flash'
+        assert res['generatedBy'] == 'gemini-3.5-flash'
         call_kwargs = mock_client.models.generate_content.call_args.kwargs
-        assert call_kwargs['model'] == 'gemini-3.7-flash'
+        assert call_kwargs['model'] == 'gemini-3.5-flash'
 
 
-def test_inspect_report_defaults_to_gemini_37_flash():
-    """Verify inspect_report_with_gemini defaults to gemini-3.7-flash."""
+def test_inspect_report_defaults_to_gemini_35_flash():
+    """Verify inspect_report_with_gemini defaults to gemini-3.5-flash."""
     mock_inspection_response = MagicMock()
     mock_inspection_response.text = json.dumps({
         'week_number': 30,
@@ -141,7 +141,73 @@ def test_inspect_report_defaults_to_gemini_37_flash():
 
         res = inspect_report_with_gemini(b'%PDF-mock', 'Monaro_Week_30.pdf')
         assert res is not None
-        assert res['inspectedBy'] == 'gemini-3.7-flash'
+        assert res['inspectedBy'] == 'gemini-3.5-flash'
         assert res['week_number'] == 30
         call_kwargs = mock_client.models.generate_content.call_args.kwargs
-        assert call_kwargs['model'] == 'gemini-3.7-flash'
+        assert call_kwargs['model'] == 'gemini-3.5-flash'
+
+
+def test_gemini_model_environment_override(monkeypatch):
+    """Verify GEMINI_MODEL environment variable dynamically overrides the default model across all functions."""
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-custom-enterprise-model")
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        'synthesis': {'executive': 'Exec.', 'technical': 'Tech.', 'governance': 'Gov.'},
+        'top3': [],
+        'sleeperOutlier': {'ref': '1.1', 'title': 'S', 'warning': 'W'}
+    })
+
+    with patch('scripts.gemini_generator.get_gemini_client', return_value=mock_client):
+        res = generate_executive_synthesis({}, [])
+        assert res['generatedBy'] == "gemini-custom-enterprise-model"
+        assert mock_client.models.generate_content.call_args.kwargs['model'] == "gemini-custom-enterprise-model"
+
+
+def test_gemini_model_explicit_override():
+    """Verify explicit model argument takes precedence over environment variable."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        'synthesis': {'executive': 'Exec.', 'technical': 'Tech.', 'governance': 'Gov.'},
+        'top3': [],
+        'sleeperOutlier': {'ref': '1.1', 'title': 'S', 'warning': 'W'}
+    })
+
+    with patch('scripts.gemini_generator.get_gemini_client', return_value=mock_client):
+        res = generate_executive_synthesis({}, [], model="gemini-explicit-override")
+        assert res['generatedBy'] == "gemini-explicit-override"
+        assert mock_client.models.generate_content.call_args.kwargs['model'] == "gemini-explicit-override"
+
+
+def test_gemini_region_resolution(monkeypatch):
+    """Verify get_default_gemini_region resolves CLI override, env var, and default 'us'."""
+    from scripts.gemini_generator import get_default_gemini_region
+
+    # 1. Default when unset
+    monkeypatch.delenv("GEMINI_REGION", raising=False)
+    monkeypatch.delenv("GCP_REGION", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
+    assert get_default_gemini_region() == "us"
+
+    # 2. Environment variable override
+    monkeypatch.setenv("GEMINI_REGION", "australia-southeast1")
+    assert get_default_gemini_region() == "australia-southeast1"
+
+    # 3. Explicit argument override
+    assert get_default_gemini_region("global") == "global"
+
+
+def test_multi_region_us_client_initialization(monkeypatch):
+    """Verify get_gemini_client configures .rep. hostname for multi-region endpoints."""
+    from scripts.gemini_generator import get_gemini_client
+    monkeypatch.setenv("GCP_PROJECT_ID", "monaro-risk-dev")
+    monkeypatch.setenv("GEMINI_REGION", "us")
+
+    with patch('scripts.gemini_generator.genai.Client') as mock_genai_client:
+        get_gemini_client()
+        mock_genai_client.assert_called_once()
+        kwargs = mock_genai_client.call_args.kwargs
+        assert kwargs['vertexai'] is True
+        assert kwargs['location'] == 'us'
+        assert kwargs['http_options'].base_url == "https://aiplatform.us.rep.googleapis.com"
+

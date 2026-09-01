@@ -39,6 +39,8 @@ def get_default_project():
                     first_proj = val.split(',')[0].strip()
                     if first_proj:
                         return first_proj
+    if os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')) or os.path.exists(os.path.join(DIRECTORY, 'data', 'f-dse')):
+        return 'monaro'
     return 'sample'
 
 def get_project_dir(project_slug=''):
@@ -581,9 +583,10 @@ def get_startup_banner(port=PORT):
         '=' * 64,
         f'🚀 Project Dash — Decoupled Risk & Delivery Platform ({default_proj})',
         '=' * 64,
-        f'  👉 Dashboard (Local):        {urls[0]}/?project=sample',
-        f'  👉 Dashboard (Loopback):     {urls[1]}/?project=sample',
+        f'  👉 Dashboard (Local):        {urls[0]}/',
+        f'  👉 Dashboard (Loopback):     {urls[1]}/',
         f'  👉 Dashboard (Monaro):       {urls[0]}/?project=monaro',
+        f'  👉 Dashboard (Sample):       {urls[0]}/?project=sample',
         f'  📡 REST Status Endpoint:     http://localhost:{port}/api/status?project={default_proj}',
         f'  📡 REST Sync Endpoint:       http://localhost:{port}/api/sync?project={default_proj}',
         '=' * 64,
