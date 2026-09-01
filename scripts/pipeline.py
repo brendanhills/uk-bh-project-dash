@@ -364,6 +364,14 @@ def ingest_report_file(
     all_weeks = existing_weeks + [meta['week_number']]
     is_latest = meta['week_number'] >= max(all_weeks) if all_weeks else True
 
+    default_kpis = {
+        'commercial': '🟢 ON TRACK',
+        'ibr': '🟡 DUE AUG 2026 (90%)',
+        'ato': '🟢 GREEN',
+        'escalations': f"🔴 {metrics.get('eventuated_issues_count', 0)} ITEMS"
+    }
+    default_overall_status = "🟡 AMBER (Stable)" if metrics.get('eventuated_issues_count', 0) > 0 else "🟢 ON TRACK"
+
     snapshot_entry = {
         'date': report_date,
         'week': week_key,
@@ -371,6 +379,8 @@ def ingest_report_file(
         'weekNumber': meta['week_number'],
         'isLatest': is_latest,
         'isCurrent': is_latest,
+        'overallStatus': default_overall_status,
+        'kpis': default_kpis,
         'metrics': metrics,
         'synthesis': synthesis.get('synthesis', {}),
         'executiveSummary': synthesis.get('synthesis', {}),
@@ -394,8 +404,13 @@ def ingest_report_file(
                     s['isLatest'] = False
                     s['isCurrent'] = False
         existing_entry = snapshots['snapshots'].get(week_slot, {})
-        if isinstance(existing_entry, dict) and 'plans' in existing_entry:
-            snapshot_entry['plans'] = existing_entry['plans']
+        if isinstance(existing_entry, dict):
+            if 'plans' in existing_entry:
+                snapshot_entry['plans'] = existing_entry['plans']
+            if 'kpis' in existing_entry:
+                snapshot_entry['kpis'] = existing_entry['kpis']
+            if 'overallStatus' in existing_entry:
+                snapshot_entry['overallStatus'] = existing_entry['overallStatus']
         snapshots['snapshots'][week_slot] = snapshot_entry
         snapshots['lastSynced'] = datetime.now().isoformat()
     else:

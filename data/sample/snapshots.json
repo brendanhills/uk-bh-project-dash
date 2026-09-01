@@ -683,6 +683,13 @@
       "weekNumber": 28,
       "isLatest": true,
       "isCurrent": true,
+      "overallStatus": "🟢 ON TRACK",
+      "kpis": {
+        "commercial": "🟢 ON TRACK",
+        "ibr": "🟢 DUE AUG 2026 (95%)",
+        "ato": "🟢 GREEN",
+        "escalations": "🟢 0 ITEMS"
+      },
       "metrics": {
         "total_risks": 28,
         "inherent_avg_score": 14.6,
