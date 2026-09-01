@@ -25,7 +25,13 @@ steps:
     args:
       - '-c'
       - |
-        BUILD_TAG="${TAG_NAME:-$BRANCH_NAME}"
+        BUILD_TAG="$TAG_NAME"
+        if [ -z "$$BUILD_TAG" ]; then
+          BUILD_TAG="$BRANCH_NAME"
+        fi
+        if [ -z "$$BUILD_TAG" ]; then
+          BUILD_TAG="dev"
+        fi
         BUILD_TIME=$(date -u +'%Y-%m-%d %H:%M UTC')
         cat << BUILD_JSON > data/build_info.json
         {
@@ -36,6 +42,8 @@ steps:
           "service": "${_SERVICE_NAME}"
         }
         BUILD_JSON
+        echo "=== Generated data/build_info.json ==="
+        cat data/build_info.json
 
   # 4. Build container image using custom Dockerfile
   - name: 'gcr.io/cloud-builders/docker'
@@ -78,6 +86,10 @@ steps:
       - '--iap'
       - '--port'
       - '8080'
+      - '--update-labels'
+      - 'commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID'
+      - '--set-env-vars'
+      - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION}'
 
   # 7. Enforce IAM Invoker and IAP Group Policies via CLI
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
