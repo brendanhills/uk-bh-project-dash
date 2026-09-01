@@ -149,9 +149,9 @@
             const latestWeek = latestSnap.week || latestSnap.weekLabel || 'Latest';
             if (liveBadgeEl) liveBadgeEl.innerText = `Live (${latestWeek})`;
 
-            // Update subtle footer build info & timestamp
+            // Update subtle footer build info & timestamp (cache-busted)
             try {
-                fetch('data/build_info.json').then(r => r.ok ? r.json() : null).then(bInfo => {
+                fetch(`data/build_info.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(bInfo => {
                     if (bInfo) {
                         const tagEl = document.getElementById('footerBuildTagVal');
                         const dateEl = document.getElementById('footerBuildDateVal');

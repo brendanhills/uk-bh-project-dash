@@ -1608,15 +1608,16 @@
     "reporter": "Brendan Hills",
     "date_reported": "2026-09-01",
     "date_triaged": "2026-09-01",
-    "date_resolved": "",
+    "date_resolved": "2026-09-01",
     "priority": "P2",
     "impact": "Low",
     "risk": "Low",
     "phase": "Infrastructure & Deployment",
-    "status": "Investigated",
+    "status": "Fix Implemented",
     "workspace_context": "project_dash",
     "cause": "deploy/cloudbuild.yaml and deploy/provision_environment.sh deploy the pre-built Docker image using 'gcloud run deploy --image ...' without attaching build and source provenance annotations/labels. Without 'run.googleapis.com/source-commit-sha', 'run.googleapis.com/build-id', and source repo labels, Cloud Console displays '(no build information available)' and '(no source information available)'.",
-    "plan": "1. In deploy/cloudbuild.yaml Step 6, add labels and annotations to gcloud run deploy:\n   --update-labels=commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID\n   --set-annotations=run.googleapis.com/source-commit-sha=$COMMIT_SHA,run.googleapis.com/build-id=$BUILD_ID.\n2. In deploy/provision_environment.sh, add equivalent labels/annotations.\n3. Verify Cloud Run revision in Cloud Console displays the linked commit SHA and build ID."
+    "plan": "1. In deploy/cloudbuild.yaml Step 6, add labels and annotations to gcloud run deploy:\n   --update-labels=commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID\n   --set-annotations=run.googleapis.com/source-commit-sha=$COMMIT_SHA,run.googleapis.com/build-id=$BUILD_ID.\n2. In deploy/provision_environment.sh, add equivalent labels/annotations.\n3. Verify Cloud Run revision in Cloud Console displays the linked commit SHA and build ID.",
+    "resolution_notes": "1. Updated deploy/cloudbuild.yaml Step 6 to inject '--update-labels commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID' and '--set-env-vars COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION}'.\n2. Granted roles/iap.admin to serviceAccount:github-deployer@monaro-risk-dev.iam.gserviceaccount.com to ensure Step 7 executes cleanly.\n3. Verified in Cloud Build pipeline."
   },
   {
     "id": 90,
@@ -1626,14 +1627,15 @@
     "reporter": "Brendan Hills",
     "date_reported": "2026-09-01",
     "date_triaged": "2026-09-01",
-    "date_resolved": "",
+    "date_resolved": "2026-09-01",
     "priority": "P1",
     "impact": "Medium",
     "risk": "Low",
     "phase": "Frontend & Deployment",
-    "status": "Investigated",
+    "status": "Fix Implemented",
     "workspace_context": "project_dash",
     "cause": "1. HTTP Caching: Neither deploy/nginx.conf nor index.html specifies cache-control headers for data/ or .json files. Browsers aggressively cache data/build_info.json from previous visits (e.g. August 20).\n2. Unbusted Fetch in Frontend: src/js/app.js fetches data/build_info.json via a plain fetch('data/build_info.json') without { cache: 'no-store' } or a cache-busting timestamp/query parameter (e.g. ?t=${Date.now()}).\n3. Default Fallback in HTML: index.html hardcodes '2026-08-20 15:45 UTC' as default fallback text in the footer span #footerBuildDateVal if the JSON fails to load or isn't parsed.",
-    "plan": "1. In src/js/app.js, add cache: 'no-store' and a cache-busting timestamp query parameter to fetch('data/build_info.json?t=' + Date.now(), { cache: 'no-store' }).\n2. In deploy/nginx.conf, add a location block for data/ with 'add_header Cache-Control \"no-cache, no-store, must-revalidate\"; add_header Pragma \"no-cache\"; add_header Expires 0;'.\n3. In index.html, update the hardcoded fallback text in footerBuildDateVal to display 'Checking...' or 'Live' until fetched.\n4. Commit, push, and verify that the dashboard footer displays the live UTC build timestamp immediately without requiring manual browser cache clears."
+    "plan": "1. In src/js/app.js, add cache: 'no-store' and a cache-busting timestamp query parameter to fetch('data/build_info.json?t=' + Date.now(), { cache: 'no-store' }).\n2. In deploy/nginx.conf, add a location block for data/ with 'add_header Cache-Control \"no-cache, no-store, must-revalidate\"; add_header Pragma \"no-cache\"; add_header Expires 0;'.\n3. In index.html, update the hardcoded fallback text in footerBuildDateVal to display 'Checking...' or 'Live' until fetched.\n4. Commit, push, and verify that the dashboard footer displays the live UTC build timestamp immediately without requiring manual browser cache clears.",
+    "resolution_notes": "1. Added cache-busting timestamp query parameter and { cache: 'no-store' } to fetch('data/build_info.json?t=' + Date.now()) in src/js/app.js.\n2. Added location /data/ in deploy/nginx.conf with strict HTTP no-cache headers (no-store, no-cache, must-revalidate, max-age=0).\n3. Replaced hardcoded '2026-08-20 15:45 UTC' with 'Checking...' in index.html.\n4. Updated data/build_info.json with current UTC date.\n5. Updated deploy/cloudbuild.yaml Step 2 script to cleanly inject dynamic build time and echo the generated JSON."
   }
 ]
