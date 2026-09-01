@@ -21,6 +21,7 @@ COPY prompts/ ./prompts/
 COPY scripts/ ./scripts/
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH="/app"
 ENV DEFAULT_PROJECTS="monaro"
 
 # Entrypoint runs the turnkey standalone Drive and Sheets sync script

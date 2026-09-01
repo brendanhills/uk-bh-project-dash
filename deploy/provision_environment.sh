@@ -15,20 +15,26 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_TARGET="dev"
 PROJECT_ID=""
 REGION="australia-southeast1"
+APIS_ONLY=false
 
 usage() {
-  echo "Usage: $0 [options]"
+  echo "Usage: $0 [options] [dev|prod]"
   echo ""
   echo "Options:"
   echo "  --env <dev|prod>        Target environment preset (default: dev)"
   echo "  --project <project-id>  Override GCP Project ID explicitly"
   echo "  --region <region>       GCP Region (default: australia-southeast1)"
+  echo "  --apis-only             Only enable the 16 required GCP APIs and exit"
   echo "  --help, -h              Show this help message"
   exit 0
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    dev|prod)
+      ENV_TARGET="$1"
+      shift
+      ;;
     --env)
       ENV_TARGET="$2"
       shift 2
@@ -40,6 +46,10 @@ while [[ $# -gt 0 ]]; do
     --region)
       REGION="$2"
       shift 2
+      ;;
+    --apis-only)
+      APIS_ONLY=true
+      shift
       ;;
     --help|-h)
       usage
@@ -114,9 +124,17 @@ gcloud services enable \
   cloudtasks.googleapis.com \
   cloudscheduler.googleapis.com \
   iam.googleapis.com \
-  --project="${PROJECT_ID}"
+  --project="${PROJECT_ID}" --quiet
 echo "✅ All 16 GCP APIs successfully enabled."
 echo ""
+
+if [[ "${APIS_ONLY}" == "true" ]]; then
+  echo "=============================================================================="
+  echo "🎉 --apis-only specified: All 16 APIs enabled for ${PROJECT_ID}. Exiting."
+  echo "=============================================================================="
+  exit 0
+fi
+
 
 # 2. Create Deployer Service Account
 echo "=== 2. Creating Dedicated Service Account (${SA_NAME}) ==="
@@ -390,7 +408,31 @@ for USR in "brendanhills@google.com" "allins@google.com"; do
   echo "  ✓ Granted run.developer to user:${USR} on ${SYNC_JOB_NAME}"
 done
 
-echo "✅ Scheduled Ingestion Job and Cloud Tasks Queue configured."
+gcloud run jobs add-iam-policy-binding "${SYNC_JOB_NAME}" \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/run.invoker" >/dev/null 2>&1 || true
+echo "  ✓ Granted run.invoker to serviceAccount:${SA_EMAIL} on ${SYNC_JOB_NAME}"
+
+# Create or Update Cloud Scheduler Job
+SCHED_JOB_NAME="monaro-sync-schedule"
+if ! gcloud scheduler jobs describe "${SCHED_JOB_NAME}" --location="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  gcloud scheduler jobs create http "${SCHED_JOB_NAME}" \
+    --location="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --schedule="0 17 * * 5" \
+    --time-zone="Australia/Sydney" \
+    --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${SYNC_JOB_NAME}:run" \
+    --http-method="POST" \
+    --oauth-service-account-email="${SA_EMAIL}" \
+    --description="Weekly automated ingestion sync for Project Monaro" || true
+  echo "  ✓ Created Cloud Scheduler job: ${SCHED_JOB_NAME}"
+else
+  echo "  ✓ Cloud Scheduler job already exists: ${SCHED_JOB_NAME}"
+fi
+
+echo "✅ Scheduled Ingestion Job, Cloud Tasks Queue, and Cloud Scheduler configured."
 echo ""
 
 echo "=============================================================================="
