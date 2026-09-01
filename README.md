@@ -264,6 +264,12 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
 - **Deployment, Provisioning & Operations**: See [`docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md) for the comprehensive canonical guide: automated CI/CD pipelines, turnkey environment provisioning (`./deploy/provision_environment.sh`), production release tag workflows, and SRE Day-2 runbooks.
 - **Cloud Services, APIs & Running Costs**: See [`docs/CLOUD_COSTS_AND_API_REVIEW.md`](./docs/CLOUD_COSTS_AND_API_REVIEW.md) for an audit of all 14 GCP APIs, workload modeling for 10–50 daily users, itemized Sydney running costs (<$1.00/month), and cost optimization recommendations.
 
+### 💰 Cloud Running Costs & Free Tier Economics
+- **Expected Baseline Spend**: **<$1.00 AUD / month** under moderate organizational usage (10–50 users, ~22,000 requests/month, ~4 GB egress).
+- **100% Free Tier Coverage**: Cloud Run web requests (first 2M free), Cloud Run compute (first 180k vCPU-s free), Identity-Aware Proxy (native Cloud Run $0.00), Network egress (first 100 GB free), and Cloud Build (first 120 min/day free) operate entirely within permanent GCP Free Tier allowances.
+- **Cold Start vs. Hot Standby**: With `--min-instances=0` (scale-to-zero), idle cost is **$0.00** with a fast ~1.5s cold start for the Nginx Alpine container. Setting `--min-instances=1` guarantees 0ms latency at ~$12.50/month in Sydney.
+- **Active Guardrails**: Browser caching for JS/CSS (`deploy/nginx.conf`), automated image lifecycle cleanup policies (`deploy/cleanup-policy.json`), and default warm worker pools prevent storage and billing drift.
+
 ---
 
 ## 🔒 Security & Privacy

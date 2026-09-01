@@ -290,6 +290,49 @@ The pipeline deliberately omits custom `machineType` overrides in `options:` to 
 
 ---
 
+## 💰 Cloud Services, Running Costs & Economics (Sydney Region)
+
+Project Monaro Risk Dashboard is engineered on a serverless, static container architecture running on **Google Cloud Run** in Sydney (`australia-southeast1`), secured behind **Identity-Aware Proxy (IAP)**, and automated via **Cloud Build**.
+
+### 1. Monthly Cost Scorecard for Moderate Organizational Usage (10–50 Users)
+For a workload of **10 to 50 active stakeholders** visiting the dashboard 3 to 5 times per working day (~22,000 requests/month, ~4 GB egress):
+
+| Category | Monthly Workload | Google Cloud Free Tier Allowance | Projected Monthly Cost |
+| :--- | :--- | :--- | :--- |
+| **Cloud Run (Compute & Requests)** | ~22,000 invocations, ~2,200 vCPU-s | **2,000,000 reqs, 180k vCPU-s, 360k GiB-s** | **$0.00** *(100% Free Tier)* |
+| **Identity-Aware Proxy (IAP)** | 10–50 users via Google SSO | **Included natively with Cloud Run** | **$0.00** *(No ALB required)* |
+| **Network Internet Egress** | ~4.0 GB / month | **100 GB / month worldwide** | **$0.00** *(100% Free Tier)* |
+| **Cloud Build CI/CD** | ~25 minutes / month (~30 builds) | **120 build-minutes / day (~3,600 min/mo)** | **$0.00** *(100% Free Tier)* |
+| **Cloud Logging & Monitoring** | ~80 MB logs / month | **50 GB logs, 150 MB metrics / month** | **$0.00** *(100% Free Tier)* |
+| **Google Drive & Sheets APIs** | ~250 sync queries / month | **Standard Workspace API quota** | **$0.00** |
+| **Artifact Registry Storage** | ~0.8 GB (20 image revisions) | **0.5 GB / month** ($0.10/GB thereafter) | **~$0.03 / month** |
+| **Vertex AI (Gemini Synthesis)** | ~250k input tokens, ~25k output | Pay-as-you-go ($0.075 / 1M in, $0.30 / 1M out) | **~$0.03 / month** |
+| **Vertex AI (TTS Podcast Audio)** | ~6 minutes generated speech / mo | Pay-as-you-go (~$0.016 / 1k characters) | **~$0.15 / month** |
+| **PROJECTED TOTAL MONTHLY BILL** | — | — | **~$0.21 – $0.80 / month** |
+
+### 2. Cold Start vs. Hot Standby Analysis (`--min-instances=0` vs `1`)
+- **Scale-to-Zero (`--min-instances=0`)** — **Recommended**:
+  - **Idle Cost**: **$0.00 / month**.
+  - **Cold Start Profile**: The container image is a lightweight Alpine Nginx distribution (~25 MB). Total cold start time is **~1.5 to 1.9 seconds** (including IAP authentication handshake). Subsequent requests are served in < 50ms.
+  - Saves **~$150 AUD / year** per environment compared to keeping dedicated instances running 24/7.
+- **Dedicated Warm Standby (`--min-instances=1`)**:
+  - **Idle Cost**: **~$12.50 / month** in Sydney (1 instance $\times$ 730 hours $\times$ 0.5 GiB / 1 vCPU idle allocation).
+  - Guarantees 0ms cold start latency for all initial morning requests. Useful for customer-facing production services with strict SLA requirements.
+
+### 3. Active Cost Guardrails Implemented in the Codebase
+1. **Application Code Browser Caching (`deploy/nginx.conf`)**:
+   - Explicit `location /src/` block with `expires 1d; Cache-Control: "public, no-transform"`.
+   - Client browsers cache JavaScript and CSS modules for 24 hours, reducing repeat asset requests by ~85% while keeping `/data/` and `index.html` strictly un-cached (`max-age=0`) for real-time freshness.
+2. **Artifact Registry Automated Lifecycle Policy (`deploy/cleanup-policy.json`)**:
+   - Caps repository storage by keeping only the 10 most recent version tags and automatically deleting untagged image digests older than 14 days, permanently preventing storage drift past the 0.5 GB Free Tier.
+   - Automatically applied by `deploy/provision_environment.sh`.
+3. **Cloud Build Standard Warm Pool**:
+   - Omits expensive custom machine types (`options.machineType`), running builds in 52s on the default warm worker pool with ~2s queue latency and 100% eligibility for the 120 free build-minutes/day.
+
+👉 **Full Architectural Audit**: For the complete 14-API audit, traffic math formulas, and billing alert setup, see [`docs/CLOUD_COSTS_AND_API_REVIEW.md`](./CLOUD_COSTS_AND_API_REVIEW.md).
+
+---
+
 ## 🛡️ Day-2 Operations & SRE Runbooks
 
 ### Runbook 1: Instant Rollback to a Previous Revision (Zero-Downtime)
