@@ -221,3 +221,12 @@ def test_bug_98_check_for_updates_feedback(full_html: str):
     assert "Checking for updates..." in full_html
     assert "Already up to date: No new reports found" in full_html
     assert "Updated: Ingested" in full_html
+
+
+def test_bug_97_podcast_playback_defensive_execution(full_html: str):
+    """Bug #97 & #98 follow-up: Ensure podcast playback resolves dynamically and activateTimeMachine tolerates missing kpis."""
+    assert 'preload="metadata"' in full_html
+    assert 'snap.kpis || {}' in full_html
+    assert 'resolvePodcastAudioSrc(activeKey, snap)' in full_html
+    assert 'nativePodcastSourceMp3' in full_html
+    assert 'audioEl.preload = \'metadata\'' in full_html
