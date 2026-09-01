@@ -105,47 +105,107 @@ Project Dash separates **data ingestion** from **web presentation** for security
   - The client issues a non-cached fetch: `fetch('data/monaro/snapshots.json?t=' + Date.now(), { cache: 'no-store' })`.
   - The client updates in-memory snapshots (`TIME_MACHINE_SNAPSHOTS`) and automatically re-renders the 5×5 heatmaps, KPI metrics, and burndown charts dynamically.
 
-### 3. How to Manage the Scheduled Task
-Ingestion is managed as an automated Google Cloud infrastructure pipeline:
+### 3. How to Manage the Scheduled Task & Trigger Updates
+
+Ingestion is managed as an automated, serverless Google Cloud pipeline in Sydney (`australia-southeast1`):
 
 - **Cloud Run Job (`monaro-risk-sync-job`)**:
-  Packaged via `deploy/Dockerfile.sync` and runs in `australia-southeast1` using the deployer service account.
+  Packaged via `deploy/Dockerfile.sync` and runs in `australia-southeast1` using `github-deployer@monaro-risk-dev.iam.gserviceaccount.com`.
 - **Cloud Scheduler (`monaro-sync-schedule`)**:
-  Configured to trigger the sync pipeline on a regular recurring cadence (e.g. every Friday at 5:00 PM Sydney time `0 17 * * 5`).
+  Configured to trigger the sync pipeline on a regular recurring cadence (every Friday at 5:00 PM Sydney time `0 17 * * 5`).
 - **Cloud Tasks Queue (`monaro-sync-queue`)**:
   Enforces a concurrency limit of `1` and retry policies to prevent duplicate simultaneous executions.
 
-#### Managing the Schedule with `gcloud`
+---
+
+#### 👁️ Viewing the Scheduled Task in the Cloud Console
+You can inspect the scheduled pipeline across three console dashboards:
+
+| Component | Console Navigation | Direct Link (Pantheon / GCP) |
+| :--- | :--- | :--- |
+| **Cloud Scheduler** | **Cloud Scheduler > Jobs** | [Pantheon Cloud Scheduler](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev) • [Public Console](https://console.cloud.google.com/cloudscheduler?project=monaro-risk-dev) |
+| **Cloud Run Jobs** | **Cloud Run > Jobs** | [Pantheon Cloud Run Jobs](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev) • [Public Console](https://console.cloud.google.com/run/jobs?project=monaro-risk-dev) |
+| **Cloud Tasks** | **Cloud Tasks > Queues** | [Pantheon Cloud Tasks](https://pantheon.corp.google.com/cloudtasks?project=monaro-risk-dev) • [Public Console](https://console.cloud.google.com/cloudtasks?project=monaro-risk-dev) |
+| **Live Job Logs** | **Logging > Logs Explorer** | [Pantheon Logs Explorer](https://pantheon.corp.google.com/logs/query;query=resource.type%3D%22cloud_run_job%22%20AND%20resource.labels.job_name%3D%22monaro-risk-sync-job%22?project=monaro-risk-dev) |
+
+---
+
+#### ⚡ How to Trigger an Update Manually (On-Demand)
+
+You can trigger an update out-of-cycle at any time using either the Cloud Console UI or the terminal:
+
+##### Method 1: Execute Directly from Cloud Run Jobs Console (Recommended for 1-Click Run & Live Logs)
+1. Open the **[Cloud Run Jobs Console](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev)**.
+2. Click on **`monaro-risk-sync-job`** in the list.
+3. In the top action bar, click the **`▶ Execute`** button.
+   - *Tip*: Clicking the dropdown arrow next to "Execute" allows you to select **"Execute with overrides"** if you want to temporarily test with custom environment variables (e.g. `DEFAULT_PROJECTS=sample` or custom log levels).
+4. The console automatically redirects to the **Executions** tab, displaying the live execution status (`Pending` $\rightarrow$ `Running` $\rightarrow$ `Succeeded`) and real-time streaming container logs.
+
+##### Method 2: "Force Run" from Cloud Scheduler Console (Tests Full Cron Trigger)
+1. Open the **[Cloud Scheduler Console](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev)**.
+2. Locate the row for **`monaro-sync-schedule`**.
+3. Click the three vertical dots (**`⋮`**) on the far right and select **`Force run`**.
+4. The job status will update to `Success` and will dispatch the HTTP POST request to Cloud Run, spawning a new worker execution asynchronously.
+
+##### Method 3: Trigger via `gcloud` CLI in Terminal
 ```bash
-# View active schedule
-gcloud scheduler jobs describe monaro-sync-schedule --location=australia-southeast1 --project=monaro-risk-dev
-
-# Update schedule frequency (e.g. every Friday at 5:00 PM AEST)
-gcloud scheduler jobs update http monaro-sync-schedule \
-  --location=australia-southeast1 \
+# Option A: Execute the Cloud Run Job directly and stream output to your terminal:
+gcloud run jobs execute monaro-risk-sync-job \
+  --region=australia-southeast1 \
   --project=monaro-risk-dev \
-  --schedule="0 17 * * 5" \
-  --time-zone="Australia/Sydney"
+  --wait
 
-# Pause the scheduled task (e.g. during change freeze)
-gcloud scheduler jobs pause monaro-sync-schedule --location=australia-southeast1 --project=monaro-risk-dev
-
-# Resume the scheduled task
-gcloud scheduler jobs resume monaro-sync-schedule --location=australia-southeast1 --project=monaro-risk-dev
+# Option B: Fire the Cloud Scheduler cron trigger:
+gcloud scheduler jobs run monaro-sync-schedule \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev
 ```
 
-#### On-Demand Triggering (Dev & Admin)
-To force immediate synchronization out-of-cycle:
-1. **Google Cloud Console (1-Click)**:
-   - Navigate to [Cloud Run Jobs](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev), select `monaro-risk-sync-job`, and click **Execute**.
-   - Or navigate to [Cloud Scheduler](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev) and click **Force Run**.
-2. **CLI Dispatch Tool (`scripts/trigger_sync.py`)**:
-   ```bash
-   # Trigger remote Cloud Run Job in GCP:
-   python3 scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
+##### Method 4: Ingestion CLI Scripts
+```bash
+# Trigger remote Cloud Run Job in GCP via Python helper:
+python3 scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
 
-   # Run local standalone ingestion:
-   python3 scripts/trigger_sync.py --mode=local
+# Run local standalone ingestion using local ADC credentials:
+python3 scripts/sync_drive.py --projects monaro
+```
+
+---
+
+#### 🔧 How to Update the Process When Needed
+
+1. **Updating Python Ingestion Logic or Prompts**:
+   - Edit [`scripts/sync_drive.py`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/scripts/sync_drive.py) or [`scripts/gemini_generator.py`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/scripts/gemini_generator.py).
+   - Verify locally: `pytest tests/test_sync_drive.py`.
+   - Rebuild and push the sync container to Artifact Registry:
+     ```bash
+     gcloud builds submit --config=deploy/cloudbuild_sync.yaml --project=monaro-risk-dev
+     ```
+   - Point the Cloud Run Job to the new image:
+     ```bash
+     gcloud run jobs update monaro-risk-sync-job \
+       --image=australia-southeast1-docker.pkg.dev/monaro-risk-dev/cloud-run-source-deploy/monaro-risk-sync:latest \
+       --region=australia-southeast1 \
+       --project=monaro-risk-dev
+     ```
+
+2. **Changing the Schedule Timing**:
+   ```bash
+   # Change cron schedule (e.g. from Friday 5 PM to Monday 9 AM Sydney time):
+   gcloud scheduler jobs update http monaro-sync-schedule \
+     --location=australia-southeast1 \
+     --project=monaro-risk-dev \
+     --schedule="0 9 * * 1" \
+     --time-zone="Australia/Sydney"
+   ```
+
+3. **Pausing or Resuming the Scheduled Task**:
+   ```bash
+   # Pause (e.g. during a program change freeze):
+   gcloud scheduler jobs pause monaro-sync-schedule --location=australia-southeast1 --project=monaro-risk-dev
+
+   # Resume:
+   gcloud scheduler jobs resume monaro-sync-schedule --location=australia-southeast1 --project=monaro-risk-dev
    ```
 
 
