@@ -127,7 +127,7 @@ def test_parse_report_metadata_gemini_multimodal(mock_inspect: MagicMock, tmp_pa
         'report_date': '28 Aug 2026',
         'title': 'Monaro Executive Risk Review',
         'summary': 'Week 31 summary pack',
-        'inspectedBy': 'gemini-3.5-flash'
+        'inspectedBy': 'gemini-3.7-flash'
     }
 
     dummy_pdf = tmp_path / "test_report.pdf"
@@ -137,7 +137,7 @@ def test_parse_report_metadata_gemini_multimodal(mock_inspect: MagicMock, tmp_pa
     assert meta['week_number'] == 31
     assert meta['week_label'] == 'Week 31'
     assert meta['report_date'] == '28 Aug 2026'
-    assert meta['inspectedBy'] == 'gemini-3.5-flash'
+    assert meta['inspectedBy'] == 'gemini-3.7-flash'
     mock_inspect.assert_called_once()
 
 

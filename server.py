@@ -65,55 +65,19 @@ def parse_request_params(query_or_params):
         return {k: v[0] if len(v) == 1 else v for k, v in q.items()}
     return {}
 
-# Default fallback Drive folder reports
-DEFAULT_DRIVE_REPORTS = [
-    {"id": "1_monaro_drive_w29", "week": "Week 29", "date": "21 Aug 2026", "name": "Weekly Reporting - Week 29 - 21 Aug 2026.pdf", "url": "https://drive.google.com/file/d/1_monaro_drive_w29/view"},
-    {"id": "1_monaro_drive_w28", "week": "Week 28", "date": "14 Aug 2026", "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf", "url": "https://drive.google.com/file/d/1_monaro_drive_w28/view"},
-    {"id": "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu", "week": "Week 27", "date": "07 Aug 2026", "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf", "url": "https://drive.google.com/file/d/1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu/view"},
-    {"id": "1UlQmROLEbOroFI8neyne3qOUm4wEgCyC", "week": "Week 26", "date": "31 Jul 2026", "name": "Weekly Reporting - Week 26 - 31 Jul 2026.pdf", "url": "https://drive.google.com/file/d/1UlQmROLEbOroFI8neyne3qOUm4wEgCyC/view"},
-    {"id": "13ThXt0QIpS2OFg4NEewfx8ggoD2CItlz", "week": "Week 25", "date": "24 Jul 2026", "name": "Weekly Reporting - Week 25 - 24 Jul 2026.pdf", "url": "https://drive.google.com/file/d/13ThXt0QIpS2OFg4NEewfx8ggoD2CItlz/view"},
-    {"id": "100xnsVUDdlKVzxTgK26_lmjSYYUWnUhK", "week": "Week 24", "date": "17 Jul 2026", "name": "Weekly Reporting - Week 24 - 17 Jul 2026.pdf", "url": "https://drive.google.com/file/d/100xnsVUDdlKVzxTgK26_lmjSYYUWnUhK/view"},
-    {"id": "1YRJuXlIIkYRYEsU41K_nuO9iIwrS9k0e", "week": "Week 23", "date": "10 Jul 2026", "name": "Weekly Reporting - Week 23 - 10 Jul 2026.pdf", "url": "https://drive.google.com/file/d/1YRJuXlIIkYRYEsU41K_nuO9iIwrS9k0e/view"},
-    {"id": "1kQiDQPF9DCUZ0vvbivToMoJWeZJoB0eREFnywRxpCHA", "week": "Week 22", "date": "03 Jul 2026", "name": "Weekly Reporting - Week 22 - 03 Jul 2026 (Google Doc)", "url": "https://docs.google.com/document/d/1kQiDQPF9DCUZ0vvbivToMoJWeZJoB0eREFnywRxpCHA/edit"}
+from scripts.sync_drive import query_drive_folder_live
+
+# Known ingested reports referenced in historical audits
+KNOWN_DRIVE_REPORTS = [
+    {"id": "1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu", "week": "Week 27", "date": "07 Aug 2026", "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf", "url": "https://drive.google.com/file/d/1HBfI9itx3BER4IRnH9eavBgAsrDGHnmu/view"}
 ]
 
-KNOWN_DRIVE_REPORTS = DEFAULT_DRIVE_REPORTS
-
 def query_live_drive_folder(folder_id: str) -> List[Dict[str, Any]]:
-    """Queries Google Drive API for files in the specified folderId using ADC credentials."""
+    """Queries Google Drive folder using scripts.sync_drive live discovery."""
     if not folder_id or str(folder_id).startswith('sample-'):
         return []
     try:
-        import google.auth
-        from googleapiclient.discovery import build
-        credentials, _ = google.auth.default(scopes=[
-            'https://www.googleapis.com/auth/drive.readonly',
-            'https://www.googleapis.com/auth/cloud-platform'
-        ])
-        service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
-        query = f"'{folder_id}' in parents and trashed = false"
-        results = service.files().list(
-            q=query,
-            fields="files(id, name, mimeType, webViewLink, createdTime)",
-            orderBy="name desc"
-        ).execute()
-        files = results.get('files', [])
-        drive_reports = []
-        for f in files:
-            name = f.get('name', '')
-            if name.endswith(('.pdf', '.docx', '.doc', '.gdoc', '.pptx')) or 'Reporting' in name or 'Week' in name:
-                w_match = re.search(r'week[\s_-]*(\d+)', name, re.IGNORECASE) or re.search(r'\bw(\d+)\b', name, re.IGNORECASE)
-                w_label = f"Week {w_match.group(1)}" if w_match else "Report"
-                date_match = re.search(r'(\d{1,2})[\s_-]+([A-Za-z]{3,9})[\s_-]+(\d{4})', name)
-                rep_date = f"{date_match.group(1)} {date_match.group(2)[:3].title()} {date_match.group(3)}" if date_match else "Recent"
-                drive_reports.append({
-                    "id": f.get('id'),
-                    "name": name,
-                    "week": w_label,
-                    "date": rep_date,
-                    "url": f.get('webViewLink') or f"https://drive.google.com/file/d/{f.get('id')}/view"
-                })
-        return drive_reports
+        return query_drive_folder_live(folder_id)
     except Exception:
         return []
 
@@ -391,7 +355,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             elif proj == 'sample':
                 configured_reports = []
             else:
-                configured_reports = list(DEFAULT_DRIVE_REPORTS)
+                configured_reports = list(KNOWN_DRIVE_REPORTS)
 
             seen_ids = set()
             seen_names = set()
