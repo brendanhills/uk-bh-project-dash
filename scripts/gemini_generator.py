@@ -140,9 +140,9 @@ Provide an exception-first executive briefing based on the following weekly metr
 def generate_executive_synthesis(
     metrics: Dict[str, Any],
     gap_close_plans: List[Dict[str, Any]],
-    model: str = "gemini-3.5-flash"
+    model: str = "gemini-2.5-flash"
 ) -> Dict[str, Any]:
-    """Generates structured executive decision synthesis using Gemini 3.5 Flash."""
+    """Generates structured executive decision synthesis using Gemini 2.5 Flash."""
     client = get_gemini_client()
     if not client:
         raise RuntimeError("Gemini Client could not be initialized. Please configure Google Cloud ADC or GEMINI_API_KEY in .env.")
@@ -169,7 +169,7 @@ def generate_executive_synthesis(
 def generate_multispeaker_podcast(
     metrics: Dict[str, Any],
     synthesis_result: Dict[str, Any],
-    model: str = "gemini-3.5-flash",
+    model: str = "gemini-2.5-flash",
     audio_out_path: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Generates dual-host dialogue transcript and multi-speaker audio."""
@@ -273,7 +273,7 @@ def inspect_report_with_gemini(
     file_content_or_path: Any,
     file_name: str = "",
     mime_type: str = "application/pdf",
-    model: str = "gemini-3.5-flash"
+    model: str = "gemini-2.5-flash"
 ) -> Optional[Dict[str, Any]]:
     """
     Inspects report content or document files using Gemini Multimodal AI to extract

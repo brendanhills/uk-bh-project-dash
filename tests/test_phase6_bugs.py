@@ -65,9 +65,9 @@ def test_bug_91_cloudbuild_pipeline_efficiency(project_root: Path):
 
     cb_content = cb_path.read_text(encoding="utf-8")
 
-    # 1. High-throughput machine type
-    assert "machineType: 'E2_HIGHCPU_8'" in cb_content, (
-        "options.machineType must be 'E2_HIGHCPU_8' for fast build execution"
+    # 1. Standard optimal worker pool (no custom expensive machineType override)
+    assert "machineType:" not in cb_content, (
+        "options should not force expensive custom machineType; default warm pool is optimal"
     )
 
     # 2. No redundant Artifact Registry create/describe in per-commit build
