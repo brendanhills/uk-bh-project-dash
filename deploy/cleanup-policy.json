@@ -1,0 +1,17 @@
+[
+  {
+    "name": "delete-untagged-old-images",
+    "action": "DELETE",
+    "condition": {
+      "tagState": "UNTAGGED",
+      "olderThan": "14d"
+    }
+  },
+  {
+    "name": "keep-ten-most-recent-tags",
+    "action": "KEEP",
+    "mostRecentVersions": {
+      "keepCount": 10
+    }
+  }
+]

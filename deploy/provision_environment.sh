@@ -164,6 +164,17 @@ if ! gcloud artifacts repositories describe cloud-run-source-deploy --location="
 else
   echo "ℹ️ Artifact Registry repository already exists in ${REGION}."
 fi
+
+# Apply automated lifecycle cleanup policy to cap storage within GCP Free Tier (0.5 GB)
+if [ -f "${SCRIPT_DIR}/cleanup-policy.json" ]; then
+  echo "  Applying automated image cleanup policy to keep storage within Free Tier..."
+  gcloud artifacts repositories set-cleanup-policies cloud-run-source-deploy \
+    --project="${PROJECT_ID}" \
+    --location="${REGION}" \
+    --policy="${SCRIPT_DIR}/cleanup-policy.json" \
+    --no-dry-run >/dev/null 2>&1 || true
+  echo "  ✓ Applied cleanup policy (retain last 10 versions, delete untagged >14d)."
+fi
 echo ""
 
 # 5. Cloud Build Trigger
