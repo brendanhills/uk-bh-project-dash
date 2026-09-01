@@ -29,16 +29,24 @@ DIRECTORY = BASE_DIR
 SNAPSHOTS_FILE = os.path.join(DIRECTORY, "data", "sample", "snapshots.json")
 
 def get_default_project():
+    env_default = os.getenv('DEFAULT_PROJECTS') or os.getenv('DEFAULT_PROJECT')
+    if env_default:
+        first_proj = env_default.split(',')[0].strip()
+        if first_proj:
+            return first_proj
     env_path = os.path.join(DIRECTORY, '.env')
     if os.path.exists(env_path):
-        with open(env_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('DEFAULT_PROJECTS=') or line.startswith('DEFAULT_PROJECT='):
-                    val = line.split('=', 1)[1].strip().strip('"\'')
-                    first_proj = val.split(',')[0].strip()
-                    if first_proj:
-                        return first_proj
+        try:
+            with open(env_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('DEFAULT_PROJECTS=') or line.startswith('DEFAULT_PROJECT='):
+                        val = line.split('=', 1)[1].strip().strip('"\'')
+                        first_proj = val.split(',')[0].strip()
+                        if first_proj:
+                            return first_proj
+        except OSError:
+            pass
     if os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')) or os.path.exists(os.path.join(DIRECTORY, 'data', 'f-dse')):
         return 'monaro'
     return 'sample'
