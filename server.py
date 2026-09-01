@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import subprocess
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +25,8 @@ from scripts.pipeline import (
     save_json_file
 )
 
-PORT = 9000
+logger = logging.getLogger('server')
+PORT = int(os.getenv('PORT', '9000'))
 DIRECTORY = BASE_DIR
 SNAPSHOTS_FILE = os.path.join(DIRECTORY, "data", "sample", "snapshots.json")
 
@@ -92,6 +94,15 @@ def query_live_drive_folder(folder_id: str) -> List[Dict[str, Any]]:
         return []
 
 class DashboardHandler(http.server.SimpleHTTPRequestHandler):
+    extensions_map = {
+        **http.server.SimpleHTTPRequestHandler.extensions_map,
+        '.js': 'application/javascript',
+        '.mjs': 'application/javascript',
+        '.json': 'application/json',
+        '.wasm': 'application/wasm',
+        '.svg': 'image/svg+xml',
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
@@ -100,6 +111,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
         super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.end_headers()
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -155,6 +173,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
@@ -185,11 +205,19 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             proj = params.get('project') or get_default_project()
             p_dir = get_project_dir(proj)
 
+            sync_result = None
+            if proj != 'sample' and str(params.get('drive', 'true')).lower() != 'false':
+                try:
+                    from scripts.sync_drive import sync_drive_reports
+                    sync_result = sync_drive_reports(project_name=proj, allow_empty=True)
+                except Exception as e:
+                    logger.warning(f"Drive sync failed or skipped: {e}")
+
             snaps = load_json_file(os.path.join(p_dir, 'snapshots.json'), {})
             risks = load_json_file(os.path.join(p_dir, 'risks.json'), [])
             issues = load_json_file(os.path.join(p_dir, 'issues.json'), [])
 
-            self.send_json({
+            resp = {
                 'status': 'ok',
                 'project': proj,
                 'message': f'Live data synchronized successfully for project "{proj}"',
@@ -199,7 +227,10 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     'risks': len(risks if isinstance(risks, list) else []),
                     'issues': len(issues if isinstance(issues, list) else [])
                 }
-            })
+            }
+            if sync_result:
+                resp['drive_sync'] = sync_result
+            self.send_json(resp)
         except Exception as e:
             self.send_json({'error': str(e)}, 500)
 

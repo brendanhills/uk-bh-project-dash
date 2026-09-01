@@ -37,11 +37,21 @@ steps:
         echo "=== Generated data/build_info.json ==="
         cat data/build_info.json
 
-  # 3. Build Web Dashboard Container Image
+  # 3. Pull previous image for Docker layer caching (non-blocking)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest || true
+
+  # 4. Build Unified Container Image (Web Service & Sync Worker) with Docker layer caching
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'project_dash'
     args:
       - 'build'
+      - '--cache-from'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
       - '-f'
       - 'deploy/Dockerfile'
       - '-t'
@@ -50,43 +60,14 @@ steps:
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
       - '.'
 
-  # 4. Pull previous sync image for Docker layer caching (non-blocking)
-  - name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest || true
-
-  # 5. Build Sync Worker Container Image with Docker layer caching
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: 'project_dash'
-    args:
-      - 'build'
-      - '--cache-from'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest'
-      - '-f'
-      - 'deploy/Dockerfile.sync'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:$COMMIT_SHA'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest'
-      - '.'
-
-  # 6. Push container images to Artifact Registry concurrently
+  # 5. Push container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '--all-tags'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}'
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync'
-
-  # 7. Deploy Web Service to Cloud Run (Private Mode + IAP + GCS Volume Mount)
+  # 6. Deploy Web Service to Cloud Run (Private Mode + IAP + GCS Volume Mount)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
@@ -105,15 +86,15 @@ steps:
       - '--execution-environment'
       - 'gen2'
       - '--add-volume'
-      - 'name=data-volume,type=cloud-storage,bucket=$PROJECT_ID-data,readonly=true'
+      - 'name=data-volume,type=cloud-storage,bucket=$PROJECT_ID-data'
       - '--add-volume-mount'
-      - 'volume=data-volume,mount-path=/usr/share/nginx/html/data'
+      - 'volume=data-volume,mount-path=/app/data'
       - '--update-labels'
       - 'commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID'
       - '--set-env-vars'
-      - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION}'
+      - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION},DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL},GEMINI_REGION=${_GEMINI_REGION}'
 
-  # 8. Update Ingestion Sync Job in Cloud Run (Gen2 + GCS Volume Mount)
+  # 7. Update Ingestion Sync Job in Cloud Run (Gen2 + GCS Volume Mount, reusing unified image)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
@@ -121,7 +102,11 @@ steps:
       - 'update'
       - 'monaro-risk-sync-job'
       - '--image'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:$COMMIT_SHA'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+      - '--command'
+      - 'python,scripts/sync_drive.py'
+      - '--args'
+      - '--project=monaro'
       - '--region'
       - '${_REGION}'
       - '--execution-environment'
@@ -136,8 +121,6 @@ steps:
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
-  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:$COMMIT_SHA'
-  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/monaro-risk-sync:latest'
 
 substitutions:
   _SERVICE_NAME: 'monaro-risk-dash-dev'

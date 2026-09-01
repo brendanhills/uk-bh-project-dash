@@ -37,8 +37,8 @@ Project Dash solves this by unifying:
    - Backend functionality is consolidated into a cohesive ingestion pipeline (`scripts/pipeline.py`) and a clean REST resource interface (`server.py`).
    - Business logic favors refactoring and unifying shared workflows over accumulating single-purpose scripts or endpoints.
 4. **Data Confidentiality & Decoupled Multi-Project Support**:
-   - Proprietary Monaro / F-DSE project content is strictly protected behind Google SSO and IAP.
-   - The system natively supports parameter-driven project isolation (`?project=sample` vs `?project=f-dse`), enabling safe demonstrations and public testing using sanitized sample datasets (Project Aurora).
+   - Proprietary Monaro project content is strictly protected behind Google SSO and IAP.
+   - The system natively supports parameter-driven project isolation (`?project=sample` vs `?project=monaro`), enabling safe demonstrations and public testing using sanitized sample datasets (Project Aurora).
 
 ---
 
@@ -79,7 +79,7 @@ Project Dash solves this by unifying:
 | **Access Control (IAP)** | `monaro-risk-dev@google.com` | `monaro-risk-prod@google.com` |
 | **Admin Group (IAP / CI)** | `monaro-risk-dev-admin@google.com` | `monaro-risk-prod-admin@google.com` |
 | **CI/CD Cloud Build Trigger** | `deploy-monaro-risk-dash-dev` (on push to `dev`) | `deploy-monaro-risk-dash-prod` (on push of `project_dash/prod-*` tag) |
-| **Default Active Dataset** | `sample` (Project Aurora) | `f-dse` (Monaro Live) |
+| **Default Active Dataset** | `sample` (Project Aurora) | `monaro` (Monaro Live) |
 | **Google Cloud Service Account** | `monaro-risk-dash-dev-sa@monaro-risk-dev.iam.gserviceaccount.com` | `monaro-risk-dash-prod-sa@monaro-risk-prod.iam.gserviceaccount.com` |
 
 ---
@@ -92,15 +92,14 @@ All project data is strictly isolated within `data/<project-slug>/`:
 project_dash/
 ├── index.html                   # Core presentation frontend
 ├── server.py                    # Parameterized REST API & static server
+├── setup.sh                     # Canonical root environment provisioning & audit CLI
 ├── deploy/                      # Turnkey Cloud Run provisioning & Dockerfile
-│   ├── cloudbuild.yaml          # Sydney multi-stage automated CI/CD pipeline
-│   ├── Dockerfile               # Container specification (python:3.13-slim)
-│   ├── provision_environment.sh # Turnkey GCP API & IAM provisioning script
-│   └── PROD_PROVISIONING_GUIDE.md # Production Pantheon click-ops runbook
+│   ├── cloudbuild.yaml          # Streamlined automated CI/CD pipeline (~45s)
+│   └── Dockerfile               # Unified container specification (python:3.13-slim)
 ├── docs/                        # Project manuals & guides
 │   ├── HANDOVER_GUIDE.md        # Turnkey operator & handover manual
 │   ├── TEAM_PRESENTATION_GUIDE.md # 5-minute showcase narrative
-│   └── DEPLOYMENT_GUIDE.md      # CI/CD & IAP security setup
+│   └── DEPLOYMENT_GUIDE.md      # Consolidated deployment & production guide
 ├── prompts/
 │   ├── exec_summary_prompt.md   # Gemini structured JSON executive summary prompt
 │   └── podcast_prompt.md        # Gemini dual-speaker podcast script prompt
@@ -119,9 +118,9 @@ project_dash/
 │   │   ├── snapshots.json       # Longitudinal weekly snapshots (W22-W27)
 │   │   ├── knowledge.json       # Blueprint & contract knowledge sources
 │   │   └── driver_tree.json     # Contractual milestones & capability drops
-│   └── f-dse/                   # Monaro / F-DSE Production Dataset (Git-ignored)
+│   └── monaro/                  # Monaro Production Dataset (Git-ignored)
 ├── archive/                     # Preserved prototypes & legacy scripts with full git history
-└── tests/                       # Automated test suite (127 unit tests)
+└── tests/                       # Automated test suite (181 pytest unit tests)
 ```
 
 ### 3.1 Data Contracts & File Schemas
@@ -377,7 +376,7 @@ Blueprint knowledge and contractual reference mapping:
 ## 4. Functional Requirements (Modules FR-1 through FR-9)
 
 ### FR-1: Global Navigation & Shell Controls
-- **FR-1.1 Dynamic Project Selector**: Navigation bar dropdown allowing dynamic switching between configured projects (`?project=sample`, `?project=f-dse`).
+- **FR-1.1 Dynamic Project Selector**: Navigation bar dropdown allowing dynamic switching between configured projects (`?project=sample`, `?project=monaro`).
 - **FR-1.2 Historical Time Machine Ribbon**: Header ribbon allowing users to scrub between historical weeks (`W22` through `W27`). Selecting a past week updates dashboard state to that historical point in time and displays a prominent warning banner with a 1-click button to return to the live baseline.
 - **FR-1.3 Workspace Sync Modal**: Modal dialog supporting:
   - 1-Click live sync from Google Sheets via backend API.
@@ -446,10 +445,10 @@ All ingestion, parsing, metric calculation, and AI generation logic is consolida
 - **Headless CLI Interface**:
   ```bash
   # 1-Command Workspace Sync
-  python3 scripts/pipeline.py --project=f-dse --sync
+  python3 scripts/pipeline.py --project=monaro --sync
 
   # 1-Command Weekly Report Ingestion
-  python3 scripts/pipeline.py --project=f-dse --ingest-report="Weekly Reporting - Week 28 - 14 Aug 2026.pdf"
+  python3 scripts/pipeline.py --project=monaro --ingest-report="Weekly Reporting - Week 28 - 14 Aug 2026.pdf"
   ```
 
 ---
@@ -468,17 +467,17 @@ To prevent future specification drift and maintain high code velocity:
 3. **Spec Synchronization Barrier**:
    - Whenever a Conductor track completes or a significant feature/architectural change lands, the Master Spec (`conductor/spec.md`) must be reviewed and updated to reflect the new state.
 4. **Automated Quality Assurance**:
-   - The test suite (`tests/`) maintains 100% passing automated test coverage (currently **127 unit tests**) validating data schemas, live calculations, server APIs, and driver tree interactions before code is pushed to `dev`.
+   - The test suite (`tests/`) maintains 100% passing automated test coverage (currently **181 unit tests** via `pytest`) validating data schemas, live calculations, server APIs, and driver tree interactions before code is pushed to `dev`.
 
 ---
 
 ## 7. Verification Checklist & Acceptance Criteria
 
 - [ ] Single Page Application renders all 8 active navigation tabs cleanly with zero console errors.
-- [ ] Multi-project parameter routing (`?project=sample` vs `?project=f-dse`) cleanly isolates datasets.
+- [ ] Multi-project parameter routing (`?project=sample` vs `?project=monaro`) cleanly isolates datasets.
 - [ ] 5×5 Risk Heatmap toggles seamlessly between Inherent and Residual distributions, and cell clicks filter the Live Risk Explorer with active focus rings.
 - [ ] Neural podcast audio player supports waveform scrubbing, variable speeds (0.75x–2x), synced transcript, and MP3 download.
 - [ ] Driver tree deliverable cards display clickable related risk and issue badges that cross-filter ledgers.
 - [ ] Unified pipeline engine (`python3 scripts/pipeline.py --project=<slug> --sync`) cleanly generates valid snapshot and data files without precomputed caches.
 - [ ] Cloud Run deployment is secured by Identity-Aware Proxy (IAP) requiring corporate Google SSO.
-- [ ] All 127 automated unit tests pass cleanly (`python3 -m unittest discover -s tests -p "test_*.py"`).
+- [ ] All 181 automated unit tests pass cleanly (`pytest`).
