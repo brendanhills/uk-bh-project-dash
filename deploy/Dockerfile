@@ -1,15 +1,23 @@
-FROM nginx:alpine
+# ==============================================================================
+# Unified Project Dash Container (Web Service & Ingestion Sync Worker)
+# ==============================================================================
+FROM python:3.13-slim
 
-# Copy static frontend assets and data files
-COPY index.html /usr/share/nginx/html/index.html
-COPY favicon.svg /usr/share/nginx/html/favicon.svg
-COPY assets/ /usr/share/nginx/html/assets/
-COPY data/ /usr/share/nginx/html/data/
-COPY src/ /usr/share/nginx/html/src/
+WORKDIR /app
 
-# Copy custom Nginx configuration for Cloud Run port 8080
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+# 1. Install dependencies first to leverage Docker layer caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 2. Copy the full project (frontend SPA, backend REST server, scripts, assets, prompts)
+COPY . .
+
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+ENV PYTHONPATH="/app"
+ENV DEFAULT_PROJECTS="monaro"
 
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+# Default command runs the unified Python HTTP server
+CMD ["python", "server.py"]

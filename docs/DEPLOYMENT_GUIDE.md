@@ -551,9 +551,9 @@ Before **15 November 2026**:
 
 ### Runbook 7: Data Synchronization, Scheduled Task Management & Client Refresh
 
-The Project Dash platform operates a fully decoupled data architecture where data ingestion, AI processing, and presentation are independently managed:
-- **Presentation**: Pure static web application served via Nginx on Cloud Run (`monaro-risk-dash-dev` / `monaro-risk-dash-prod`).
-- **Ingestion Worker**: Containerized batch processor (`deploy/Dockerfile.sync`) executing as a Cloud Run Job (`monaro-risk-sync-job`).
+The Project Dash platform operates a decoupled data architecture where data ingestion, AI processing, and presentation are independently managed:
+- **Presentation & REST API**: Single unified container (`deploy/Dockerfile`) executing `server.py` on Cloud Run (`monaro-risk-dash-dev` / `monaro-risk-dash-prod`), serving the frontend SPA with zero-cache headers and handling REST endpoints.
+- **Ingestion Worker**: Reuses the exact same container image executing as a Cloud Run Job (`monaro-risk-sync-job`) with `--command="python,scripts/sync_drive.py"`.
 - **Orchestration**: Cloud Scheduler triggers the ingestion job on a recurring weekly schedule, with Cloud Tasks managing execution throttling and retries.
 
 ```mermaid
@@ -568,12 +568,12 @@ flowchart TD
     subgraph IngestionWorker["2. Ingestion Processing (Cloud Run Job: monaro-risk-sync-job)"]
         DriveScan["Drive API v3 Scanner\n(Folder 1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C)"]
         Filter["Incremental Report Filter\n(Compare against snapshots.json)"]
-        GeminiAI["Google Gemini 3.7 Flash\n(Multimodal PDF Inspection & Synthesis)"]
+        GeminiAI["Google Gemini 3.5 Flash\n(Multimodal PDF Inspection & Synthesis)"]
         SnapshotCommit["Atomic Update to\ndata/monaro/snapshots.json"]
     end
 
     subgraph PresentationServing["3. Static Serving & Client Refresh"]
-        CloudRunWeb["Cloud Run Nginx Container\n(monaro-risk-dash-dev)"]
+        CloudRunWeb["Cloud Run Python Container\n(monaro-risk-dash-dev)"]
         Browser["User Browser / SPA"]
         FreshnessCheck["Client Cache-Busting Refresh\n(fetch snapshots.json?t=now)"]
     end

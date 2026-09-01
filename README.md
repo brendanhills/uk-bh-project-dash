@@ -144,7 +144,7 @@ Project Dash separates **data ingestion** from **web presentation** for security
                       [data/monaro/snapshots.json]
                                      │
                                      ▼
-                       [Cloud Run Nginx Web App]
+                   [Cloud Run Web App & REST API Server]
                                      ▲
                                      │ (Client Cache-Busting: checkForUpdates())
                                [User Browser]
@@ -168,7 +168,7 @@ Project Dash separates **data ingestion** from **web presentation** for security
 Ingestion is managed as an automated, serverless Google Cloud pipeline in Sydney (`australia-southeast1`):
 
 - **Cloud Run Job (`monaro-risk-sync-job`)**:
-  Packaged via `deploy/Dockerfile.sync` and runs in `australia-southeast1` using `github-deployer@monaro-risk-dev.iam.gserviceaccount.com`.
+  Packaged via the unified container (`deploy/Dockerfile`) and runs in `australia-southeast1` using `github-deployer@monaro-risk-dev.iam.gserviceaccount.com`.
 - **Cloud Scheduler (`monaro-sync-schedule`)**:
   Configured to trigger the sync pipeline on a regular recurring cadence (every Friday at 5:00 PM Sydney time `0 17 * * 5`).
 - **Cloud Tasks Queue (`monaro-sync-queue`)**:
@@ -278,9 +278,8 @@ project_dash/
 ├── .env.example                 # Environment configuration template
 ├── setup.sh                     # Canonical turnkey provisioning & sub-5s state inspection (-l) tool
 ├── deploy/                      # Infrastructure & Container deployment configs
-│   ├── Dockerfile               # Static Nginx Cloud Run web service container
-│   ├── Dockerfile.sync          # Python 3.13 Cloud Run Job ingestion worker container
-│   ├── cloudbuild.yaml          # 5-stage automated Cloud Build CI/CD pipeline
+│   ├── Dockerfile               # Unified Python 3.13 Cloud Run web service & sync container
+│   ├── cloudbuild.yaml          # Streamlined automated Cloud Build CI/CD pipeline (~45s)
 ├── docs/                        # Project operator manuals & guides
 │   ├── HANDOVER_GUIDE.md        # Turnkey operator & handover manual
 │   ├── TEAM_PRESENTATION_GUIDE.md # 5-minute showcase narrative
@@ -355,8 +354,8 @@ Project Dash is deployed automatically to Google Cloud Run in Sydney, Australia 
 ### 💰 Cloud Running Costs & Free Tier Economics
 - **Expected Baseline Spend**: **<$1.00 AUD / month** under moderate organizational usage (10–50 users, ~22,000 requests/month, ~4 GB egress).
 - **100% Free Tier Coverage**: Cloud Run web requests (first 2M free), Cloud Run compute (first 180k vCPU-s free), Identity-Aware Proxy (native Cloud Run $0.00), Network egress (first 100 GB free), and Cloud Build (first 120 min/day free) operate entirely within permanent GCP Free Tier allowances.
-- **Cold Start vs. Hot Standby**: With `--min-instances=0` (scale-to-zero), idle cost is **$0.00** with a fast ~1.5s cold start for the Nginx Alpine container. Setting `--min-instances=1` guarantees 0ms latency at ~$12.50/month in Sydney.
-- **Active Guardrails**: Browser caching for JS/CSS (`deploy/nginx.conf`), automated image lifecycle cleanup policies (`deploy/cleanup-policy.json`), and default warm worker pools prevent storage and billing drift.
+- **Cold Start vs. Hot Standby**: With `--min-instances=0` (scale-to-zero), idle cost is **$0.00** with a fast ~1.5s to 2.0s cold start for the Python 3.13-slim container. Setting `--min-instances=1` guarantees 0ms latency at ~$12.50/month in Sydney.
+- **Active Guardrails**: Browser caching headers via `server.py`, automated image lifecycle cleanup policies (`deploy/cleanup-policy.json`), and default warm worker pools prevent storage and billing drift.
 
 ---
 

@@ -735,12 +735,14 @@ else
   echo "  ✓ Cloud Tasks queue already exists: ${SYNC_QUEUE_NAME}"
 fi
 
-# Create or Update Cloud Run Job
-SYNC_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/monaro-risk-sync:latest"
+# Create or Update Cloud Run Job (reusing unified container image)
+SYNC_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${IMAGE_NAME}:latest"
 DATA_BUCKET="${PROJECT_ID}-data"
 if ! gcloud run jobs describe "${SYNC_JOB_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
   gcloud run jobs create "${SYNC_JOB_NAME}" \
     --image="${SYNC_IMAGE}" \
+    --command="python,scripts/sync_drive.py" \
+    --args="--project=monaro" \
     --region="${REGION}" \
     --project="${PROJECT_ID}" \
     --service-account="${SA_EMAIL}" \
@@ -754,6 +756,8 @@ if ! gcloud run jobs describe "${SYNC_JOB_NAME}" --region="${REGION}" --project=
 else
   gcloud run jobs update "${SYNC_JOB_NAME}" \
     --image="${SYNC_IMAGE}" \
+    --command="python,scripts/sync_drive.py" \
+    --args="--project=monaro" \
     --region="${REGION}" \
     --project="${PROJECT_ID}" \
     --execution-environment=gen2 \
