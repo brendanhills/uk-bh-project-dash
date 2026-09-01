@@ -1,17 +1,9 @@
 steps:
-  # 1. Run Automated Unit & Ingestion Tests
+  # 1. Inject dynamic build metadata into data/build_info.json for dashboard footer
+  # Uses python:3.13-slim; runs concurrently with cache pull at t=0
   - name: 'python:3.13-slim'
-    dir: 'project_dash'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        pip install --no-cache-dir -r requirements.txt
-        pytest
-
-  # 2. Inject dynamic build metadata into data/build_info.json for dashboard footer
-  # Reuses cached python:3.13-slim image from step 1 for instant 0-second start
-  - name: 'python:3.13-slim'
+    id: 'build-info'
+    waitFor: ['-']
     dir: 'project_dash'
     entrypoint: 'bash'
     args:
@@ -37,17 +29,23 @@ steps:
         echo "=== Generated data/build_info.json ==="
         cat data/build_info.json
 
-  # 3. Pull previous image for Docker layer caching (non-blocking)
+  # 2. Pull previous image for Docker layer caching (non-blocking, starts at t=0)
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    waitFor: ['-']
     entrypoint: 'bash'
     args:
       - '-c'
       - |
         docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest || true
 
-  # 4. Build Unified Container Image (Web Service & Sync Worker) with Docker layer caching
+  # 3. Build Unified Container Image with Docker layer caching and BuildKit
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    waitFor: ['build-info', 'pull-cache']
     dir: 'project_dash'
+    env:
+      - 'DOCKER_BUILDKIT=1'
     args:
       - 'build'
       - '--cache-from'
@@ -60,8 +58,20 @@ steps:
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
       - '.'
 
-  # 5. Push container image to Artifact Registry
+  # 4. Run Automated Unit & Ingestion Tests inside the built container (zero pip install overhead!)
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'run-tests'
+    waitFor: ['build-image']
+    args:
+      - 'run'
+      - '--rm'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+      - 'pytest'
+
+  # 5. Push container image to Artifact Registry (runs only after unit tests pass)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    waitFor: ['run-tests']
     args:
       - 'push'
       - '--all-tags'
@@ -69,6 +79,8 @@ steps:
 
   # 6. Deploy Web Service to Cloud Run (Private Mode + IAP + GCS Volume Mount)
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-web'
+    waitFor: ['push-image']
     args:
       - 'run'
       - 'deploy'
@@ -94,8 +106,10 @@ steps:
       - '--set-env-vars'
       - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION},DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL},GEMINI_REGION=${_GEMINI_REGION}'
 
-  # 7. Update Ingestion Sync Job in Cloud Run (Gen2 + GCS Volume Mount, reusing unified image)
+  # 7. Update Ingestion Sync Job in Cloud Run (runs concurrently with deploy-web!)
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'update-job'
+    waitFor: ['push-image']
     args:
       - 'run'
       - 'jobs'
