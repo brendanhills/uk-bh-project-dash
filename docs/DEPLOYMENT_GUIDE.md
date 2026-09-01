@@ -8,9 +8,11 @@ Secured with **Identity-Aware Proxy (IAP)** for corporate Google SSO login and a
 
 > [!CAUTION]
 > ### 🚨 CRITICAL OPS NOTICE: 90-Day Temporary Project Expiration
-> Both `monaro-risk-prod` and `monaro-risk-dev` environments are currently provisioned as **90-day temporary Google Cloud sandbox projects**.
-> * **Action Required**: A permanent Commonwealth / Project Monaro billing account MUST be attached to `monaro-risk-prod` in Pantheon Billing before the 90-day expiration window.
-> * **Consequence of Inaction**: If a permanent billing account is not attached prior to day 90, Google Cloud will automatically suspend and delete all project resources, Cloud Run services, and Artifact Registry container images.
+> Both `monaro-risk-prod` and `monaro-risk-dev` environments were provisioned on **17 August 2026** as **90-day temporary Google Cloud sandbox projects**.
+> * **Project Provisioned**: **17 August 2026** (`05:27:13 UTC`)
+> * **Hard Expiration Date**: **Sunday, 15 November 2026** (`05:27:13 UTC` / **3:27 PM AEST**)
+> * **Action Required**: A permanent Commonwealth / Project Monaro billing account MUST be attached to `monaro-risk-prod` and `monaro-risk-dev` in Pantheon Billing before **15 November 2026**.
+> * **Consequence of Inaction**: If a permanent billing account is not attached prior to 15 November 2026, Google Cloud will automatically suspend and delete all project resources, Cloud Run services, Cloud Run Jobs, Cloud Scheduler tasks, and Artifact Registry container images.
 
 ---
 
@@ -141,23 +143,88 @@ git push origin project_dash/prod-v1.0.0
 
 ---
 
-## ⚡ Turnkey Environment Provisioning
+---
 
-### Method A: One-Command Scripted Provisioning (Recommended)
+## 🔌 Required Google Cloud APIs & Turnkey Admin Enablement
 
-The repository provides [`deploy/provision_environment.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/provision_environment.sh) to idempotently provision either environment in Sydney with all 14 APIs, IAM permissions, triggers, and alerting policies:
+The Project Dash platform requires **16 Google Cloud APIs** across compute, scheduling, data integration, CI/CD, security, and observability:
 
+| # | API Identifier | Service Name | Role & Purpose in Project Dash |
+| :-: | :--- | :--- | :--- |
+| **1** | `run.googleapis.com` | Cloud Run | Serves the web frontend (`monaro-risk-dash-dev`) and executes the background sync job (`monaro-risk-sync-job`). |
+| **2** | `cloudscheduler.googleapis.com` | Cloud Scheduler | Triggers the automated weekly ingestion cron job (`monaro-sync-schedule`). |
+| **3** | `cloudtasks.googleapis.com` | Cloud Tasks | Manages task queueing (`monaro-sync-queue`), concurrency limits (max 1), and retries. |
+| **4** | `drive.googleapis.com` | Google Drive API v3 | Live scanning and downloading weekly PDF reports from folder `1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C`. |
+| **5** | `sheets.googleapis.com` | Google Sheets API v4 | Reads active program and team risk registers directly from Google Sheets. |
+| **6** | `aiplatform.googleapis.com` | Vertex AI | Powers Gemini 3.7 Flash multimodal report inspection, risk delta calculation, and decision synthesis. |
+| **7** | `cloudbuild.googleapis.com` | Cloud Build | Automates Docker container image compilation and continuous deployment in Sydney. |
+| **8** | `artifactregistry.googleapis.com` | Artifact Registry | Stores container image tags in Sydney (`cloud-run-source-deploy`). |
+| **9** | `iap.googleapis.com` | Identity-Aware Proxy | Enforces Google SSO and group-based zero-trust access control. |
+| **10** | `compute.googleapis.com` | Compute Engine | Required underlying API for regional IAP backend bindings and routing. |
+| **11** | `logging.googleapis.com` | Cloud Logging | Centralized structured log streaming and audit trails. |
+| **12** | `clouderrorreporting.googleapis.com`| Cloud Error Reporting | Captures unhandled container exceptions and alerts admins. |
+| **13** | `monitoring.googleapis.com` | Cloud Monitoring | Infrastructure health metrics and uptime monitoring. |
+| **14** | `iam.googleapis.com` | IAM API | Service account management and least-privilege role bindings. |
+| **15** | `containeranalysis.googleapis.com`| Container Analysis | Container vulnerability scanning in Artifact Registry. |
+| **16** | `containerscanning.googleapis.com`| Container Scanning | On-demand container vulnerability scanning. |
+
+---
+
+### Turnkey Admin Enablement Options
+
+Administrators can enable all 16 APIs instantly using any of the following four methods:
+
+#### Option 1: Fast Dedicated Helper Script (Fastest)
 ```bash
-# Provision Development Environment (monaro-risk-dev in Sydney)
-./deploy/provision_environment.sh dev
+# Enables all 16 APIs in a single batch call with zero interactive prompt friction:
+./deploy/enable_apis.sh --project monaro-risk-dev
+```
 
-# Provision Production Environment (monaro-risk-prod in Sydney)
+#### Option 2: Provisioning Script `--apis-only` Flag
+```bash
+# Enables all 16 APIs and verifies configuration without deploying resources:
+./deploy/provision_environment.sh dev --apis-only
+./deploy/provision_environment.sh prod --apis-only
+```
+
+#### Option 3: Full End-to-End Environment Provisioning
+```bash
+# Provisions all 16 APIs, Service Accounts, Cloud Run Jobs, Cloud Tasks, and Cloud Scheduler:
+./deploy/provision_environment.sh dev
 ./deploy/provision_environment.sh prod
 ```
 
+#### Option 4: Direct Copy-Paste `gcloud` Batch Command
+```bash
+gcloud services enable \
+  run.googleapis.com \
+  cloudscheduler.googleapis.com \
+  cloudtasks.googleapis.com \
+  drive.googleapis.com \
+  sheets.googleapis.com \
+  aiplatform.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  iap.googleapis.com \
+  compute.googleapis.com \
+  logging.googleapis.com \
+  clouderrorreporting.googleapis.com \
+  monitoring.googleapis.com \
+  iam.googleapis.com \
+  containeranalysis.googleapis.com \
+  containerscanning.googleapis.com \
+  --project="monaro-risk-dev" --quiet
+```
+
+---
+
+## ⚡ Turnkey Environment Provisioning Details
+
+The repository provides [`deploy/provision_environment.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/provision_environment.sh) to idempotently provision either environment in Sydney with all 16 APIs, IAM permissions, triggers, and alerting policies:
+
 #### What `provision_environment.sh` Automates:
-1. **Enables 14 GCP APIs**: `clouderrorreporting`, `logging`, `monitoring`, `cloudbuild`, `run`, `artifactregistry`, `iap`, `compute`, `aiplatform`, `containeranalysis`, `containerscanning`, `sheets`, `drive`, `iam`.
-2. **Creates Service Account**: `github-deployer@<PROJECT_ID>.iam.gserviceaccount.com`.
+1. **Enables 16 GCP APIs**: `run`, `cloudscheduler`, `cloudtasks`, `drive`, `sheets`, `aiplatform`, `cloudbuild`, `artifactregistry`, `iap`, `compute`, `logging`, `clouderrorreporting`, `monitoring`, `iam`, `containeranalysis`, `containerscanning`.
+2. **Creates Dedicated Service Account**: `github-deployer@<PROJECT_ID>.iam.gserviceaccount.com`.
 3. **Binds Least-Privilege IAM Roles**:
    * `roles/run.admin`
    * `roles/artifactregistry.admin`
@@ -165,6 +232,7 @@ The repository provides [`deploy/provision_environment.sh`](file:///usr/local/go
    * `roles/iap.admin`
    * `roles/logging.logWriter`
    * `roles/storage.objectViewer`
+   * `roles/storage.admin`
    * `roles/containeranalysis.occurrences.editor`
 4. **Artifact Registry**: Creates repository `cloud-run-source-deploy` in `australia-southeast1`.
 5. **Cloud Build Triggers**: Connects GitHub repository `cloud-gtm/uk-bh-experiments` and creates branch trigger (`^dev$`) or tag trigger (`^project_dash/prod-.*$`).
@@ -175,21 +243,7 @@ The repository provides [`deploy/provision_environment.sh`](file:///usr/local/go
    * `user:brendanhills@google.com`
    * `user:allins@google.com`
    * `serviceAccount:service-<PROJECT_NUM>@gcp-sa-iap.iam.gserviceaccount.com` (Invoker only)
-
----
-
-### Method B: Google Cloud Console ("Click-Ops") Walkthrough
-
-If configuring manually via Pantheon:
-
-#### Step 0: Create Project & Link Billing
-1. Open **[Pantheon > New Project](https://pantheon.corp.google.com/projectcreate)**.
-2. Set **Project ID**: `monaro-risk-prod` (or `monaro-risk-dev`).
-3. Link a permanent billing account.
-
-#### Step 1: Enable APIs
-1. Open **[APIs & Services > Library](https://pantheon.corp.google.com/apis/library)**.
-2. Enable the 14 APIs listed above.
+8. **Scheduled Ingestion Pipeline**: Provisions Cloud Run Job `monaro-risk-sync-job`, Cloud Tasks queue `monaro-sync-queue`, and Cloud Scheduler job `monaro-sync-schedule`.
 
 #### Step 2: Create Artifact Registry in Sydney
 1. Open **[Artifact Registry > Repositories](https://pantheon.corp.google.com/artifacts)**.
@@ -315,11 +369,15 @@ Access is governed primarily through Google Groups (`monaro-risk-dev@google.com`
 ---
 
 ### Runbook 5: 90-Day Sandbox Billing Migration Checklist
-Before day 90 of sandbox project creation:
+The projects were provisioned on **17 August 2026** and will expire on **Sunday, 15 November 2026 (05:27 UTC / 3:27 PM AEST)**.
+
+Before **15 November 2026**:
 1. Confirm the permanent billing account ID in [Google Cloud Billing Console](https://pantheon.corp.google.com/billing).
-2. Attach permanent billing:
+2. Attach permanent billing to both projects:
    ```bash
    gcloud beta billing projects link monaro-risk-prod \
+     --billing-account=<PERMANENT_BILLING_ACCOUNT_ID>
+   gcloud beta billing projects link monaro-risk-dev \
      --billing-account=<PERMANENT_BILLING_ACCOUNT_ID>
    ```
 3. Verify in Pantheon: **Billing > Account Management** $\rightarrow$ verify status is **Active** with no expiration notice.

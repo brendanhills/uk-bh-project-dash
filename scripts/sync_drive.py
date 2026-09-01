@@ -13,6 +13,11 @@ import json
 import logging
 import argparse
 import re
+# Ensure parent directory is in sys.path when executed directly as a script
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PARENT_DIR not in sys.path:
+    sys.path.insert(0, PARENT_DIR)
+
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
