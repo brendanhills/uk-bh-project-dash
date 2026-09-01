@@ -1,5 +1,5 @@
 {
-  "lastSynced": "2026-09-01T17:44:19.095682",
+  "lastSynced": "2026-09-01T17:57:24.189803",
   "driveFolderId": "sample-drive-folder-aurora",
   "snapshots": {
     "w22": {
@@ -782,7 +782,7 @@
       "driveFile": {
         "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
         "id": "sample-drive-doc-aurora-w28",
-        "ingestedAt": "2026-09-01T17:44:19.095662"
+        "ingestedAt": "2026-09-01T17:57:24.189776"
       }
     }
   },
