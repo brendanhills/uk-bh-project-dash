@@ -1675,5 +1675,23 @@
     "cause": "1. Static Container Architecture: Cloud Run deploys a pure static Nginx container (deploy/Dockerfile: FROM nginx:alpine) where server.py and Python are not executed. Nginx routes /api/check-drive-sync to index.html (try_files $uri $uri/ /index.html), causing fetch().json() in src/js/app.js to fail silently with a JSON parse error.\n2. Silent Exception Swallowing: server.py query_live_drive_folder wraps Drive API calls in a broad 'except Exception: return []', silently masking ADC credential expirations, Drive API permission issues, or network failures, and falling back to a static list.\n3. Incomplete Bug #85 Resolution: Bug #85 was artificially mitigated by hardcoding Week 29 into server.py DEFAULT_DRIVE_REPORTS and mocking the API in unit tests, rather than establishing an automated ingestion pipeline in CI/CD.",
     "plan": "Option B Implementation Plan (Scheduled Ingestion Pipeline & Static Sync):\n1. Automated Ingestion Script: Implement scripts/sync_drive.py (or enhance scripts/pipeline.py) using the Google Drive API and ADC/Service Account to scan the Monaro reporting folder (1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C), extract metadata for new weekly packs (e.g. Week 30+), update data/monaro/snapshots.json and config.json, and register all discovered reports.\n2. Cloud Build & Scheduled Ingestion Hook: Integrate scripts/sync_drive.py into deploy/cloudbuild.yaml (using the existing lightweight python:3.13-slim runner) so that each build/deploy automatically pulls the latest Google Drive files into the deployed container, and configure a scheduled trigger for regular automated synchronization.\n3. Frontend Static Hosting Awareness: In src/js/app.js (checkDriveSyncStatus), add graceful handling when running under static hosting: if /api/check-drive-sync returns HTML or 404, fall back cleanly to reading data/monaro/snapshots.json with cache-busting, display the latest ingested snapshot report in the modal, and present an informative status badge ('Synced via CI/CD Pipeline') with clear feedback instead of an unhandled JSON parse error.\n4. Eliminate Hardcoded Weekly Fallbacks: Deprecate manual additions to server.py DEFAULT_DRIVE_REPORTS; ensure snapshots and known reports are derived dynamically from data/monaro/snapshots.json.\n5. Automated Verification: Add automated unit and regression tests verifying sync_drive.py detection logic and frontend graceful fallback behavior.",
     "resolution_notes": "1. Turnkey Ingestion Script: Created scripts/sync_drive.py which directly interfaces with Google Drive API v3 to scan folder 1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C, filters uningested weekly reports, and runs multimodal extraction with Gemini 3.7 Flash, updating snapshots.json and config.json.\n2. Model Standards: Updated scripts/gemini_generator.py, scripts/pipeline.py, and scripts/sync_drive.py to default to Gemini 3.7 Flash per user directives.\n3. Server & Mock Elimination: Eliminated hardcoded DEFAULT_DRIVE_REPORTS from server.py, delegated live Drive folder discovery to scripts.sync_drive, and ensured server.py serves static development assets with strict no-cache headers.\n4. Read-Only Provenance Hub: Converted #sheetsModal in index.html and src/js/app.js into a Read-Only Data Provenance Hub. Replaced failing /api/* fetch calls with client-side static freshness checks (checkForUpdates()) querying snapshots.json with cache-busting timestamp.\n5. Cloud Infrastructure & Triggering: Authored deploy/Dockerfile.sync for Cloud Run Job (monaro-risk-sync-job), scripts/trigger_sync.py CLI tool, and updated deploy/provision_environment.sh (Section 7) and docs/DEPLOYMENT_GUIDE.md (Runbook 7) with 1-click Cloud Console and Cloud Tasks instructions.\n6. Verified all 165 project unit, integration, and regression tests pass."
+  },
+  {
+    "id": 93,
+    "type": "FR",
+    "title": "Add active execution check to prevent duplicate concurrent sync runs",
+    "description": "Add a check to make sure that the update/sync process is not already running before triggering a new update run (both manually and automatically), preventing overlapping job executions and race conditions.",
+    "cause": "",
+    "plan": "",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-01",
+    "date_triaged": "",
+    "date_resolved": "",
+    "priority": "",
+    "impact": "",
+    "risk": "",
+    "phase": "",
+    "status": "Reported",
+    "workspace_context": "project_dash"
   }
 ]
