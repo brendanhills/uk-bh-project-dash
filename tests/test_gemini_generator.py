@@ -10,7 +10,8 @@ from scripts.gemini_generator import (
     generate_multispeaker_podcast,
     build_synthesis_prompt,
     ExecutiveSynthesisResult,
-    PodcastDialogueTurn
+    PodcastDialogueTurn,
+    inspect_report_with_gemini
 )
 
 
@@ -95,7 +96,53 @@ def test_parse_structured_synthesis_json():
         mock_client_instance.models.generate_content.return_value = mock_response
         mock_get_client.return_value = mock_client_instance
 
-        result = generate_executive_synthesis({}, [], model='gemini-3.5-flash')
+        result = generate_executive_synthesis({}, [], model='gemini-2.5-flash')
         assert result['synthesis']['executive'] == 'Executive summary paragraph test.'
         assert len(result['top3']) == 1
         assert result['sleeperOutlier']['ref'] == '1.15'
+        assert result['generatedBy'] == 'gemini-2.5-flash'
+
+
+def test_default_model_is_gemini_25_flash():
+    """Verify generate_executive_synthesis and generate_multispeaker_podcast default to gemini-2.5-flash."""
+    mock_synthesis_response = MagicMock()
+    mock_synthesis_response.text = json.dumps({
+        'synthesis': {'executive': 'Exec.', 'technical': 'Tech.', 'governance': 'Gov.'},
+        'top3': [{'num': 1, 'type': 'decision', 'tag': '🚨 Action', 'ref': '1.1', 'title': 'T', 'action': 'A'}],
+        'sleeperOutlier': {'ref': '1.2', 'title': 'S', 'warning': 'W'}
+    })
+
+    with patch('scripts.gemini_generator.get_gemini_client') as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_synthesis_response
+        mock_get_client.return_value = mock_client
+
+        res = generate_executive_synthesis({}, [])
+        assert res['generatedBy'] == 'gemini-2.5-flash'
+        # Verify model argument passed to generate_content was gemini-2.5-flash
+        call_kwargs = mock_client.models.generate_content.call_args.kwargs
+        assert call_kwargs['model'] == 'gemini-2.5-flash'
+
+
+def test_inspect_report_defaults_to_gemini_25_flash():
+    """Verify inspect_report_with_gemini defaults to gemini-2.5-flash."""
+    mock_inspection_response = MagicMock()
+    mock_inspection_response.text = json.dumps({
+        'week_number': 30,
+        'week_label': 'Week 30',
+        'report_date': '28 Aug 2026',
+        'title': 'Monaro Weekly Pack Week 30',
+        'summary': 'Week 30 status report.'
+    })
+
+    with patch('scripts.gemini_generator.get_gemini_client') as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_inspection_response
+        mock_get_client.return_value = mock_client
+
+        res = inspect_report_with_gemini(b'%PDF-mock', 'Monaro_Week_30.pdf')
+        assert res is not None
+        assert res['inspectedBy'] == 'gemini-2.5-flash'
+        assert res['week_number'] == 30
+        call_kwargs = mock_client.models.generate_content.call_args.kwargs
+        assert call_kwargs['model'] == 'gemini-2.5-flash'
