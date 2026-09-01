@@ -51,3 +51,6 @@
 ---
 - [ ] **Track: Terraform Infrastructure as Code (IaC) Provisioning** `[Future Enhancement]`
   *Link: [./tracks/terraform_iac_provisioning_future/index.md](./tracks/terraform_iac_provisioning_future/index.md)*
+---
+- [ ] **Track: Scheduled Ingestion Pipeline, Static Sync Architecture & Gemini 2.5 Upgrade**
+  *Link: [./tracks/scheduled_sync_and_gemini_25_20260901/index.md](./tracks/scheduled_sync_and_gemini_25_20260901/index.md)*
