@@ -98,7 +98,8 @@ def test_ingest_endpoint(dummy_handler: DummyHandler):
         'fileId': 'mock-w28-id',
         'fallback': True
     }
-    server.DashboardHandler.handle_ingest(dummy_handler, params)
+    with patch('server.ingest_report_file', return_value={'week_label': 'Week 28', 'week_number': 28, 'status': 'success'}):
+        server.DashboardHandler.handle_ingest(dummy_handler, params)
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data is not None
     assert dummy_handler.sent_data.get('status') == 'ok'
@@ -112,11 +113,13 @@ def test_briefing_generate_endpoint(dummy_handler: DummyHandler):
         'week': 'Week 28',
         'fallback': True
     }
-    server.DashboardHandler.handle_briefing(dummy_handler, params)
+    with patch('server.save_json_file') as mock_save:
+        server.DashboardHandler.handle_briefing(dummy_handler, params)
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data is not None
     assert dummy_handler.sent_data.get('status') == 'ok'
     assert 'synthesis' in dummy_handler.sent_data
+    mock_save.assert_called_once()
 
 
 # --- Legacy Routing Aliases & Backward Compatibility ---
@@ -151,7 +154,8 @@ def test_handle_sync_all_endpoint(dummy_handler: DummyHandler):
 
 def test_handle_ingest_data_endpoint(dummy_handler: DummyHandler):
     """Verify POST /api/ingest-data triggers ingestion orchestrator."""
-    server.DashboardHandler.handle_ingest_data(dummy_handler, params={"project": "sample"})
+    with patch('server.ingest_report_file', return_value={'week_label': 'Week 28', 'status': 'success'}):
+        server.DashboardHandler.handle_ingest_data(dummy_handler, params={"project": "sample"})
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data.get("status") == "ok"
     assert dummy_handler.sent_data.get("project") == "sample"
@@ -160,9 +164,11 @@ def test_handle_ingest_data_endpoint(dummy_handler: DummyHandler):
 
 def test_handle_regenerate_briefing_endpoint(dummy_handler: DummyHandler):
     """Verify POST /api/regenerate-briefing regenerates briefing synthesis."""
-    server.DashboardHandler.handle_regenerate_briefing(dummy_handler, params={"project": "sample", "week": "Week 27", "fallback": True})
+    with patch('server.save_json_file') as mock_save:
+        server.DashboardHandler.handle_regenerate_briefing(dummy_handler, params={"project": "sample", "week": "Week 27", "fallback": True})
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data.get("status") == "ok"
+    mock_save.assert_called_once()
 
 
 def test_notebook_sync_and_catalog_endpoints():

@@ -1121,14 +1121,14 @@
                     audioEl.ontimeupdate = () => {
                         if (timeLabel && isPodcastPlaying) {
                             const cur = formatAudioTime(audioEl.currentTime);
-                            const dur = formatAudioTime(audioEl.duration || 42);
+                            const dur = formatAudioTime(audioEl.duration);
                             timeLabel.innerText = `${cur} / ${dur}`;
                         }
                     };
                     audioEl.onended = () => {
                         isPodcastPlaying = false;
                         if (playBtn) playBtn.innerText = '▶';
-                        const dur = formatAudioTime(audioEl.duration || 42);
+                        const dur = formatAudioTime(audioEl.duration);
                         if (timeLabel) timeLabel.innerText = `Finished (${dur})`;
                         animateWaveform(false);
                     };
@@ -1529,14 +1529,38 @@
             updatePodcastAudioForWeek(weekKey);
         }
 
-        function hasAudioForWeek(weekKey, snap) {
+        let PODCAST_AUDIO_CACHE = {}; // Cache map of audioSrc -> boolean
+
+        function resolvePodcastAudioSrc(weekKey, snap) {
             if (!snap) snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[weekKey]) ? TIME_MACHINE_SNAPSHOTS[weekKey] : {};
             if (snap.audioUrl && typeof snap.audioUrl === 'string' && snap.audioUrl.trim().length > 0) {
-                return true;
+                return snap.audioUrl.trim();
             }
-            // Verified pre-recorded studio audio asset is strictly Week 26
-            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/^w/i, '') : '');
-            return String(weekNum) === '26';
+            if (snap.audioFile && typeof snap.audioFile === 'string' && snap.audioFile.trim().length > 0) {
+                return snap.audioFile.trim();
+            }
+            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/\D/g, '') : '');
+            if (weekNum) {
+                return `assets/podcast_w${weekNum}.mp3`;
+            }
+            return null;
+        }
+
+        function hasAudioForWeek(weekKey, snap) {
+            if (!snap) snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[weekKey]) ? TIME_MACHINE_SNAPSHOTS[weekKey] : {};
+            if (snap.hasAudio !== undefined) return Boolean(snap.hasAudio);
+            if (snap.audioUrl && typeof snap.audioUrl === 'string' && snap.audioUrl.trim().length > 0) return true;
+
+            const audioSrc = resolvePodcastAudioSrc(weekKey, snap);
+            if (!audioSrc) return false;
+
+            // Return cached verification result if already probed
+            if (PODCAST_AUDIO_CACHE[audioSrc] !== undefined) {
+                return PODCAST_AUDIO_CACHE[audioSrc];
+            }
+
+            // Default to true while audio element verifies metadata
+            return true;
         }
 
         function updatePodcastAudioForWeek(weekKey) {
@@ -1560,111 +1584,43 @@
             }
 
             const snap = (typeof TIME_MACHINE_SNAPSHOTS !== 'undefined' && TIME_MACHINE_SNAPSHOTS[weekKey]) ? TIME_MACHINE_SNAPSHOTS[weekKey] : {};
-            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/^w/i, '') : '26');
-            const weekLabel = snap.week || snap.weekLabel || `Week ${weekNum}`;
+            const weekNum = snap.weekNumber || (weekKey ? weekKey.replace(/\D/g, '') : '');
+            const weekLabel = snap.week || snap.weekLabel || (weekNum ? `Week ${weekNum}` : 'Reporting Cycle');
             const pName = (CONFIG && CONFIG.project && CONFIG.project.name) || 'Project';
 
             const audioTitle = snap.podcastTitle || `${weekLabel} Executive Briefing & Milestone Analysis`;
             if (titleEl) titleEl.innerText = audioTitle;
 
-            const hasAudio = hasAudioForWeek(weekKey, snap);
+            const audioSrc = resolvePodcastAudioSrc(weekKey, snap);
+            const downloadName = `${pName.replace(/\s+/g, '_')}_Executive_Podcast_${weekLabel.replace(/\s+/g, '_')}.mp3`;
 
-            if (hasAudio) {
-                const audioSrc = snap.audioUrl || `assets/podcast_w${weekNum}.mp3`;
-                const audioDuration = (String(weekNum) === '26') ? '0:00 / 0:42' : '0:00 / 1:45';
-                const downloadName = `${pName.replace(/\s+/g, '_')}_Executive_Podcast_${weekLabel.replace(/\s+/g, '_')}.mp3`;
-
-                if (timeLabel) {
-                    timeLabel.innerText = audioDuration;
-                    timeLabel.className = 'font-mono font-bold text-indigo-700';
-                }
-
-                if (playBtn) {
-                    playBtn.disabled = false;
-                    playBtn.className = 'w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center text-lg shadow-sm transition-all cursor-pointer shrink-0';
-                    playBtn.innerText = '▶';
-                    playBtn.title = `Play ${weekLabel} Executive Briefing`;
-                }
-
-                if (downloadEl) {
-                    downloadEl.href = audioSrc;
-                    downloadEl.download = downloadName;
-                    downloadEl.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-pointer';
-                    downloadEl.title = 'Download executive podcast audio file';
-                    downloadEl.style.display = '';
-                }
-
-                if (transcriptBtn) {
-                    transcriptBtn.disabled = false;
-                    transcriptBtn.className = 'text-indigo-700 hover:text-indigo-900 font-bold bg-white border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 cursor-pointer text-xs flex items-center gap-1';
-                    transcriptBtn.title = `View ${weekLabel} podcast transcript`;
-                }
-
-                if (speedControls) {
-                    speedControls.classList.remove('opacity-40', 'pointer-events-none');
-                }
-                if (waveformContainer) {
-                    waveformContainer.classList.remove('opacity-30');
-                }
-
-                const srcSource = document.getElementById('nativePodcastSourceMp3');
-                if (srcSource) srcSource.src = audioSrc;
-                audioEl.src = audioSrc;
-                audioEl.onerror = () => {
-                    console.info(`[Audio] Audio file ${audioSrc} failed to load. Disabling player.`);
-                    if (playBtn) {
-                        playBtn.disabled = true;
-                        playBtn.className = 'w-10 h-10 rounded-xl bg-slate-300 text-slate-400 flex items-center justify-center text-lg shadow-sm transition-all cursor-not-allowed opacity-50 shrink-0';
-                        playBtn.title = `Audio briefing unavailable for ${weekLabel}`;
-                    }
-                    if (timeLabel) {
-                        timeLabel.innerText = 'Audio unavailable';
-                        timeLabel.className = 'font-mono text-xs text-slate-400';
-                    }
-                    if (downloadEl) {
-                        downloadEl.removeAttribute('href');
-                        downloadEl.className = 'bg-slate-200 text-slate-400 font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-not-allowed pointer-events-none opacity-50';
-                    }
-                    if (transcriptBtn) {
-                        transcriptBtn.disabled = true;
-                        transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-50 pointer-events-none text-xs flex items-center gap-1';
-                        transcriptBtn.title = `Transcript unavailable (audio briefing not available for ${weekLabel})`;
-                    }
-                };
-                audioEl.load();
-            } else {
-                // Audio is NOT available for this week (e.g. Weeks 27-30 without studio recording)
-                // Grey out and disable audio player and transcript completely. Never use robotic browser speech synthesis.
+            function setAudioUnavailable() {
+                if (audioSrc) PODCAST_AUDIO_CACHE[audioSrc] = false;
                 if (timeLabel) {
                     timeLabel.innerText = 'Audio briefing unavailable';
                     timeLabel.className = 'font-mono text-xs text-slate-400';
                 }
-
                 if (playBtn) {
                     playBtn.disabled = true;
-                    playBtn.className = 'w-10 h-10 rounded-xl bg-slate-300 text-slate-400 flex items-center justify-center text-lg shadow-sm transition-all cursor-not-allowed opacity-50 shrink-0';
+                    playBtn.className = 'w-10 h-10 rounded-xl bg-slate-200 text-slate-400 border border-slate-300 flex items-center justify-center text-lg shadow-xs transition-all cursor-not-allowed opacity-60 shrink-0';
                     playBtn.innerText = '▶';
                     playBtn.title = `Audio briefing unavailable for ${weekLabel}`;
                 }
-
                 if (downloadEl) {
                     downloadEl.removeAttribute('href');
                     downloadEl.removeAttribute('download');
-                    downloadEl.className = 'bg-slate-200 text-slate-400 font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-not-allowed pointer-events-none opacity-50';
+                    downloadEl.className = 'bg-slate-200 text-slate-400 border border-slate-300 font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-not-allowed pointer-events-none opacity-60';
                     downloadEl.title = `Audio briefing unavailable for ${weekLabel}`;
                 }
-
                 if (transcriptBtn) {
                     transcriptBtn.disabled = true;
-                    transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-50 pointer-events-none text-xs flex items-center gap-1';
+                    transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-60 pointer-events-none text-xs flex items-center gap-1';
                     transcriptBtn.title = `Transcript unavailable (audio briefing not available for ${weekLabel})`;
                 }
-
                 const transcriptModal = document.getElementById('transcriptModal');
                 if (transcriptModal && !transcriptModal.classList.contains('hidden')) {
                     transcriptModal.classList.add('hidden');
                 }
-
                 if (speedControls) {
                     speedControls.classList.add('opacity-40', 'pointer-events-none');
                 }
@@ -1672,11 +1628,78 @@
                     waveformContainer.classList.add('opacity-30');
                     animateWaveform(false);
                 }
-
                 const srcSource = document.getElementById('nativePodcastSourceMp3');
                 if (srcSource) srcSource.removeAttribute('src');
                 audioEl.removeAttribute('src');
             }
+
+            function setAudioAvailable(durationSec) {
+                if (audioSrc) PODCAST_AUDIO_CACHE[audioSrc] = true;
+                const formattedDuration = (durationSec && !isNaN(durationSec) && durationSec > 0 && durationSec !== Infinity)
+                    ? `0:00 / ${formatAudioTime(durationSec)}`
+                    : '0:00 / --:--';
+
+                if (timeLabel) {
+                    timeLabel.innerText = formattedDuration;
+                    timeLabel.className = 'font-mono font-bold text-indigo-700';
+                }
+                if (playBtn) {
+                    playBtn.disabled = false;
+                    playBtn.className = 'w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center text-lg shadow-sm transition-all cursor-pointer shrink-0';
+                    playBtn.innerText = '▶';
+                    playBtn.title = `Play ${weekLabel} Executive Briefing`;
+                }
+                if (downloadEl) {
+                    downloadEl.href = audioSrc;
+                    downloadEl.download = downloadName;
+                    downloadEl.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-pointer';
+                    downloadEl.title = 'Download executive podcast audio file';
+                    downloadEl.style.display = '';
+                }
+                if (transcriptBtn) {
+                    transcriptBtn.disabled = false;
+                    transcriptBtn.className = 'text-indigo-700 hover:text-indigo-900 font-bold bg-white border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 cursor-pointer text-xs flex items-center gap-1';
+                    transcriptBtn.title = `View ${weekLabel} podcast transcript`;
+                }
+                if (speedControls) {
+                    speedControls.classList.remove('opacity-40', 'pointer-events-none');
+                }
+                if (waveformContainer) {
+                    waveformContainer.classList.remove('opacity-30');
+                }
+            }
+
+            if (!audioSrc || PODCAST_AUDIO_CACHE[audioSrc] === false) {
+                setAudioUnavailable();
+                return;
+            }
+
+            // If already verified and duration known, update immediately
+            if (PODCAST_AUDIO_CACHE[audioSrc] === true && audioEl.src && audioEl.src.includes(audioSrc) && audioEl.duration) {
+                setAudioAvailable(audioEl.duration);
+                return;
+            }
+
+            // Set source and verify metadata dynamically from the file
+            const srcSource = document.getElementById('nativePodcastSourceMp3');
+            if (srcSource) srcSource.src = audioSrc;
+            audioEl.src = audioSrc;
+
+            audioEl.onloadedmetadata = () => {
+                setAudioAvailable(audioEl.duration);
+            };
+
+            audioEl.onerror = () => {
+                console.info(`[Audio] Audio file ${audioSrc} failed to load or does not exist on server. Disabling player.`);
+                setAudioUnavailable();
+            };
+
+            // Set optimistic state while metadata loads
+            if (PODCAST_AUDIO_CACHE[audioSrc] === true) {
+                setAudioAvailable(audioEl.duration);
+            }
+
+            audioEl.load();
         }
 
         function returnToPresent() {

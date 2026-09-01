@@ -154,6 +154,8 @@ def filter_uningested_reports(
     Returns only reports that have not yet been ingested into snapshots.json.
     """
     existing_weeks = set()
+    existing_file_ids = set()
+    existing_file_names = set()
     snapshots_dict = snapshots_data.get('snapshots', {})
     for key, snap in snapshots_dict.items():
         if isinstance(snap, dict):
@@ -165,9 +167,21 @@ def filter_uningested_reports(
                 m = re.search(r'(\d+)', str(w_label))
                 if m:
                     existing_weeks.add(int(m.group(1)))
+            fid = snap.get('driveFileId') or (snap.get('driveFile', {}).get('id') if isinstance(snap.get('driveFile'), dict) else None)
+            if fid:
+                existing_file_ids.add(str(fid).strip())
+            fname = snap.get('driveFileName') or (snap.get('driveFile', {}).get('name') if isinstance(snap.get('driveFile'), dict) else None)
+            if fname:
+                existing_file_names.add(str(fname).strip().lower())
 
     uningested = []
     for f in drive_files:
+        f_id = str(f.get('id') or '').strip()
+        f_name = str(f.get('name') or '').strip().lower()
+        if f_id and f_id in existing_file_ids:
+            continue
+        if f_name and f_name in existing_file_names:
+            continue
         w_num = f.get('week_number')
         if w_num is not None and w_num in existing_weeks:
             continue
@@ -209,7 +223,6 @@ def sync_drive_reports(
     logger.info(f"Found {len(to_ingest)} new report(s) needing ingestion.")
 
     ingested_reports = []
-    latest_week = snapshots_data.get('current_week') or 'Week 29'
 
     if not dry_run:
         for item in to_ingest:
@@ -227,8 +240,32 @@ def sync_drive_reports(
                 location=location
             )
             ingested_reports.append(res)
-            if res.get('week'):
-                latest_week = res.get('week')
+
+    if not dry_run and to_ingest:
+        snapshots_data = load_json_file(snapshots_path, {'snapshots': {}})
+
+    # Determine true maximum week across all snapshots
+    all_week_nums = []
+    snapshots_map = snapshots_data.get('snapshots', {}) if isinstance(snapshots_data, dict) else {}
+    for k, snap in snapshots_map.items():
+        if isinstance(snap, dict):
+            wn = snap.get('weekNumber')
+            if wn is not None:
+                try:
+                    all_week_nums.append(int(wn))
+                except (ValueError, TypeError):
+                    pass
+            m = re.search(r'\d+', str(k))
+            if m:
+                try:
+                    all_week_nums.append(int(m.group(0)))
+                except (ValueError, TypeError):
+                    pass
+
+    if all_week_nums:
+        latest_week = f"Week {max(all_week_nums)}"
+    else:
+        latest_week = snapshots_data.get('current_week') or 'Week 30'
 
     timestamp_iso = datetime.now(timezone.utc).isoformat()
 
