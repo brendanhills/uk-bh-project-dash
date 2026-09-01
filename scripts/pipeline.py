@@ -281,7 +281,7 @@ def ingest_report_file(
     project_name: str = 'sample',
     data_root: Optional[str] = None,
     force_fallback: bool = False,
-    model: str = 'gemini-3.5-flash'
+    model: str = 'gemini-3.7-flash'
 ) -> Dict[str, Any]:
     """Unified report ingestion engine: parses metadata, computes metrics, generates briefing, and updates snapshots."""
     proj_dir = get_project_dir(project_name, data_root)

@@ -96,15 +96,15 @@ def test_parse_structured_synthesis_json():
         mock_client_instance.models.generate_content.return_value = mock_response
         mock_get_client.return_value = mock_client_instance
 
-        result = generate_executive_synthesis({}, [], model='gemini-2.5-flash')
+        result = generate_executive_synthesis({}, [], model='gemini-3.7-flash')
         assert result['synthesis']['executive'] == 'Executive summary paragraph test.'
         assert len(result['top3']) == 1
         assert result['sleeperOutlier']['ref'] == '1.15'
-        assert result['generatedBy'] == 'gemini-2.5-flash'
+        assert result['generatedBy'] == 'gemini-3.7-flash'
 
 
-def test_default_model_is_gemini_25_flash():
-    """Verify generate_executive_synthesis and generate_multispeaker_podcast default to gemini-2.5-flash."""
+def test_default_model_is_gemini_37_flash():
+    """Verify generate_executive_synthesis and generate_multispeaker_podcast default to gemini-3.7-flash."""
     mock_synthesis_response = MagicMock()
     mock_synthesis_response.text = json.dumps({
         'synthesis': {'executive': 'Exec.', 'technical': 'Tech.', 'governance': 'Gov.'},
@@ -118,14 +118,13 @@ def test_default_model_is_gemini_25_flash():
         mock_get_client.return_value = mock_client
 
         res = generate_executive_synthesis({}, [])
-        assert res['generatedBy'] == 'gemini-2.5-flash'
-        # Verify model argument passed to generate_content was gemini-2.5-flash
+        assert res['generatedBy'] == 'gemini-3.7-flash'
         call_kwargs = mock_client.models.generate_content.call_args.kwargs
-        assert call_kwargs['model'] == 'gemini-2.5-flash'
+        assert call_kwargs['model'] == 'gemini-3.7-flash'
 
 
-def test_inspect_report_defaults_to_gemini_25_flash():
-    """Verify inspect_report_with_gemini defaults to gemini-2.5-flash."""
+def test_inspect_report_defaults_to_gemini_37_flash():
+    """Verify inspect_report_with_gemini defaults to gemini-3.7-flash."""
     mock_inspection_response = MagicMock()
     mock_inspection_response.text = json.dumps({
         'week_number': 30,
@@ -142,7 +141,7 @@ def test_inspect_report_defaults_to_gemini_25_flash():
 
         res = inspect_report_with_gemini(b'%PDF-mock', 'Monaro_Week_30.pdf')
         assert res is not None
-        assert res['inspectedBy'] == 'gemini-2.5-flash'
+        assert res['inspectedBy'] == 'gemini-3.7-flash'
         assert res['week_number'] == 30
         call_kwargs = mock_client.models.generate_content.call_args.kwargs
-        assert call_kwargs['model'] == 'gemini-2.5-flash'
+        assert call_kwargs['model'] == 'gemini-3.7-flash'

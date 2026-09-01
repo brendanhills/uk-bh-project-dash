@@ -1,0 +1,27 @@
+# ==============================================================================
+# Ingestion Worker Container (Cloud Run Job: monaro-risk-sync-job)
+# ==============================================================================
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# Install system dependencies for PDF parsing
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project data and ingestion scripts
+COPY data/ ./data/
+COPY prompts/ ./prompts/
+COPY scripts/ ./scripts/
+
+ENV PYTHONUNBUFFERED=1
+ENV DEFAULT_PROJECTS="monaro"
+
+# Entrypoint runs the turnkey standalone Drive and Sheets sync script
+ENTRYPOINT ["python", "scripts/sync_drive.py", "--project=monaro"]

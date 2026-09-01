@@ -330,3 +330,38 @@ Before day 90 of sandbox project creation:
 | **`502 / 503 Bad Gateway`** | Container failed to start or did not bind port `8080`. | Check Cloud Logging: `resource.type=cloud_run_revision AND severity>=ERROR`. Ensure `PORT=8080` is listened to. |
 | **Cloud Build Trigger Permission Error** | `github-deployer` service account missing `roles/run.admin` or `roles/iam.serviceAccountUser`. | Re-run Step 3 in `./deploy/provision_environment.sh`. |
 | **Docker Build Failure in CI** | Python dependency conflict or broken test assertion. | Run `pip install -r requirements.txt && pytest` locally to replicate. |
+
+---
+
+### Runbook 7: Triggering On-Demand & Scheduled Data Ingestion Sync
+The risk intelligence platform utilizes an automated, scheduled ingestion worker (`monaro-risk-sync-job`) running as a Cloud Run Job. Developers and administrators can trigger synchronization through three mechanisms:
+
+#### 1. Cloud Console (1-Click Web UI)
+1. **Cloud Run Jobs**: Open **[Cloud Run Jobs Console](https://pantheon.corp.google.com/run/jobs?project=monaro-risk-dev)**, select `monaro-risk-sync-job`, and click **Execute**.
+2. **Cloud Scheduler**: Open **[Cloud Scheduler Console](https://pantheon.corp.google.com/cloudscheduler?project=monaro-risk-dev)** and click **Force Run** on the scheduled sync job.
+
+#### 2. Developer / Admin CLI (`scripts/trigger_sync.py`)
+```bash
+# Trigger remote Cloud Run Job in GCP
+python scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
+
+# Or trigger directly with gcloud:
+gcloud run jobs execute monaro-risk-sync-job \
+  --project=monaro-risk-dev \
+  --region=australia-southeast1 \
+  --wait
+
+# Run local standalone ingestion:
+python scripts/trigger_sync.py --mode=local
+```
+
+#### 3. Cloud Tasks Queue
+```bash
+gcloud tasks create-http-task \
+  --queue=monaro-sync-queue \
+  --location=australia-southeast1 \
+  --project=monaro-risk-dev \
+  --url="https://monaro-risk-sync-job..." \
+  --header="Content-Type:application/json"
+```
+

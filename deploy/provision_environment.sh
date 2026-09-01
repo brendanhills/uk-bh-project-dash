@@ -111,9 +111,11 @@ gcloud services enable \
   containerscanning.googleapis.com \
   sheets.googleapis.com \
   drive.googleapis.com \
+  cloudtasks.googleapis.com \
+  cloudscheduler.googleapis.com \
   iam.googleapis.com \
   --project="${PROJECT_ID}"
-echo "✅ All 14 GCP APIs successfully enabled."
+echo "✅ All 16 GCP APIs successfully enabled."
 echo ""
 
 # 2. Create Deployer Service Account
@@ -332,6 +334,52 @@ for USR in "brendanhills@google.com" "allins@google.com"; do
   echo "  ✓ Granted iap.httpsResourceAccessor to user:${USR}"
 done
 echo "✅ Cloud Run and IAP Access Control configured in ${REGION}."
+echo ""
+
+# 7. Scheduled Ingestion Pipeline (Cloud Run Job & Cloud Tasks Queue)
+echo "=== 7. Provisioning Scheduled Ingestion Job & Cloud Tasks Queue ==="
+SYNC_JOB_NAME="monaro-risk-sync-job"
+SYNC_QUEUE_NAME="monaro-sync-queue"
+
+# Create Cloud Tasks Queue
+if ! gcloud tasks queues describe "${SYNC_QUEUE_NAME}" --location="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  gcloud tasks queues create "${SYNC_QUEUE_NAME}" \
+    --location="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --max-concurrent-dispatches=1 \
+    --max-attempts=3 || true
+  echo "  ✓ Created Cloud Tasks queue: ${SYNC_QUEUE_NAME}"
+else
+  echo "  ✓ Cloud Tasks queue already exists: ${SYNC_QUEUE_NAME}"
+fi
+
+# Create or Update Cloud Run Job
+SYNC_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/monaro-risk-sync:latest"
+if ! gcloud run jobs describe "${SYNC_JOB_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  gcloud run jobs create "${SYNC_JOB_NAME}" \
+    --image="${SYNC_IMAGE}" \
+    --region="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --service-account="${SA_EMAIL}" \
+    --tasks=1 \
+    --max-retries=1 \
+    --set-env-vars="DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=${PROJECT_ID}" >/dev/null 2>&1 || true
+  echo "  ✓ Created Cloud Run Job: ${SYNC_JOB_NAME}"
+else
+  echo "  ✓ Cloud Run Job already exists: ${SYNC_JOB_NAME}"
+fi
+
+# Grant Admin and Deployer permission to execute Cloud Run Job
+for USR in "brendanhills@google.com" "allins@google.com"; do
+  gcloud run jobs add-iam-policy-binding "${SYNC_JOB_NAME}" \
+    --project="${PROJECT_ID}" \
+    --region="${REGION}" \
+    --member="user:${USR}" \
+    --role="roles/run.developer" >/dev/null 2>&1 || true
+  echo "  ✓ Granted run.developer to user:${USR} on ${SYNC_JOB_NAME}"
+done
+
+echo "✅ Scheduled Ingestion Job and Cloud Tasks Queue configured."
 echo ""
 
 echo "=============================================================================="
