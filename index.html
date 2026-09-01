@@ -406,25 +406,25 @@
                                 </div>
                             </div>
                         </div>
-                        <audio id="nativePodcastAudio" preload="auto" src="assets/podcast_w27.mp3?v=au3">
-                            <source id="nativePodcastSourceMp3" src="assets/podcast_w27.mp3?v=au3" type="audio/mpeg">
+                        <audio id="nativePodcastAudio" preload="none">
+                            <source id="nativePodcastSourceMp3" type="audio/mpeg">
                         </audio>
                     </div>
 
                     <!-- Right: Speed, Transcript & Download Audio Button -->
                     <div class="flex items-center gap-2.5 self-end sm:self-center shrink-0 text-xs">
-                        <div class="flex items-center gap-1 font-bold text-[11px] bg-white p-1 rounded-lg border border-purple-100">
+                        <div id="podcastSpeedControls" class="flex items-center gap-1 font-bold text-[11px] bg-white p-1 rounded-lg border border-purple-100">
                             <button onclick="setPodcastSpeed(1.0)" id="speed10" class="px-1.5 py-0.2 rounded bg-indigo-600 text-white cursor-pointer">1.0x</button>
                             <button onclick="setPodcastSpeed(1.25)" id="speed12" class="px-1.5 py-0.2 rounded text-slate-600 hover:text-slate-900 cursor-pointer">1.25x</button>
                             <button onclick="setPodcastSpeed(1.5)" id="speed15" class="px-1.5 py-0.2 rounded text-slate-600 hover:text-slate-900 cursor-pointer">1.5x</button>
                         </div>
 
-                        <button onclick="toggleTranscriptModal()" class="text-indigo-700 hover:text-indigo-900 font-bold bg-white border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 cursor-pointer text-xs flex items-center gap-1">
+                        <button onclick="toggleTranscriptModal()" id="podcastTranscriptBtn" class="text-indigo-700 hover:text-indigo-900 font-bold bg-white border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 cursor-pointer text-xs flex items-center gap-1">
                             <span>📜 Transcript</span>
                         </button>
 
                         <!-- Direct Audio Download Button -->
-                        <a id="podcastDownloadLink" href="assets/podcast_w27.mp3" download="F_DSE_Executive_Podcast_Week27.mp3" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5" title="Download executive podcast audio file">
+                        <a id="podcastDownloadLink" href="#" download="" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5" title="Download executive podcast audio file">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <span>Download Audio</span>
                         </a>
@@ -1401,8 +1401,9 @@
                 <button onclick="closeSheetsModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl cursor-pointer">Close</button>
                 <div class="flex items-center gap-3">
                     <span class="text-[11px] text-slate-500">Pipeline runs via Cloud Run Job / Cloud Tasks</span>
-                    <button onclick="checkForUpdates()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold shadow-sm flex items-center gap-2 cursor-pointer transition-all">
-                        <span>↻ Check for Updates</span>
+                    <button onclick="checkForUpdates()" id="btnCheckUpdates" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold shadow-sm flex items-center gap-2 cursor-pointer transition-all">
+                        <span id="btnCheckUpdatesIcon">↻</span>
+                        <span id="btnCheckUpdatesText">Check for Updates</span>
                     </button>
                 </div>
             </div>
@@ -1419,7 +1420,7 @@
                     <span class="text-2xl">🎙️</span>
                     <div>
                         <h2 class="text-base font-bold">NotebookLM Deep Dive Transcript</h2>
-                        <p class="text-xs text-purple-200">Episode 26: The I-129 Breakthrough &amp; SRR Glide Path (Alex &amp; Jordan)</p>
+                        <p id="podcastModalSubtitle" class="text-xs text-purple-200">Episode 26: The I-129 Breakthrough &amp; SRR Glide Path (Alex &amp; Jordan)</p>
                     </div>
                 </div>
                 <button onclick="toggleTranscriptModal()" class="text-white/80 hover:text-white p-1 rounded-lg">✕</button>

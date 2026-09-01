@@ -18,6 +18,18 @@ def project_root() -> Path:
 
 
 @pytest.fixture(scope="session")
+def full_html(project_root: Path) -> str:
+    """Loads index.html concatenated with all ES modules under src/js/ once per test session."""
+    html_file = project_root / "index.html"
+    html = html_file.read_text(encoding="utf-8")
+    js_dir = project_root / "src" / "js"
+    if js_dir.exists():
+        for js_path in sorted(js_dir.rglob("*.js")):
+            html += "\n" + js_path.read_text(encoding="utf-8")
+    return html
+
+
+@pytest.fixture(scope="session")
 def sample_project_dir(project_root: Path) -> Path:
     """Returns the Path to data/sample/ directory."""
     return project_root / "data" / "sample"
