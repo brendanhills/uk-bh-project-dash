@@ -19,7 +19,7 @@ def test_project_data_files_exist_and_parse(project_root: Path, project: str):
         'driver_tree.json'
     ]
     proj_dir = project_root / 'data' / project
-    if not proj_dir.is_dir():
+    if not (proj_dir.is_dir() and (proj_dir / 'config.json').is_file()):
         pytest.skip(f"Private data/{project} directory not present in clean checkout (supplied via GCS volume mount)")
 
     for fname in required_files:
@@ -96,8 +96,8 @@ def test_sample_driver_tree_and_knowledge(sample_driver_tree: dict, sample_knowl
 def test_register_separation_and_counts(project_root: Path):
     """Verify primary and secondary register configuration and distinct counts."""
     data_dir = project_root / 'data' / 'monaro'
-    if not data_dir.exists():
-        pytest.skip("Private enterprise data directory not present")
+    if not (data_dir.is_dir() and (data_dir / 'config.json').is_file()):
+        pytest.skip("Private enterprise data directory not present in clean checkout")
 
     config = json.loads((data_dir / 'config.json').read_text(encoding='utf-8'))
     assert config.get('project', {}).get('primaryRegisterName') == 'Internal Risks'
@@ -114,8 +114,8 @@ def test_register_separation_and_counts(project_root: Path):
 def test_enterprise_driver_tree_and_knowledge(project_root: Path):
     """Verify Monaro driver tree 24 gates (Bug #70) and blueprint bundle sources."""
     data_dir = project_root / 'data' / 'monaro'
-    if not data_dir.exists():
-        pytest.skip("Private enterprise data directory not present")
+    if not (data_dir.is_dir() and (data_dir / 'knowledge.json').is_file()):
+        pytest.skip("Private enterprise data directory not present in clean checkout")
 
     k_data = json.loads((data_dir / 'knowledge.json').read_text(encoding='utf-8'))
     sources = k_data.get('sources', [])

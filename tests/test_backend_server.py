@@ -37,12 +37,18 @@ def test_get_project_dir_helper():
 
     monaro_dir = server.get_project_dir("monaro")
     assert Path(monaro_dir).exists()
-    assert monaro_dir.endswith(str(Path("data") / "monaro"))
+    if (Path(server.DIRECTORY) / 'data' / 'monaro').is_dir():
+        assert monaro_dir.endswith(str(Path("data") / "monaro"))
+    else:
+        assert monaro_dir.endswith(str(Path("data") / "sample"))
 
     # Default fallback
     default_dir = server.get_project_dir("")
     assert Path(default_dir).exists()
-    assert default_dir.endswith(str(Path("data") / "monaro"))
+    if (Path(server.DIRECTORY) / 'data' / 'monaro').is_dir():
+        assert default_dir.endswith(str(Path("data") / "monaro"))
+    else:
+        assert default_dir.endswith(str(Path("data") / "sample"))
 
 
 def test_bug_94_default_project_resolution(monkeypatch):
@@ -126,6 +132,8 @@ def test_briefing_generate_endpoint(dummy_handler: DummyHandler):
 ])
 def test_sync_sheet_parameterized(dummy_handler: DummyHandler, project_query: str, min_risks: int):
     """Verify handle_sync_sheet returns correct risks, secondary registers, and snapshots across projects."""
+    if "monaro" in project_query and not (Path(server.DIRECTORY) / 'data' / 'monaro' / 'risks.json').is_file():
+        pytest.skip("Private monaro dataset not present in clean checkout")
     server.DashboardHandler.handle_sync_sheet(dummy_handler, query_str=project_query)
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data is not None
@@ -169,19 +177,19 @@ def test_handle_regenerate_briefing_endpoint(dummy_handler: DummyHandler):
 def test_notebook_sync_and_catalog_endpoints():
     """Verify DashboardHandler handle_check_notebook_sync, handle_sync_notebook, and handle_list_notebooks."""
     dummy1 = DummyHandler()
-    server.DashboardHandler.handle_check_notebook_sync(dummy1)
+    server.DashboardHandler.handle_check_notebook_sync(dummy1, query_str="project=sample")
     assert dummy1.sent_code == 200
     assert 'sources' in dummy1.sent_data
     assert dummy1.sent_data['totalSources'] > 0
     assert 'bundleMapping' in dummy1.sent_data
 
     dummy2 = DummyHandler()
-    server.DashboardHandler.handle_sync_notebook(dummy2)
+    server.DashboardHandler.handle_sync_notebook(dummy2, query_or_params="project=sample")
     assert dummy2.sent_code == 200
     assert dummy2.sent_data['status'] == 'ok'
 
     dummy3 = DummyHandler()
-    server.DashboardHandler.handle_list_notebooks(dummy3)
+    server.DashboardHandler.handle_list_notebooks(dummy3, query_str="project=sample")
     assert dummy3.sent_code == 200
     assert 'notebooks' in dummy3.sent_data
     assert len(dummy3.sent_data['notebooks']) >= 1
