@@ -1843,5 +1843,24 @@
     "status": "Fix Implemented",
     "workspace_context": "project_dash",
     "resolution_notes": "1. Refactored getLatestWeekKey() in src/js/app.js and src/js/modules/time_machine.js to compute the maximum weekNumber across all available snapshots rather than stopping on legacy isLatest flags on older snapshots.\n2. Verified returnToPresent() accurately returns to Week 30.\n3. Verified with automated unit test test_bug_101_get_latest_week_key_resolves_highest_week."
+  },
+  {
+    "id": 102,
+    "type": "FR",
+    "title": "Script to check if podcasts have been generated and are up to date",
+    "description": "Provide a standalone inspection/CLI utility script (or healthcheck tool) to verify across projects whether executive podcast briefings have been generated, are current with the latest week, and identify any snapshots still using fallback or needing regeneration.",
+    "cause": "Automated sync operations and multi-project deployments needed a dedicated operational audit and self-healing CLI command to verify Gemini 3.5 Flash podcast status and detect missing or fallback briefings.",
+    "plan": "1. Author standalone CLI script scripts/check_podcast_status.py supporting audit of all project datasets, formatted tabular output, --json, and --fix flag for on-demand self-healing generation.\n2. Add automated unit tests in tests/test_sync_podcast_generation.py.\n3. Document utility in README.md and docs/DEPLOYMENT_GUIDE.md.",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-02",
+    "date_triaged": "2026-09-02",
+    "date_resolved": "2026-09-02",
+    "priority": "P2",
+    "impact": "Medium",
+    "risk": "Low",
+    "phase": "Phase 2: Data Pipeline & Ingestion",
+    "status": "Fix Implemented",
+    "workspace_context": "project_dash",
+    "resolution_notes": "1. Implemented scripts/check_podcast_status.py providing check_project_podcast_status() and CLI entrypoint to audit snapshots.json across all or specific projects.\n2. Verifies latest week, turn counts, dialogue speaker alternation (Alex & Jordan), model provenance ('gemini-3.5-flash'), and audio presence.\n3. Added --fix option to automatically invoke ensure_latest_podcast_generated() via Vertex AI us-central1.\n4. Added automated unit tests test_check_podcast_status_reports_needs_regeneration_on_fallback and test_check_podcast_status_reports_up_to_date_when_gemini_35 in tests/test_sync_podcast_generation.py.\n5. Documented in README.md and docs/DEPLOYMENT_GUIDE.md."
   }
 ]

@@ -83,7 +83,7 @@ def test_gemini_region_and_multi_region_rep_endpoint(monkeypatch):
     monkeypatch.delenv("GEMINI_REGION", raising=False)
     monkeypatch.delenv("GCP_REGION", raising=False)
     monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
-    assert get_default_gemini_region() == "us"
+    assert get_default_gemini_region() == "us-central1"
     assert get_default_gemini_region("australia-southeast1") == "australia-southeast1"
 
     monkeypatch.setenv("GCP_PROJECT_ID", "monaro-risk-dev")
@@ -415,7 +415,7 @@ def test_generate_executive_synthesis_404_region_retry_and_invalid_json():
     mock_us_client.models.generate_content.return_value = mock_synthesis_response
 
     def client_side_effect(location=None):
-        if location == 'us':
+        if location in ('us', 'us-central1'):
             return mock_us_client
         return mock_regional_client
 

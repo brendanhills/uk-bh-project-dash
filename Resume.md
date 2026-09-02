@@ -1,13 +1,13 @@
 # Project Monaro / F-DSE Risk Governance & Intelligence Platform — Session Resume
 
-**Checkpoint Timestamp:** `2026-09-01 17:16:00 AEST`  
+**Checkpoint Timestamp:** `2026-09-02 16:45:00 AEST`  
 **Active Git Branch:** `dev`  
 **Workspace:** `/usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash`  
 **Deployment Region:** **`australia-southeast1`** (Sydney, Australia)  
 **Live Cloud Run Dev Service:** `monaro-risk-dash-dev`  
 **Live Cloud Run Prod Service:** `monaro-risk-dash-prod`  
 **Local Cloudtop Dev Server:** [Monaro Project (Default)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro) | [Aurora Sample](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)  
-**Test Suite Health:** **181 / 181 Tests Passing (100%)** (`pytest` in 9.59s).  
+**Test Suite Health:** **106 / 106 Tests Passing (100%)** (`pytest` in 12.96s).  
 **Active Conductor Track:** `migrate_from_unittest_to_pytest_20260827` (Status: `[x] Completed / Final Verification`)
 
 ---
@@ -103,7 +103,14 @@ git push origin project_dash/prod-v1.0.0
    - Preserved 100% Sydney (`australia-southeast1`) hosting for all core infrastructure (Cloud Run Web Service, Cloud Run Ingestion Job, Cloud Storage data bucket, Artifact Registry, and Cloud Build triggers).
    - Configured cross-region workaround targeting Google Cloud's official multi-region US endpoint (`https://aiplatform.us.rep.googleapis.com`, `location="us"`), with automatic 404 retry fallback.
    - Future-proofed zero-code domestic migration: when Gemini 3.5 Flash deploys to Sydney in a few weeks, switching `GEMINI_REGION="australia-southeast1"` enables immediate local AI execution without code changes or container rebuilds.
-   - Verified live end-to-end connectivity via pre-flight doctor diagnostics, updated Cloud Run Job environment variables in GCP, and expanded unit test suite to 181 passing tests (100%).
+
+9. **Podcast Generation on Sync Remediation & Status Inspection Tool (FR-102)**:
+   - Completely remediated podcast briefing generation during sync: added `ensure_latest_podcast_generated()` to `scripts/sync_drive.py` and `scripts/pipeline.py`, ensuring Gemini 3.5 Flash generates/refreshes dual-host executive briefings on every sync (even with 0 new Drive files).
+   - Strict Zero-TTS Mandate: Removed all external TTS models and modalities in favor of Gemini 3.5 Flash structured dialogue turns, with frontend browser speech synthesis as local audio playback fallback.
+   - Resolved Cloud Run 404 region mismatch by standardizing `GEMINI_REGION="us-central1"` across Cloud Build, `setup.sh`, and `gemini_generator.py`.
+   - Decoupled frontend transcript modal from audio file availability in `src/js/app.js`, ensuring executive scripts are immediately readable.
+   - Created standalone audit and self-healing CLI utility `scripts/check_podcast_status.py` (FR-102) with `--fix` and `--json` support.
+   - Added unit test suite `tests/test_sync_podcast_generation.py` (100% test pass rate across 106 tests).
 
 
 ---

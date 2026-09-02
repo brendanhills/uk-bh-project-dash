@@ -142,7 +142,7 @@ substitutions:
   _ACCESS_GROUP: 'monaro-risk-dev@google.com'
   _REGION: 'australia-southeast1'
   _GEMINI_MODEL: 'gemini-3.5-flash'
-  _GEMINI_REGION: 'us'
+  _GEMINI_REGION: 'us-central1'
 
 options:
   logging: CLOUD_LOGGING_ONLY

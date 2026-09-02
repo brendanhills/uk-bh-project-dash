@@ -16,9 +16,9 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
    - Uses **Gemini 3.5 Flash** to generate authoritative, exception-first executive decision syntheses covering overall program posture, core health milestones, and active delivery blockers.
    - Automatically surfaces **Top 3 Critical Action Cards** (Action / Impact / Outcome) and early-warning **Sleeper Outliers** with operational rationale and interactive drill-downs.
 
-3. **Neural Dual-Speaker Audio Briefing**:
-   - Synthesizes dual-host executive discussion podcasts using Gemini TTS (`MultiSpeakerVoiceConfig` with `Puck` and `Aoede`).
-   - Built-in neural waveform player with variable playback speed, auto-scrolling synced transcript, and direct MP3 export.
+3. **Dual-Speaker Executive Briefing & Interactive Podcast Player**:
+   - Synthesizes dynamic dual-host executive briefings (Alex, Program Delivery Analyst & Jordan, Technical Director) using **Gemini 3.5 Flash** (`gemini-3.5-flash`).
+   - Integrated executive audio player with synchronized live transcript drawer, dual speaker avatars, variable playback speed, and browser speech synthesis fallback when offline.
 
 4. **Multi-Register 5×5 Risk & Issue Matrix & Clean Register Isolation**:
    - Explicitly separated tabs for **Internal Risks** (107 primary items) and **Team Google Risks** (12 technical items) with dedicated matrices, provenance tooltips, and ownership filters.
@@ -39,7 +39,7 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
 
 ### 1. Prerequisites
 - **Python 3.12+**
-- **Google Cloud ADC** (`gcloud auth application-default login`) or **`GEMINI_API_KEY`** (Required for Gemini 3.5 Flash AI decision synthesis and neural podcast audio generation)
+- **Google Cloud ADC** (`gcloud auth application-default login`) or **`GEMINI_API_KEY`** (Required for Gemini 3.5 Flash AI decision synthesis and podcast generation; configured in `us-central1`)
 
 ### 2. Setup
 ```bash
@@ -224,7 +224,7 @@ gcloud scheduler jobs run monaro-sync-schedule \
   --project=monaro-risk-dev
 ```
 
-##### Method 4: Ingestion CLI Scripts
+##### Method 4: Ingestion & Verification CLI Scripts
 ```bash
 # Trigger remote Cloud Run Job in GCP via Python helper:
 python3 scripts/trigger_sync.py --mode=cloud --project=monaro-risk-dev --region=australia-southeast1
@@ -234,6 +234,12 @@ python3 scripts/sync_drive.py --doctor
 
 # Run local standalone ingestion using local ADC credentials:
 python3 scripts/sync_drive.py --project monaro
+
+# Audit executive podcast briefing status & freshness (Gemini 3.5 Flash) across all projects:
+python3 scripts/check_podcast_status.py
+
+# Inspect specific project and automatically fix/regenerate missing or fallback podcasts:
+python3 scripts/check_podcast_status.py --project monaro --fix
 ```
 
 ---
@@ -296,7 +302,8 @@ project_dash/
 │   ├── sync_drive.py            # Turnkey standalone Google Drive & Sheets ingestion engine
 │   ├── trigger_sync.py          # Admin/Dev CLI trigger tool for Cloud Run Job & local sync
 │   ├── pipeline.py              # Ingestion, Drive report parsing & Gemini synthesis pipeline
-│   ├── gemini_generator.py      # Gemini 3.5 Flash synthesis & TTS audio generator
+│   ├── gemini_generator.py      # Gemini 3.5 Flash synthesis & podcast dialogue generator
+│   ├── check_podcast_status.py  # Standalone CLI audit tool to inspect & refresh podcast status
 │   └── check_build_status.py    # Cloud Build CI/CD status query tool
 ├── src/
 │   └── js/                      # Modular ES6 frontend architecture (api.js, state.js, analytics.js, app.js)
