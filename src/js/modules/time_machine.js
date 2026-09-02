@@ -7,6 +7,17 @@ import { cleanField } from '../analytics.js';
 
 export function getLatestWeekKey() {
     const snaps = store.get('timeMachineSnapshots') || {};
+    let maxWeek = -1;
+    let maxKey = null;
+    for (const [key, snap] of Object.entries(snaps)) {
+        if (!snap) continue;
+        const wn = snap.weekNumber || (typeof snap.week === 'string' ? parseInt(snap.week.replace(/\D/g, '')) : 0) || (typeof snap.weekLabel === 'string' ? parseInt(snap.weekLabel.replace(/\D/g, '')) : 0) || parseInt(key.replace(/\D/g, '')) || 0;
+        if (!isNaN(wn) && wn > maxWeek) {
+            maxWeek = wn;
+            maxKey = key;
+        }
+    }
+    if (maxKey) return maxKey;
     const keys = Object.keys(snaps);
     return keys.length > 0 ? keys[keys.length - 1] : 'w27';
 }
@@ -63,7 +74,13 @@ export function renderTimeMachineModalList() {
     const latestKey = getLatestWeekKey();
 
     let html = '';
-    const sortedKeys = Object.keys(snaps).reverse();
+    const sortedKeys = Object.keys(snaps).sort((a, b) => {
+        const snapA = snaps[a] || {};
+        const snapB = snaps[b] || {};
+        const wnA = snapA.weekNumber || (typeof snapA.week === 'string' ? parseInt(snapA.week.replace(/\D/g, '')) : 0) || (typeof snapA.weekLabel === 'string' ? parseInt(snapA.weekLabel.replace(/\D/g, '')) : 0) || parseInt(a.replace(/\D/g, '')) || 0;
+        const wnB = snapB.weekNumber || (typeof snapB.week === 'string' ? parseInt(snapB.week.replace(/\D/g, '')) : 0) || (typeof snapB.weekLabel === 'string' ? parseInt(snapB.weekLabel.replace(/\D/g, '')) : 0) || parseInt(b.replace(/\D/g, '')) || 0;
+        return wnB - wnA;
+    });
 
     for (const k of sortedKeys) {
         const s = snaps[k];

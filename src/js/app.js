@@ -1435,7 +1435,16 @@
             if (!container) return;
 
             const latestKey = getLatestWeekKey();
-            const entries = Object.entries(TIME_MACHINE_SNAPSHOTS);
+            const entries = Object.entries(TIME_MACHINE_SNAPSHOTS || {});
+
+            // Sort entries in descending chronological order by week number
+            entries.sort((a, b) => {
+                const snapA = a[1] || {};
+                const snapB = b[1] || {};
+                const wnA = snapA.weekNumber || (typeof snapA.week === 'string' ? parseInt(snapA.week.replace(/\D/g, '')) : 0) || (typeof snapA.weekLabel === 'string' ? parseInt(snapA.weekLabel.replace(/\D/g, '')) : 0) || parseInt(a[0].replace(/\D/g, '')) || 0;
+                const wnB = snapB.weekNumber || (typeof snapB.week === 'string' ? parseInt(snapB.week.replace(/\D/g, '')) : 0) || (typeof snapB.weekLabel === 'string' ? parseInt(snapB.weekLabel.replace(/\D/g, '')) : 0) || parseInt(b[0].replace(/\D/g, '')) || 0;
+                return wnB - wnA;
+            });
 
             container.innerHTML = entries.map(([key, snap]) => {
                 const isLatest = key === latestKey;
@@ -1465,14 +1474,11 @@
 
         function getLatestWeekKey() {
             if (!TIME_MACHINE_SNAPSHOTS || typeof TIME_MACHINE_SNAPSHOTS !== 'object') return 'w27';
-            for (const [key, snap] of Object.entries(TIME_MACHINE_SNAPSHOTS)) {
-                if (snap && (snap.isCurrent || snap.isLatest)) return key;
-            }
             let maxWeek = -1;
             let maxKey = null;
             for (const [key, snap] of Object.entries(TIME_MACHINE_SNAPSHOTS)) {
                 if (!snap) continue;
-                const wn = snap.weekNumber || parseInt(key.replace(/\D/g, ''));
+                const wn = snap.weekNumber || (typeof snap.week === 'string' ? parseInt(snap.week.replace(/\D/g, '')) : 0) || (typeof snap.weekLabel === 'string' ? parseInt(snap.weekLabel.replace(/\D/g, '')) : 0) || parseInt(key.replace(/\D/g, '')) || 0;
                 if (!isNaN(wn) && wn > maxWeek) {
                     maxWeek = wn;
                     maxKey = key;
@@ -3609,21 +3615,26 @@
                 }).join('');
             }
 
-            // Update Sleeper Outlier (Bug #71)
+            // Update Sleeper Outlier (Bug #71, Bug #99)
             const slContainer = document.getElementById('sleeperOutlierContainer');
             const sl = snap ? snap.sleeperOutlier : null;
-            const hasOutlierData = sl && (sl.risk || sl.description || sl.title) && (sl.trigger || sl.triggerCondition || sl.action || sl.ref);
+            const hasOutlierData = sl && (sl.risk || sl.description || sl.title || sl.warning || sl.ref);
             if (hasOutlierData && slContainer) {
                 const slRefBtn = document.getElementById('sleeperOutlierRefBtn');
                 const slText = document.getElementById('sleeperOutlierText');
                 slContainer.classList.remove('hidden');
                 if (slRefBtn) {
-                    slRefBtn.innerHTML = sl.ref ? `<button onclick="jumpToDriverRef('${sl.ref}')" class="bg-slate-100 hover:bg-purple-100 text-purple-900 text-xs font-bold px-2 py-0.5 rounded-md border border-purple-200 font-mono transition-all cursor-pointer shadow-2xs">Ref ${sl.ref} (${sl.title || ''}) ↗</button>` : '';
+                    const refLabel = sl.ref ? `Ref ${sl.ref}${sl.title ? ' (' + sl.title + ')' : ''} ↗` : '';
+                    slRefBtn.innerHTML = sl.ref ? `<button onclick="jumpToDriverRef('${sl.ref}')" class="bg-slate-100 hover:bg-purple-100 text-purple-900 text-xs font-bold px-2 py-0.5 rounded-md border border-purple-200 font-mono transition-all cursor-pointer shadow-2xs">${refLabel}</button>` : '';
                 }
                 if (slText) {
-                    const riskContent = cleanField(sl.risk || sl.description || sl.title || '');
-                    const triggerContent = cleanField(sl.trigger || sl.triggerCondition || sl.action || 'Schedule variance across multi-site landing zones');
-                    slText.innerHTML = `<strong>The Risk:</strong> ${riskContent} &nbsp;&bull;&nbsp; <strong>Trigger:</strong> ${triggerContent}`;
+                    const riskContent = cleanField(sl.risk || sl.description || (sl.warning && !sl.title ? sl.warning : sl.title) || '');
+                    const triggerContent = cleanField(sl.warning || sl.trigger || sl.triggerCondition || sl.action || 'Schedule variance across multi-site landing zones');
+                    if (riskContent && triggerContent && riskContent !== triggerContent) {
+                        slText.innerHTML = `<strong>The Risk:</strong> ${riskContent} &nbsp;&bull;&nbsp; <strong>Trigger:</strong> ${triggerContent}`;
+                    } else {
+                        slText.innerHTML = `<strong>Early Warning:</strong> ${triggerContent || riskContent}`;
+                    }
                 }
             } else if (slContainer) {
                 slContainer.classList.add('hidden');
