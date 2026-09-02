@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Blueprint Knowledge Base
+// Project Monaro Risk Intelligence — Blueprint Knowledge Base
 // =============================================================================
 
 import { store } from '../state.js';

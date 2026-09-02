@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Pure Analytics & Calculation Engine
+// Project Monaro Risk Intelligence — Pure Analytics & Calculation Engine
 // Google Standards Compliant (go/tsstyle, go/js-practices)
 // Zero DOM Dependencies — 100% Pure, Testable Mathematical Functions
 // =============================================================================

@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Time Machine Controller
+// Project Monaro Risk Intelligence — Time Machine Controller
 // =============================================================================
 
 import { store } from '../state.js';

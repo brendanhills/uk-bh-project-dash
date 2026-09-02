@@ -1,4 +1,4 @@
-# Tech Stack Definition: F-DSE Risk Intelligence Platform
+# Tech Stack Definition: Monaro Risk Intelligence Platform
 
 ## 1. Core Architecture & Strict Invariants
 - **Automated Cloud Run Deployment with IAP Google SSO:**

@@ -1,7 +1,7 @@
 # Specification: Simplify Dashboard (Single Unified 4-View Architecture with URL-Driven A/B Testing)
 
 ## 1. Overview & Objective
-Transform the F-DSE Program Governance Dashboard into an ultra-streamlined, exception-first cockpit featuring a clean 4-tab interface designed to serve BOTH Project Managers and Executives. To allow live A/B testing with the PM without polluting the user interface with extra toggle buttons, support a clean URL parameter (`?view=pm` or `?ledger=true`) that dynamically reveals the 5th "Whole Register Ledger" tab, while defaulting to the streamlined 4-tab view when unparameterized (`/`).
+Transform the Project Monaro Program Governance Dashboard into an ultra-streamlined, exception-first cockpit featuring a clean 4-tab interface designed to serve BOTH Project Managers and Executives. To allow live A/B testing with the PM without polluting the user interface with extra toggle buttons, support a clean URL parameter (`?view=pm` or `?ledger=true`) that dynamically reveals the 5th "Whole Register Ledger" tab, while defaulting to the streamlined 4-tab view when unparameterized (`/`).
 
 ---
 

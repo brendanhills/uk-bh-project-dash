@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Executive Briefing Module
+// Project Monaro Risk Intelligence — Executive Briefing Module
 // =============================================================================
 
 import { store } from '../state.js';

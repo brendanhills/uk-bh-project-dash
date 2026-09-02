@@ -1,7 +1,7 @@
 # Specification: Production Deployment, Drive-Native Storage & Turnkey Handover
 
 ## 1. Overview
-Deploy the **F-DSE Program Governance & Risk Intelligence Platform** using Google Drive as the Single Source of Truth for storage and ingestion, enforce strict Google SSO access control via Ganpati/TwoSync groups, and deliver a comprehensive Turnkey Handover Package (`HANDOVER_GUIDE.md`) enabling immediate, self-service operation by the project team (`allins@`, `sdeacon@`, `waynedavis@`).
+Deploy the **Project Monaro Program Governance & Risk Intelligence Platform** using Google Drive as the Single Source of Truth for storage and ingestion, enforce strict Google SSO access control via Ganpati/TwoSync groups, and deliver a comprehensive Turnkey Handover Package (`HANDOVER_GUIDE.md`) enabling immediate, self-service operation by the project team (`allins@`, `sdeacon@`, `waynedavis@`).
 
 ## 2. Functional Requirements
 - **Google Drive Storage Backend**: All weekly PDF risk reports, Google Sheets registers, and `weekly_snapshots.json` persist directly in the team's shared Google Drive folder, eliminating any GCP Cloud Storage bucket dependencies.

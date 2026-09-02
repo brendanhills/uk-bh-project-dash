@@ -52,15 +52,15 @@
 - [x] Task 3.5: Populate `data/sample/precomputed_analytics.json` & sample audio
   - [x] Run `ingest_data.py --project=sample` to build baseline pre-computed cache
   - [x] Add generic sample audio snippet `data/sample/podcast_sample.mp3`
-- [x] Task 3.6: Migrate existing F-DSE project files into isolated `data/f-dse/`
-  - [x] Move proprietary live registers, snapshots, and blueprints into `data/f-dse/`
+- [x] Task 3.6: Migrate existing Monaro project files into isolated `data/monaro/`
+  - [x] Move proprietary live registers, snapshots, and blueprints into `data/monaro/`
 - [x] Task 3.7: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
 
 ## Phase 4: Presentation Engine Decoupling & Dynamic Project Routing (`index.html`)
 - [x] Task 4.1: Implement `async function loadDashboardData()` in `index.html`
-  - [x] Parse URL search parameters (`?project=sample`, `?project=f-dse`, `?project=<slug>`)
+  - [x] Parse URL search parameters (`?project=sample`, `?project=monaro`, `?project=<slug>`)
   - [x] Load `config.json` and `precomputed_analytics.json` from the target project directory
 - [x] Task 4.2: Strip all embedded static datasets from `index.html`
   - [x] Remove hardcoded `LIVE_RISKS`, `LIVE_TEAM_GOOGLE_RISKS`, `NOTEBOOK_CATALOG`, `BUNDLE_ANNEX_MAPPING`, `WEEKLY_SNAPSHOTS`, `PODCAST_SCRIPTS`, `GEMINI_PARAGRAPHS`
@@ -92,12 +92,12 @@
 
 ## Phase 6: Repository Sanitization, Git Hygiene & Documentation
 - [x] Task 6.1: Configure Strict `.gitignore`
-  - [x] Exclude `.env`, private project folders (`data/f-dse/`, `data/local/`), private MP3s, and local sync caches
+  - [x] Exclude `.env`, private project folders (`data/monaro/`, `data/local/`), private MP3s, and local sync caches
 - [x] Task 6.2: Create `.env.example`
   - [x] Document ADC authentication, `ACTIVE_PROJECT`, model options, and project configuration
 - [x] Task 6.3: Rewrite Open-Source `README.md`
   - [x] Document project architecture, zero-server static hosting, local quickstart, dataset customization, and ingestion pipeline
 - [x] Task 6.4: End-to-End Integration Verification
   - [x] Run complete test suite: `python3 -m unittest discover tests`
-  - [x] Verify both sample mode (`?project=sample`) and private mode (`?project=f-dse`) execute with zero errors
+  - [x] Verify both sample mode (`?project=sample`) and private mode (`?project=monaro`) execute with zero errors
 - [x] Task 6.5: Final Track Review & Checkpoint

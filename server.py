@@ -53,18 +53,13 @@ def get_default_project():
                             return first_proj
         except OSError:
             pass
-    if os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')) or os.path.exists(os.path.join(DIRECTORY, 'data', 'f-dse')):
+    if os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')):
         return 'monaro'
     return 'sample'
 
 def get_project_dir(project_slug=''):
     if not project_slug:
         project_slug = get_default_project()
-    # Backward compatibility alias between monaro and f-dse
-    if project_slug == 'f-dse' and os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')):
-        project_slug = 'monaro'
-    elif project_slug == 'monaro' and not os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')) and os.path.exists(os.path.join(DIRECTORY, 'data', 'f-dse')):
-        project_slug = 'f-dse'
     p_dir = os.path.join(DIRECTORY, 'data', project_slug)
     if os.path.exists(p_dir):
         return p_dir

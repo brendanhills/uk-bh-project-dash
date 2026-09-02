@@ -1,7 +1,7 @@
 # Track Specification: Customer Feedback & Strategic Advisory Enhancements
 
 ## 1. Overview
-This track addresses key customer feedback items and delivers strategic advisory features for the **Project Dashboard (Future Defence Secret Environment / F-DSE)**:
+This track addresses key customer feedback items and delivers strategic advisory features for the **Project Dashboard (Project Monaro)**:
 1. **Program Terminology Update**: Update project heading and configuration from 'Federated Defence Secret Environment' to **'Future Defence Secret Environment'**.
 2. **Persistent 'Google Need-to-Know' Module**: Add a prominent, persistent executive alert container at the very top of the dashboard visible across all tabs.
 3. **'Looking Around the Corner' Advisory Insights**: Integrate predictive forward-looking advisory insights directly into the Executive Summary tab.
@@ -13,7 +13,7 @@ This track addresses key customer feedback items and delivers strategic advisory
 ## 2. Functional Requirements
 
 ### 2.1 Heading & Program Rebranding
-- Update 'Federated Defence Secret Environment' in `data/f-dse/config.json`, header titles, report exports, and template fallbacks to **'Future Defence Secret Environment'** (F-DSE).
+- Update program title in `data/monaro/config.json`, header titles, report exports, and template fallbacks to **'Project Monaro'**.
 
 ### 2.2 Global 'Google Need-to-Know' Header Module
 - Add a top-level alert/briefing container above the primary navigation bar.

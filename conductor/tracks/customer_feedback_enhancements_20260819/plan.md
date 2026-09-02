@@ -2,7 +2,7 @@
 
 ## Phase 1: Terminology & Core Configuration Updates
 - [x] Task: Update Heading & Program Branding
-  - [x] Update `data/f-dse/config.json` title to "Monaro" / "Project Monaro"
+  - [x] Update `data/monaro/config.json` title to "Monaro" / "Project Monaro"
   - [x] Verify header rendering, tab titles, and export configurations reflect branding
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 

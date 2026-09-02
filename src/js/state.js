@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Centralized Reactive State Store
+// Project Monaro Risk Intelligence — Centralized Reactive State Store
 // Google Standards Compliant (go/tsstyle, go/js-practices)
 // =============================================================================
 

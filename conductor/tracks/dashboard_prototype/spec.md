@@ -1,7 +1,7 @@
 # Specification: Project Dashboard UI Mockup (Phase 1)
 
 ## 1. Overview & Purpose
-This specification defines the Phase 1 **Project Dashboard UI Mockup** built for the F-DSE Program team. It provides an interactive Streamlit application with in-memory mock data to demonstrate the executive dashboard layout, category heatmaps, trend tracking, and Driver Tree drill-down before live Google Sheets backend integration is built.
+This specification defines the Phase 1 **Project Dashboard UI Mockup** built for the Project Monaro Program team. It provides an interactive Streamlit application with in-memory mock data to demonstrate the executive dashboard layout, category heatmaps, trend tracking, and Driver Tree drill-down before live Google Sheets backend integration is built.
 
 ---
 

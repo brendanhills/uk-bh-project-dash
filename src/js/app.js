@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Full Application Entry Point
+// Project Monaro Risk Intelligence — Full Application Entry Point
 // =============================================================================
 
 

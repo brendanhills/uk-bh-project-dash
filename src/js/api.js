@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Backend API & Sync Client
+// Project Monaro Risk Intelligence — Backend API & Sync Client
 // Google Standards Compliant (go/tsstyle, go/js-practices)
 // =============================================================================
 
@@ -7,7 +7,7 @@ import { store } from './state.js';
 
 /**
  * Loads project configuration, snapshots, and raw dataset for the active project slug.
- * @param {string} projectSlug ('sample', 'monaro', or 'f-dse')
+ * @param {string} projectSlug ('sample' or 'monaro')
  * @returns {Promise<Object>} Loaded project payload
  */
 export async function loadProjectData(projectSlug = 'sample') {
@@ -23,27 +23,6 @@ export async function loadProjectData(projectSlug = 'sample') {
             fetch(`${basePath}/knowledge.json`),
             fetch(`${basePath}/driver_tree.json`)
         ]);
-
-        // Fallback between monaro and f-dse if primary fetch fails
-        if (configRes.status !== 'fulfilled' || !configRes.value.ok) {
-            const fallbackSlug = slug === 'f-dse' ? 'monaro' : (slug === 'monaro' ? 'f-dse' : null);
-            if (fallbackSlug) {
-                const altPath = `data/${fallbackSlug}`;
-                const altRes = await Promise.allSettled([
-                    fetch(`${altPath}/config.json`),
-                    fetch(`${altPath}/risks.json`),
-                    fetch(`${altPath}/issues.json`),
-                    fetch(`${altPath}/snapshots.json`),
-                    fetch(`${altPath}/knowledge.json`),
-                    fetch(`${altPath}/driver_tree.json`)
-                ]);
-                if (altRes[0].status === 'fulfilled' && altRes[0].value.ok) {
-                    slug = fallbackSlug;
-                    basePath = altPath;
-                    [configRes, risksRes, issuesRes, snapshotsRes, knowledgeRes, driverTreeRes] = altRes;
-                }
-            }
-        }
 
         const config = configRes.status === 'fulfilled' && configRes.value.ok ? await configRes.value.json() : null;
         const allRisks = risksRes.status === 'fulfilled' && risksRes.value.ok ? await risksRes.value.json() : [];

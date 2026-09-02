@@ -1,4 +1,4 @@
-# F-DSE Program Governance & Risk Intelligence Platform — Turnkey Handover Guide
+# Project Monaro Risk Governance & Intelligence Platform — Turnkey Handover Guide
 
 > **Operator & Maintainer Manual**
 > **Primary Stakeholder / Business Owner**: Allison Innes (`allins@google.com`)  
@@ -8,7 +8,7 @@
 
 ## 📌 Executive Summary & Architecture
 
-The **F-DSE Program Governance & Risk Intelligence Platform** is a zero-build, single-page web application designed for executive decision-making, live risk matrix analysis, and contractual delivery governance.
+The **Project Monaro Risk Governance & Intelligence Platform** is a zero-build, single-page web application designed for executive decision-making, live risk matrix analysis, and contractual delivery governance.
 
 ### Zero-Server / Browser-Direct Architecture
 * **Where does the app run?**: The dashboard runs directly in the user's web browser as a pure static Single-Page Application (`index.html`) modularized with ES6 modules in `src/js/`.

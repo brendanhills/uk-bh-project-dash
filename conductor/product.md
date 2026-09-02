@@ -1,7 +1,7 @@
-# Product Definition: F-DSE Program Governance & Risk Intelligence Platform
+# Product Definition: Project Monaro Program Governance & Risk Intelligence Platform
 
 ## Vision
-The **F-DSE Program Governance & Risk Intelligence Platform** (Monaro Risk Dashboard) serves as the central executive decision cockpit and operational risk intelligence hub for the **Future Data Science Environment (F-DSE)**. It transforms fragmented weekly PDF reports, Google Sheets risk registers, and contractual milestones into interactive, real-time executive insights powered by Google Gemini 3.5 Pro.
+The **Project Monaro Program Governance & Risk Intelligence Platform** (Monaro Risk Dashboard) serves as the central executive decision cockpit and operational risk intelligence hub for **Project Monaro**. It transforms fragmented weekly PDF reports, Google Sheets risk registers, and contractual milestones into interactive, real-time executive insights powered by Google Gemini 3.5 Pro.
 
 ## Target Audience & Stakeholders
 - **Primary Business Customer & Stakeholder:** Allison Innes (`allins@google.com`) and executive governance leadership.

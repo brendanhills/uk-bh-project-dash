@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Milestone 2 Driver Tree
+// Project Monaro Risk Intelligence — Milestone 2 Driver Tree
 // =============================================================================
 
 import { store } from '../state.js';

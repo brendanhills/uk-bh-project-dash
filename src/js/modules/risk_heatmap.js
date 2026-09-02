@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — 5x5 Heatmap Renderers
+// Project Monaro Risk Intelligence — 5x5 Heatmap Renderers
 // =============================================================================
 
 import { store } from '../state.js';

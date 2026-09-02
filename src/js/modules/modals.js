@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Universal Modals Manager
+// Project Monaro Risk Intelligence — Universal Modals Manager
 // =============================================================================
 
 import { store } from '../state.js';

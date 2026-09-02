@@ -1,7 +1,7 @@
 # Specification: Executive Summary Briefing Module (v2)
 
 ## 1. Overview & Purpose
-This specification defines the enhanced **Executive Summary Briefing Module** for the F-DSE Program. Built directly from customer meeting feedback, it replaces static/bare summaries with a high-density executive briefing view tailored for leadership meetings, risk committees, and customer status reviews.
+This specification defines the enhanced **Executive Summary Briefing Module** for the Project Monaro Program. Built directly from customer meeting feedback, it replaces static/bare summaries with a high-density executive briefing view tailored for leadership meetings, risk committees, and customer status reviews.
 
 ---
 

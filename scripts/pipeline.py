@@ -20,11 +20,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 
 def get_project_dir(project_name: str = 'monaro', data_root: Optional[str] = None) -> str:
     root = data_root or DATA_BASE_DIR
-    # Backward compatibility alias
-    if project_name == 'f-dse' and os.path.exists(os.path.join(root, 'monaro')):
-        project_name = 'monaro'
-    elif project_name == 'monaro' and not os.path.exists(os.path.join(root, 'monaro')) and os.path.exists(os.path.join(root, 'f-dse')):
-        project_name = 'f-dse'
     proj_dir = os.path.join(root, project_name)
     os.makedirs(proj_dir, exist_ok=True)
     return proj_dir

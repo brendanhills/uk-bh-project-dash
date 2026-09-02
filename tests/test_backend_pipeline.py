@@ -212,10 +212,10 @@ def test_compute_risk_metrics_and_fallbacks():
 
 def test_resolve_target_projects_and_pipeline_defaults(monkeypatch):
     """Verify target project resolution across CLI args, DEFAULT_PROJECTS env var, and defaults."""
-    assert resolve_target_projects(cli_arg='f-dse') == ['f-dse']
+    assert resolve_target_projects(cli_arg='monaro') == ['monaro']
 
-    monkeypatch.setenv('DEFAULT_PROJECTS', 'f-dse, sample, custom-app')
-    assert resolve_target_projects(cli_arg=None) == ['f-dse', 'sample', 'custom-app']
+    monkeypatch.setenv('DEFAULT_PROJECTS', 'monaro, sample, custom-app')
+    assert resolve_target_projects(cli_arg=None) == ['monaro', 'sample', 'custom-app']
 
     monkeypatch.delenv('DEFAULT_PROJECTS', raising=False)
     assert resolve_target_projects(cli_arg=None) == ['sample']
