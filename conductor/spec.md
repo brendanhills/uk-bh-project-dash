@@ -27,7 +27,7 @@ Project Dash solves this by unifying:
      - **Live Sync**: Syncs live Google Sheets registers and NotebookLM knowledge sources via the **Workspace Sync Modal** (`POST /api/sync`).
      - **Report Ingestion**: Scans the shared Drive folder for newly uploaded PDF reports and ingests them into the time-travel registry with 1 click (`POST /api/ingest`).
      - **Executive Briefing Synthesis**: Synthesizes Gemini 3.5 Flash exception-first executive summaries and Top 3 Attention items upon ingestion or manual regeneration (`POST /api/briefing/generate`).
-     - **Neural Podcast Generation**: Generates Australian multi-speaker (`Puck` & `Aoede`) podcast audio dialogue on-demand directly in the backend.
+     - **Neural Podcast Generation**: Generates Australian multi-speaker (`Puck` & `Aoede`) podcast audio dialogue synchronously in the backend using Google Cloud Text-to-Speech **Chirp 3 HD** (`en-AU-Chirp3-HD-Puck` & `en-AU-Chirp3-HD-Aoede`), dynamically synchronizing timestamps and persisting audio to GCS (`gs://${PROJECT_ID}-data/{project}/`).
    - **Self-Service Access**: User provisioning is handled through Google Groups (`monaro-risk-dev@google.com` / `monaro-risk-prod@google.com`), automatically synchronizing IAP permissions without touching GCP IAM.
    - **Automated CI/CD**: Cloud Build automatically builds, tests, and deploys verified changes upon git push, eliminating manual container or server management.
 2. **Defensive Processing & Resilient Ingestion**:
@@ -391,7 +391,7 @@ Blueprint knowledge and contractual reference mapping:
   3. **ATO & Cyber Security**: Security accreditation and ATO gate posture (e.g. `🟢 ACCREDITED`).
   4. **Critical Escalations**: Count of active executive escalations and blocker items (e.g. `🔴 4 ITEMS`).
 - **FR-2.2 Multi-Perspective Executive Synthesis**: Exception-first briefings tailored for Executive, Technical, and Governance leaders.
-- **FR-2.3 Neural Dual-Speaker Audio Podcast**: Waveform audio player with variable speed (0.75x–2x), transcript synching, and MP3 download.
+- **FR-2.3 Neural Dual-Speaker Audio Podcast**: Google Cloud Text-to-Speech **Chirp 3 HD** multi-speaker audio generation (`en-AU-Chirp3-HD-Puck` & `en-AU-Chirp3-HD-Aoede`) rendered synchronously during report ingestion and sync, with automated spoken duration timeline synchronization, GCS bucket storage (`gs://${PROJECT_ID}-data/{project}/`), HTML5 waveform audio player, variable speed controls (1.0x, 1.25x, 1.5x), transcript gating, and direct MP3 download.
 
 ### FR-3: 5×5 Inherent & Residual Risk Heatmap (Tab 2)
 - **FR-3.1 5×5 Matrix Grid**: Matrix mapping Likelihood (1–5) on the vertical axis against Impact (1–5) on the horizontal axis, colored by standard risk tiers (Green, Yellow, Amber, Red).

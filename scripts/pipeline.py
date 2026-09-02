@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PARENT_DIR = BASE_DIR
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
@@ -347,12 +348,20 @@ def ingest_report_file(
     # 3. Generate Executive Briefing (AI with Defensive Fallback)
     synthesis = None
     podcast_script = None
+    audio_asset_path = os.path.join(PARENT_DIR, 'assets', f"podcast_w{meta['week_number']}.mp3") if project_name == 'monaro' else os.path.join(proj_dir, f"podcast_w{meta['week_number']}.mp3")
+    proj_audio_path = os.path.join(proj_dir, f"podcast_w{meta['week_number']}.mp3")
 
     if not force_fallback:
         try:
             from scripts.gemini_generator import generate_executive_synthesis, generate_multispeaker_podcast
             synthesis = generate_executive_synthesis(metrics, [], model=model, location=location)
-            podcast_script = generate_multispeaker_podcast(metrics, synthesis, model=model, location=location)
+            podcast_script = generate_multispeaker_podcast(
+                metrics,
+                synthesis,
+                model=model,
+                location=location,
+                audio_out_path=audio_asset_path
+            )
         except Exception as e:
             logger.warning(f"AI Generation unavailable ({e}). Engaging deterministic fallback.")
 
@@ -360,6 +369,25 @@ def ingest_report_file(
         synthesis = generate_fallback_synthesis(metrics)
     if not podcast_script:
         podcast_script = generate_fallback_podcast(metrics, synthesis)
+
+    if os.path.isfile(audio_asset_path):
+        try:
+            import shutil
+            shutil.copy2(audio_asset_path, proj_audio_path)
+        except Exception:
+            pass
+
+    audio_size = os.path.getsize(audio_asset_path) if os.path.isfile(audio_asset_path) else None
+    audio_dur = None
+    if os.path.isfile(audio_asset_path):
+        try:
+            import mutagen
+            from mutagen.mp3 import MP3
+            a = MP3(audio_asset_path)
+            if a.info and getattr(a.info, 'length', None):
+                audio_dur = round(float(a.info.length), 1)
+        except Exception:
+            pass
 
     # 4. Construct Snapshot Record
     if project_name == 'sample':
@@ -393,6 +421,10 @@ def ingest_report_file(
         'top3': synthesis.get('top3', []),
         'sleeperOutlier': synthesis.get('sleeperOutlier', {}),
         'podcastScript': podcast_script,
+        'hasAudio': bool(audio_size),
+        'audioFile': f"assets/podcast_w{meta['week_number']}.mp3" if project_name == 'monaro' else f"data/{project_name}/podcast_w{meta['week_number']}.mp3",
+        'audioDurationSeconds': audio_dur,
+        'audioSizeBytes': audio_size,
         'generatedBy': synthesis.get('generatedBy', 'gemini-3.5-flash'),
         'podcastGeneratedBy': synthesis.get('generatedBy', 'gemini-3.5-flash') if podcast_script else 'deterministic_rule_engine',
         'podcastGeneratedAt': datetime.now().isoformat() if podcast_script else None,

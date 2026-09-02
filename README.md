@@ -16,9 +16,10 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
    - Uses **Gemini 3.5 Flash** to generate authoritative, exception-first executive decision syntheses covering overall program posture, core health milestones, and active delivery blockers.
    - Automatically surfaces **Top 3 Critical Action Cards** (Action / Impact / Outcome) and early-warning **Sleeper Outliers** with operational rationale and interactive drill-downs.
 
-3. **Dual-Speaker Executive Briefing & Interactive Podcast Player**:
-   - Synthesizes dynamic dual-host executive briefings (Alex, Program Delivery Analyst & Jordan, Technical Director) using **Gemini 3.5 Flash** (`gemini-3.5-flash`).
-   - Integrated executive audio player with synchronized live transcript drawer, dual speaker avatars, variable playback speed, and browser speech synthesis fallback when offline.
+3. **Dual-Speaker Executive Briefing (Chirp 3 HD) & Cloud Audio Storage**:
+   - Synthesizes dynamic dual-host executive briefings (Alex, Program Delivery Analyst & Jordan, Technical Director) using **Gemini 3.5 Flash** (`gemini-3.5-flash`) paired with studio-grade **Google Cloud TTS Chirp 3 HD** neural voices (`en-AU-Chirp3-HD-Puck` and `en-AU-Chirp3-HD-Aoede`).
+   - Integrated executive audio player with synchronized live transcript drawer, dynamic turn duration alignment, dual speaker avatars, variable playback speed, and browser speech synthesis fallback when offline.
+   - Synchronously persists `.mp3` audio files to local assets and streams assets directly to Google Cloud Storage (`gs://monaro-risk-dev-data/`).
 
 4. **Multi-Register 5×5 Risk & Issue Matrix & Clean Register Isolation**:
    - Explicitly separated tabs for **Internal Risks** (107 primary items) and **Team Google Risks** (12 technical items) with dedicated matrices, provenance tooltips, and ownership filters.

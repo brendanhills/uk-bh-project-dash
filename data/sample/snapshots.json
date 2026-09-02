@@ -1,5 +1,5 @@
 {
-  "lastSynced": "2026-09-01T17:57:24.189803",
+  "lastSynced": "2026-09-02T07:41:12.549535+00:00",
   "driveFolderId": "sample-drive-folder-aurora",
   "snapshots": {
     "w22": {
@@ -683,12 +683,12 @@
       "weekNumber": 28,
       "isLatest": true,
       "isCurrent": true,
-      "overallStatus": "🟢 ON TRACK",
+      "overallStatus": "\ud83d\udfe2 ON TRACK",
       "kpis": {
-        "commercial": "🟢 ON TRACK",
-        "ibr": "🟢 DUE AUG 2026 (95%)",
-        "ato": "🟢 GREEN",
-        "escalations": "🟢 0 ITEMS"
+        "commercial": "\ud83d\udfe2 ON TRACK",
+        "ibr": "\ud83d\udfe2 DUE AUG 2026 (95%)",
+        "ato": "\ud83d\udfe2 GREEN",
+        "escalations": "\ud83d\udfe2 0 ITEMS"
       },
       "metrics": {
         "total_risks": 28,
@@ -750,38 +750,38 @@
       "podcastScript": [
         {
           "speaker": "Alex",
-          "role": "Program Analyst",
+          "role": "Program Delivery Analyst",
           "avatar": "\ud83c\udf99\ufe0f",
           "time": "0:00",
-          "text": "Welcome to the Executive Decision Briefing for Week 28, ending 14 Aug 2026. I'm Alex, and with me is Jordan, our Technical Director."
+          "text": "Welcome to the Executive Briefing for Week 28, ending August 14, 2026. I'm Alex, Program Delivery Analyst. This week, our delivery velocity remains highly active, with management focus locked tightly on our upcoming contractual milestones. Our primary objective today is to review our risk profile and align on critical path decisions to maintain this momentum."
         },
         {
           "speaker": "Jordan",
           "role": "Technical Director",
           "avatar": "\ud83e\udd16",
-          "time": "0:15",
-          "text": "Thanks Alex. This week our primary focus is locked onto contractual delivery milestones and risk mitigation velocity."
+          "time": "0:21",
+          "text": "Thanks, Alex. On the engineering front, our baseline across sovereign enclaves and network interconnects is exceptionally stable. We've seen excellent risk compression this week, with our residual exposure dropping from 14.6 down to 4.8\u2014a significant delta of minus 9.8 across our 28 active items. Crucially, both our IBR and SRR milestone gates are progressing with zero eventuated issues under active mitigation."
         },
         {
           "speaker": "Alex",
-          "role": "Program Analyst",
+          "role": "Program Delivery Analyst",
           "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:32",
-          "text": "Looking at our Top Attention items, Contractual Milestone Gate 2 Alignment is currently on the critical path for leadership review."
+          "time": "0:47",
+          "text": "That risk reduction is a major win, Jordan. However, to keep pushing forward, we need immediate executive action on our top priority: Reference 1.13, the Contractual Milestone Gate 2 Alignment for the Integrated Baseline Review. To secure Commonwealth stakeholder approval and verify our critical path, leadership must formally authorize the integrated schedule baseline and close out the remaining residual action items today."
         },
         {
           "speaker": "Jordan",
           "role": "Technical Director",
           "avatar": "\ud83e\udd16",
-          "time": "0:48",
-          "text": "Exactly. On the engineering side, Sovereign Enclave Hardware Interconnect Latency is being actively managed to ensure full network validation ahead of cutover."
+          "time": "1:11",
+          "text": "Absolutely, that authorization is critical. On the technical side, we are also managing Reference 1.10b, addressing sovereign enclave hardware interconnect latency to prevent network validation window compression before the Phase 1 cutover. We're actively running redundant optical interconnect verification and dark fiber testing. Additionally, we are proactively monitoring our sleeper outlier, Reference 1.14, where we're streamlining inter-team dependency handoffs to ensure the System Requirements Review verification window isn't compressed."
         },
         {
           "speaker": "Alex",
-          "role": "Program Analyst",
+          "role": "Program Delivery Analyst",
           "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:05",
-          "text": "Overall risk posture remains stable with clear treatment ownership across all key pillars. Back to you for executive decisions."
+          "time": "1:43",
+          "text": "Excellent proactive management, Jordan. To wrap up, our governance posture is highly secure: the Joint Steering Committee has validated our controls, and our ATO accreditation and security audit artifacts remain perfectly aligned to target baseline dates with zero commercial blockers. Our primary delivery win this week is the full accreditation of our CI/CD pipeline security baseline under Reference 1.7a. Executives, please authorize the Gate 2 baseline so we can proceed smoothly into the next phase."
         }
       ],
       "driveFileId": "sample-drive-doc-aurora-w28",
@@ -790,7 +790,14 @@
         "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
         "id": "sample-drive-doc-aurora-w28",
         "ingestedAt": "2026-09-01T17:57:24.189776"
-      }
+      },
+      "generatedBy": "gemini-3.5-flash",
+      "podcastGeneratedBy": "gemini-3.5-flash",
+      "podcastGeneratedAt": "2026-09-02T07:41:12.549468+00:00",
+      "hasAudio": true,
+      "audioFile": "assets/podcast_w28.mp3",
+      "audioDurationSeconds": 131.4,
+      "audioSizeBytes": 525696
     }
   },
   "Week 28": {

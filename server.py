@@ -343,8 +343,20 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     from scripts.gemini_generator import generate_executive_synthesis, generate_multispeaker_podcast
                     plans = snap.get('plans', [])
                     synthesis = generate_executive_synthesis(metrics, plans)
-                    audio_out = os.path.join(DIRECTORY, 'assets', f'podcast_{week}.wav')
+                    
+                    # Resolve week number tag
+                    import re
+                    m = re.search(r'\d+', str(week))
+                    w_tag = f"w{m.group(0)}" if m else week
+                    audio_out = os.path.join(DIRECTORY, 'assets', f'podcast_{w_tag}.mp3')
+                    proj_audio_out = os.path.join(p_dir, f'podcast_{w_tag}.mp3')
                     podcast_script = generate_multispeaker_podcast(metrics, synthesis, audio_out_path=audio_out)
+                    if os.path.isfile(audio_out):
+                        try:
+                            import shutil
+                            shutil.copy2(audio_out, proj_audio_out)
+                        except Exception:
+                            pass
                 except Exception as e:
                     print(f"[Server] Gemini generation fallback: {e}")
 
@@ -353,10 +365,32 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             if not podcast_script:
                 podcast_script = generate_fallback_podcast(metrics, synthesis)
 
+            import re
+            m = re.search(r'\d+', str(week))
+            w_tag = f"w{m.group(0)}" if m else week
+            audio_out = os.path.join(DIRECTORY, 'assets', f'podcast_{w_tag}.mp3')
+            audio_size = os.path.getsize(audio_out) if os.path.isfile(audio_out) else None
+            audio_dur = None
+            if os.path.isfile(audio_out):
+                try:
+                    import mutagen
+                    from mutagen.mp3 import MP3
+                    a = MP3(audio_out)
+                    if a.info and getattr(a.info, 'length', None):
+                        audio_dur = round(float(a.info.length), 1)
+                except Exception:
+                    pass
+
             snap['synthesis'] = synthesis.get('synthesis', {})
             snap['top3'] = synthesis.get('top3', [])
             snap['sleeperOutlier'] = synthesis.get('sleeperOutlier', {})
             snap['podcastScript'] = podcast_script
+            snap['hasAudio'] = bool(audio_size)
+            snap['audioFile'] = f"assets/podcast_{w_tag}.mp3"
+            if audio_dur:
+                snap['audioDurationSeconds'] = audio_dur
+            if audio_size:
+                snap['audioSizeBytes'] = audio_size
 
             save_json_file(snaps_file, snaps_data)
 
@@ -364,6 +398,10 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 'status': 'ok',
                 'project': proj,
                 'week': week,
+                'hasAudio': bool(audio_size),
+                'audioFile': f"assets/podcast_{w_tag}.mp3",
+                'audioDurationSeconds': audio_dur,
+                'audioSizeBytes': audio_size,
                 'synthesis': snap.get('synthesis', {}),
                 'top3': snap.get('top3', []),
                 'sleeperOutlier': snap.get('sleeperOutlier', {}),
