@@ -230,3 +230,24 @@ def test_bug_97_podcast_playback_defensive_execution(full_html: str):
     assert 'resolvePodcastAudioSrc(activeKey, snap)' in full_html
     assert 'nativePodcastSourceMp3' in full_html
     assert 'audioEl.preload = \'metadata\'' in full_html
+
+
+def test_bug_99_sleeper_outlier_multimodal_schema_support(full_html: str):
+    """Bug #99: Sleeper outlier supports multimodal warning schema and hides container by default."""
+    assert 'id="sleeperOutlierContainer" class="mt-3 bg-white border border-purple-200/90 border-l-4 border-l-purple-500 rounded-xl p-3.5 flex items-start gap-3 hover:shadow-xs transition-all hidden"' in full_html
+    assert "sl.risk || sl.description || sl.title || sl.warning || sl.ref" in full_html
+    assert "sl.warning" in full_html
+
+
+def test_bug_100_time_machine_modal_descending_sort(full_html: str):
+    """Bug #100: Time Machine modal list is sorted in descending chronological order."""
+    assert "entries.sort" in full_html
+    assert "wnB - wnA" in full_html
+
+
+def test_bug_101_get_latest_week_key_resolves_highest_week(full_html: str):
+    """Bug #101: getLatestWeekKey computes maximum weekNumber across all snapshots without returning early on legacy flags."""
+    assert "function getLatestWeekKey()" in full_html
+    assert "let maxWeek = -1;" in full_html
+    assert "wn > maxWeek" in full_html
+
