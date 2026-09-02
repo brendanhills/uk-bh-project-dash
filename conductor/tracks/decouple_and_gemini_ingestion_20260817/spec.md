@@ -12,7 +12,7 @@ This track combines two critical architectural capabilities into a single unifie
 ### 2.1. Presentation Engine Decoupling (`index.html`)
 - **FR 1.1 - Zero Hardcoded Content**: Strip all embedded JavaScript datasets (`LIVE_RISKS`, `LIVE_TEAM_GOOGLE_RISKS`, `NOTEBOOK_CATALOG`, `BUNDLE_ANNEX_MAPPING`, `WEEKLY_SNAPSHOTS`, `PODCAST_SCRIPTS`, `GEMINI_PARAGRAPHS`) and hardcoded project strings from `index.html`.
 - **FR 1.2 - Dynamic Client-Side Dataset Loader**: Implement `async function loadDashboardData()` in `index.html` that fetches `config.json` and project data files (`risks.json`, `issues.json`, `snapshots.json`, `driver_tree.json`, `knowledge.json`, `precomputed_analytics.json`).
-- **FR 1.3 - Project Selector Query Routing**: Support clean project switching via URL parameter: `?project=sample` (default for GitHub/public) or `?project=f-dse` or custom `?project=<slug>`. When omitted, falls back to `ACTIVE_PROJECT` configured in `.env` (defaulting to `sample`).
+- **FR 1.3 - Project Selector Query Routing**: Support clean project switching via URL parameter: `?project=sample` (default for GitHub/public) or `?project=monaro` or custom `?project=<slug>`. When omitted, falls back to `ACTIVE_PROJECT` configured in `.env` (defaulting to `sample`).
 - **FR 1.4 - Modular Feature-Flagged Tabs**: Render dashboard navigation tabs dynamically based on `config.features[tab].enabled`, supporting optional tabs (Secondary Vendor Matrix, Knowledge Base, Driver Tree, Whole Ledger, and Audio Player).
 - **FR 1.5 - Dynamic KPI Pillars & Branding**: Populate global titles, subtitles, logo icons, vendor badge labels, and 4-pillar executive KPIs dynamically from `config.json`.
 
@@ -44,8 +44,8 @@ To maximize UI responsiveness and eliminate runtime mathematical variance, the i
 
 ### 2.5. Project-Scoped Master Ingestion Orchestrator (`scripts/ingest_data.py`)
 - **FR 5.1 - Unified Multi-Project Ingestion CLI**: Implement `scripts/ingest_data.py` supporting single or batch multi-project ingestion:
-  - **Explicit Project**: `--project=<slug>` targets a specific project (e.g. `--project=f-dse`).
-  - **Default Projects from .env**: When `--project` is omitted, it reads `DEFAULT_PROJECTS` (or `PROJECTS`, e.g. `DEFAULT_PROJECTS="f-dse,sample"`) from `.env` and ingests all configured projects sequentially in one command. If unconfigured, falls back to `sample`.
+  - **Explicit Project**: `--project=<slug>` targets a specific project (e.g. `--project=monaro`).
+  - **Default Projects from .env**: When `--project` is omitted, it reads `DEFAULT_PROJECTS` (or `PROJECTS`, e.g. `DEFAULT_PROJECTS="monaro,sample"`) from `.env` and ingests all configured projects sequentially in one command. If unconfigured, falls back to `sample`.
   - **Execution Steps Per Project**:
     1. Reads `data/<project>/config.json` to identify external data sources (Google Sheet IDs, Drive folder IDs, Gemini Notebook IDs).
     2. Ingests and synchronizes all project datasets into `data/<project>/`.
@@ -57,7 +57,7 @@ To maximize UI responsiveness and eliminate runtime mathematical variance, the i
 - **FR 5.3 - Parameterized Sync Endpoints**: Refactor `/api/sync-sheet`, `/api/check-drive-sync`, and `/api/sync-notebook` in `server.py` to operate on the active project directory.
 
 ### 2.6. Repository Sanitization & Git Hygiene
-- **FR 6.1 - Private Data Exclusion**: Update `.gitignore` to strictly exclude `.env`, private project folders (e.g. `data/f-dse/`), private audio MP3s, and internal sync caches (`data/drive/`, `data/sheets/`).
+- **FR 6.1 - Private Data Exclusion**: Update `.gitignore` to strictly exclude `.env`, private project folders (e.g. `data/monaro/`), private audio MP3s, and internal sync caches (`data/drive/`, `data/sheets/`).
 - **FR 6.2 - Environment Template**: Provide documented `.env.example` with ADC and API key configuration guides.
 - **FR 6.3 - Open Source Documentation**: Provide a clean, comprehensive `README.md` detailing architecture, setup, dataset schemas, and customization.
 
@@ -74,9 +74,9 @@ To maximize UI responsiveness and eliminate runtime mathematical variance, the i
 ## 4. Acceptance Criteria
 - [ ] `index.html` contains zero hardcoded project strings or risk data arrays.
 - [ ] Running `python3 scripts/ingest_data.py --project=sample` ingests sample sources, runs Gemini 3.5 synthesis, and builds `precomputed_analytics.json`.
-- [ ] Running `python3 scripts/ingest_data.py --project=f-dse` executes full ingestion for the F-DSE project using its dedicated `data/f-dse/config.json`.
+- [ ] Running `python3 scripts/ingest_data.py --project=monaro` executes full ingestion for the Monaro project using its dedicated `data/monaro/config.json`.
 - [ ] Loading `index.html?project=sample` renders the **Project Aurora** sample dataset flawlessly across all 8 tabs.
-- [ ] Loading `index.html?project=f-dse` loads the complete F-DSE project dataset.
+- [ ] Loading `index.html?project=monaro` loads the complete Monaro project dataset.
 - [ ] 5×5 matrices, trends, and burndown charts render instantaneously from pre-computed analytical caches.
 - [ ] `scripts/gemini_generator.py` successfully initializes with ADC and generates structured synthesis using `gemini-3.5-flash`.
 - [ ] Automated test suite verifies ingestion orchestration, sample dataset integrity, ADC handling, and server routes.

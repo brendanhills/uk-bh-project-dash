@@ -784,7 +784,7 @@ gcloud tasks create-http-task \
 To verify whether executive podcast briefings are up to date with **Gemini 3.5 Flash** across all project workspaces, use the standalone audit utility:
 
 ```bash
-# Audit podcast generation status across all projects (monaro, f-dse, sample):
+# Audit podcast generation status across all projects (monaro, sample):
 python3 scripts/check_podcast_status.py
 
 # Inspect a specific project:

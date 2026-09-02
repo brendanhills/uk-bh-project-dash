@@ -37,16 +37,12 @@ def test_get_project_dir_helper():
 
     monaro_dir = server.get_project_dir("monaro")
     assert Path(monaro_dir).exists()
-    assert monaro_dir.endswith(str(Path("data") / "monaro")) or monaro_dir.endswith(str(Path("data") / "f-dse"))
-
-    fdse_dir = server.get_project_dir("f-dse")
-    assert Path(fdse_dir).exists()
-    assert fdse_dir.endswith(str(Path("data") / "monaro")) or fdse_dir.endswith(str(Path("data") / "f-dse"))
+    assert monaro_dir.endswith(str(Path("data") / "monaro"))
 
     # Default fallback
     default_dir = server.get_project_dir("")
     assert Path(default_dir).exists()
-    assert default_dir.endswith(str(Path("data") / "monaro")) or default_dir.endswith(str(Path("data") / "f-dse"))
+    assert default_dir.endswith(str(Path("data") / "monaro"))
 
 
 def test_bug_94_default_project_resolution(monkeypatch):
@@ -54,7 +50,7 @@ def test_bug_94_default_project_resolution(monkeypatch):
     monkeypatch.delenv("DEFAULT_PROJECT", raising=False)
     monkeypatch.delenv("DEFAULT_PROJECTS", raising=False)
     default_proj = server.get_default_project()
-    if os.path.exists(os.path.join(server.DIRECTORY, 'data', 'monaro')) or os.path.exists(os.path.join(server.DIRECTORY, 'data', 'f-dse')):
+    if os.path.exists(os.path.join(server.DIRECTORY, 'data', 'monaro')):
         assert default_proj == "monaro"
     else:
         assert default_proj == "sample"
@@ -62,7 +58,7 @@ def test_bug_94_default_project_resolution(monkeypatch):
     # Verify fallback to sample if monaro does not exist
     with patch("os.path.exists") as mock_exists:
         def side_effect(path):
-            if "monaro" in str(path) or "f-dse" in str(path) or str(path).endswith(".env"):
+            if "monaro" in str(path) or str(path).endswith(".env"):
                 return False
             return True
         mock_exists.side_effect = side_effect
@@ -127,7 +123,6 @@ def test_briefing_generate_endpoint(dummy_handler: DummyHandler):
 @pytest.mark.parametrize("project_query, min_risks", [
     ("project=sample", 20),
     ("project=monaro", 100),
-    ("project=f-dse", 100),
 ])
 def test_sync_sheet_parameterized(dummy_handler: DummyHandler, project_query: str, min_risks: int):
     """Verify handle_sync_sheet returns correct risks, secondary registers, and snapshots across projects."""

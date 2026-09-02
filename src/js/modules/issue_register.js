@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Issue Register Ledger Table
+// Project Monaro Risk Intelligence — Issue Register Ledger Table
 // =============================================================================
 
 import { store } from '../state.js';

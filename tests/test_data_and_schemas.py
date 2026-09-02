@@ -7,9 +7,9 @@ import pytest
 
 # --- Parameterized Multi-Project Dataset Contracts ---
 
-@pytest.mark.parametrize("project", ["sample", "monaro", "f-dse"])
+@pytest.mark.parametrize("project", ["sample", "monaro"])
 def test_project_data_files_exist_and_parse(project_root: Path, project: str):
-    """Verify that sample, monaro, and f-dse directories contain valid JSON for all 6 required data files."""
+    """Verify that sample and monaro directories contain valid JSON for all 6 required data files."""
     required_files = [
         'config.json',
         'snapshots.json',
@@ -95,7 +95,7 @@ def test_sample_driver_tree_and_knowledge(sample_driver_tree: dict, sample_knowl
 
 def test_register_separation_and_counts(project_root: Path):
     """Verify primary and secondary register configuration and distinct counts."""
-    data_dir = (project_root / 'data' / 'monaro') if (project_root / 'data' / 'monaro').exists() else (project_root / 'data' / 'f-dse')
+    data_dir = project_root / 'data' / 'monaro'
     if not data_dir.exists():
         pytest.skip("Private enterprise data directory not present")
 
@@ -112,8 +112,8 @@ def test_register_separation_and_counts(project_root: Path):
 
 
 def test_enterprise_driver_tree_and_knowledge(project_root: Path):
-    """Verify F-DSE driver tree 24 gates (Bug #70) and blueprint bundle sources."""
-    data_dir = (project_root / 'data' / 'monaro') if (project_root / 'data' / 'monaro').exists() else (project_root / 'data' / 'f-dse')
+    """Verify Monaro driver tree 24 gates (Bug #70) and blueprint bundle sources."""
+    data_dir = project_root / 'data' / 'monaro'
     if not data_dir.exists():
         pytest.skip("Private enterprise data directory not present")
 
@@ -153,7 +153,7 @@ def test_live_synced_data_schema_if_present(project_root: Path):
 # --- Bug #80 Confidentiality Audit ---
 
 def test_bug_80_aurora_sample_data_isolation(project_root: Path):
-    """Bug #80: Audit and eliminate confidential Monaro/F-DSE data leaks from Project Aurora sample dashboard."""
+    """Bug #80: Audit and eliminate confidential Monaro data leaks from Project Aurora sample dashboard."""
     sample_dir = project_root / "data" / "sample"
     assert sample_dir.exists(), "data/sample must exist"
 

@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Performance Trends Controller
+// Project Monaro Risk Intelligence — Performance Trends Controller
 // =============================================================================
 
 import { store } from '../state.js';

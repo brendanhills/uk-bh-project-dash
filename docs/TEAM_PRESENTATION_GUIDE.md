@@ -1,4 +1,4 @@
-# F-DSE Program Governance & Risk Intelligence Platform
+# Project Monaro Risk Governance & Intelligence Platform
 # 🎙️ Rolling Team Showcase & Weekly Delta Guide
 
 > **Document Purpose:** This is the single living showcase document for weekly project team walkthroughs and stakeholder feedback. Each week, the top sections reflect **What's New in This Week's Delta**, while preserving the core architecture pillars and historical context below.
@@ -9,7 +9,7 @@
 
 ### 📅 Session Context
 - **Reporting Period:** Week 27 (`07 Aug 2026` Baseline) / Week 28 Ingestion Ready
-- **Target Audience:** F-DSE Project Team, Delivery Leads (Tom, Scott, Mick), Governance & Risk Managers (Susan, Michael), Executive Sponsors (`allins@`, `sdeacon@`, `waynedavis@`).
+- **Target Audience:** Project Monaro Team, Delivery Leads (Tom, Scott, Mick), Governance & Risk Managers (Susan, Michael), Executive Sponsors (`allins@`, `sdeacon@`, `waynedavis@`).
 - **Core Narrative:** This release (`project_dash`) delivers a production-ready, self-healing Executive Cockpit directly connected to live Google Sheets, Drive PDF reports, and Gemini 3.5 Pro decision intelligence.
 
 ### 🚀 Key Capabilities Operationalized in This Baseline Delta:

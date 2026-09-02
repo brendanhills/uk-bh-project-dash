@@ -1,7 +1,7 @@
 # Specification: Zero-Server Client-Only Architecture, Drive-Native Storage & Multi-Notebook Registry
 
 ## 1. Overview
-Transition the **F-DSE Program Governance & Risk Intelligence Platform** into a pure **Zero-Server, Client-Only Web Application** with **Google Drive-Native Storage** and a **Generalized Multi-Notebook Knowledge Base**. This eliminates all cloud backend server maintenance, enables interactive user-triggered ingestion directly in the browser, supports multiple Gemini Notebooks, and delivers an immediate Turnkey Handover package (`HANDOVER_GUIDE.md`) for the team (`allins@`, `sdeacon@`, `waynedavis@`).
+Transition the **Project Monaro Program Governance & Risk Intelligence Platform** into a pure **Zero-Server, Client-Only Web Application** with **Google Drive-Native Storage** and a **Generalized Multi-Notebook Knowledge Base**. This eliminates all cloud backend server maintenance, enables interactive user-triggered ingestion directly in the browser, supports multiple Gemini Notebooks, and delivers an immediate Turnkey Handover package (`HANDOVER_GUIDE.md`) for the team (`allins@`, `sdeacon@`, `waynedavis@`).
 
 ## 2. Functional Requirements
 - **Zero-Server Runtime**: Pure static SPA (`index.html`) running entirely in the user's browser. No cloud VMs, Borg jobs, or Cloud Run containers required 24/7.

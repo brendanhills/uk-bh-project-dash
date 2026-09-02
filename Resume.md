@@ -1,4 +1,4 @@
-# Project Monaro / F-DSE Risk Governance & Intelligence Platform — Session Resume
+# Project Monaro Risk Governance & Intelligence Platform — Session Resume
 
 **Checkpoint Timestamp:** `2026-09-02 16:45:00 AEST`  
 **Active Git Branch:** `dev`  
@@ -67,7 +67,7 @@ git push origin project_dash/prod-v1.0.0
      1. Turnkey Handover & Browser-Triggered Data Operations.
      2. Defensive, Resilient Processing (self-healing fallbacks).
      3. Cohesive, Minimal Unified Architecture.
-     4. Zero-Trust Security & Multi-Project Data Isolation (`?project=sample` vs `?project=monaro` / `?project=f-dse`).
+     4. Zero-Trust Security & Multi-Project Data Isolation (`?project=sample` vs `?project=monaro`).
 
 2. **Completed Track: `simplify_and_harden_for_handover_20260822`**:
    - Consolidated previously fragmented ingestion scripts into `scripts/pipeline.py` with flexible filename parsing and deterministic self-healing fallbacks.
@@ -92,7 +92,6 @@ git push origin project_dash/prod-v1.0.0
 6. **Canonical Project Defaults & Bug #94 Resolution**:
    - Configured `monaro` as the primary default project across backend server (`server.py`), frontend client (`src/js/app.js`), and CLI tools (`scripts/pipeline.py`), with graceful self-healing fallback to `sample` for clean checkouts.
    - Updated all navigation and console tables across `README.md` and `docs/DEPLOYMENT_GUIDE.md` to link `?project=monaro`.
-   - Maintained bidirectional backward-compatibility aliasing for `f-dse` $\leftrightarrow$ `monaro`.
 
 7. **Test Performance Optimization & Sandbox Isolation Invariant**:
    - Diagnosed and resolved 10.35s delay in `tests/test_server.py::test_week27_ingestion_pipeline` by introducing `force_fallback=True` and hermetic `tmp_path` data isolation, resulting in a >2,000x speedup (<0.005s call duration) and reducing full suite execution time to 9.59s.

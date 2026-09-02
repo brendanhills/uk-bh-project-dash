@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Risk Explorer Cards & Filters
+// Project Monaro Risk Intelligence — Risk Explorer Cards & Filters
 // =============================================================================
 
 import { store } from '../state.js';

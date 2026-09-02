@@ -15,12 +15,12 @@ The Python server components (`server.py`, `scripts/ingest_data.py`, and CLI too
 - On-demand automated data ingestion (`/api/ingest-data`)
 - Dynamic report discovery across `drive_reports/`, `drive_cache/`, `reports/`, and `docs/`
 - Gemini 3.5 Pro executive summary synthesis & podcast dialogue generation (`/api/regenerate-briefing`)
-- Serving static/modular frontend assets and project JSON data across multiple workspaces (`sample`, `f-dse`).
+- Serving static/modular frontend assets and project JSON data across multiple workspaces (`sample`, `monaro`).
 
 ### 2.2 Domain-Driven JavaScript Architecture (`src/js/`)
 Separate the embedded JavaScript into focused, single-responsibility ES modules with canonical `snake_case.js` naming:
 1. **`src/js/state.js`**: Centralized reactive application state management:
-   - Project configuration (`CONFIG`, active project routing `?project=sample` vs `f-dse`).
+   - Project configuration (`CONFIG`, active project routing `?project=sample` vs `monaro`).
    - Active dataset storage (`RAW_DATA`, `LIVE_RISKS`, `LIVE_ISSUES`, `BLUEPRINTS`, `TIME_MACHINE_SNAPSHOTS`).
    - Filter and UI state (`activeTab`, `matrixRating`, `matrixStatus`, `activeCellFilter`, `activeTimeMachineWeek`).
    - Event bus / subscriber callbacks for state change notifications.
@@ -68,7 +68,7 @@ Separate the embedded JavaScript into focused, single-responsibility ES modules 
 
 1. **Strict 100% Feature Parity**: Every UI interaction, animation, filter, modal, audio player, sync trigger, and time travel capability must function identically to baseline.
 2. **Zero Regression on Backend & Tests**: All 102+ existing Python unit tests (`python3 -m unittest discover tests`) must pass cleanly.
-3. **Multi-Project Agnosticism**: Dynamic multi-project routing (`?project=sample` vs `?project=f-dse`) must work seamlessly in both dev and production builds.
+3. **Multi-Project Agnosticism**: Dynamic multi-project routing (`?project=sample` vs `?project=monaro`) must work seamlessly in both dev and production builds.
 4. **Clean Code Standards**:
    - Proper ES6+ syntax with explicit imports and exports adhering to Google JavaScript Style Guide (`go/tsstyle`, `go/js-practices`).
    - No implicit global variables leakage.

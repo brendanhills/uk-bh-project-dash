@@ -11,7 +11,7 @@ Transform the Project Dash backend and ingestion architecture from a fragmented 
 
 ## Functional Requirements
 1. **Consolidated Ingestion Pipeline (`scripts/pipeline.py`)**:
-   - Single unified module replacing disparate scripts with a clean CLI interface (`python3 scripts/pipeline.py --project=f-dse --sync` and `--ingest-report=<path_or_id>`).
+   - Single unified module replacing disparate scripts with a clean CLI interface (`python3 scripts/pipeline.py --project=monaro --sync` and `--ingest-report=<path_or_id>`).
    - Resilient multi-modal report parser: extracts week and date using flexible heuristics (filename, PDF text metadata, date timestamps, and sequential fallback).
    - Robust fallback AI generation: if Gemini API key is missing or quota fails, generates deterministic, structured executive summaries without crashing.
 

@@ -1,7 +1,7 @@
 # Specification: Team Google Risk Register Integration & Multi-Register Governance
 
 ## 1. Overview & Strategic Intent
-Integrate the **Team Google Risk Register** ([Google Sheet `1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA`](https://docs.google.com/spreadsheets/d/1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA/edit?gid=0#gid=0)) into the F-DSE Program Governance & Risk Intelligence Platform. This track establishes a multi-register governance architecture that preserves separation between the **Joint Program Register** (cross-team Accenture/Google/Cth governance, 107 risks) and the **Team Google Register** (internal Google engineering tasks and mitigations), while providing a unified executive synthesis.
+Integrate the **Team Google Risk Register** ([Google Sheet `1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA`](https://docs.google.com/spreadsheets/d/1lNRf5NEBd6ygc91nNwFA4HWGFfbDK02QkbkVfr4OUoA/edit?gid=0#gid=0)) into the Project Monaro Program Governance & Risk Intelligence Platform. This track establishes a multi-register governance architecture that preserves separation between the **Joint Program Register** (cross-team Accenture/Google/Cth governance, 107 risks) and the **Team Google Register** (internal Google engineering tasks and mitigations), while providing a unified executive synthesis.
 
 ## 2. Functional Requirements
 

@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Monaro / F-DSE Risk Intelligence — Chart.js Lifecycle Manager
+// Project Monaro Risk Intelligence — Chart.js Lifecycle Manager
 // =============================================================================
 
 let chartBacklogInstance = null;
