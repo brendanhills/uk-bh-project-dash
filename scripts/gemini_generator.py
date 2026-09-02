@@ -43,6 +43,9 @@ class PodcastDialogueTurn(BaseModel):
     time: str = Field(description="Timestamp in format MM:SS.")
     text: str = Field(description="Spoken dialogue text.")
 
+class PodcastScriptResponse(BaseModel):
+    dialogue: List[PodcastDialogueTurn] = Field(description="Sequential list of 5 podcast dialogue turns.")
+
 class ReportMetadataInspection(BaseModel):
     week_number: int = Field(description="The program or project reporting week number integer (e.g. 28, 29, 30).")
     week_label: str = Field(description="Standardized week label (e.g. 'Week 28').")
@@ -54,11 +57,11 @@ def get_default_gemini_region(override: Optional[str] = None) -> str:
     """
     Dynamically resolves the active Vertex AI location for Gemini generation:
       1. Explicit argument override
-      2. GEMINI_REGION environment variable (e.g. 'us', 'australia-southeast1')
+      2. GEMINI_REGION environment variable (e.g. 'us-central1', 'australia-southeast1')
       3. GCP_REGION / GOOGLE_CLOUD_LOCATION environment variable
-      4. System default fallback ('us' for multi-region US until Sydney deployment arrives)
+      4. System default fallback ('us-central1' where gemini-3.5-flash is hosted)
     """
-    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "us"
+    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "us-central1"
 
 def get_default_gemini_model(override: Optional[str] = None) -> str:
     """
@@ -206,9 +209,9 @@ def generate_executive_synthesis(
         )
     except Exception as e:
         loc = get_default_gemini_region(location)
-        if "404" in str(e) and loc not in ['us', 'global']:
-            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on multi-region 'us' endpoint...")
-            fallback_client = get_gemini_client(location='us')
+        if "404" in str(e) and loc != 'us-central1':
+            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on 'us-central1' endpoint...")
+            fallback_client = get_gemini_client(location='us-central1')
             if not fallback_client:
                 raise
             response = fallback_client.models.generate_content(
@@ -238,7 +241,7 @@ def generate_multispeaker_podcast(
     location: Optional[str] = None,
     audio_out_path: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """Generates dual-host dialogue transcript and multi-speaker audio."""
+    """Generates dual-host dialogue transcript between Alex and Jordan using Gemini 3.5 Flash."""
     active_model = get_default_gemini_model(model)
     client = get_gemini_client(location=location)
     if not client:
@@ -248,19 +251,33 @@ def generate_multispeaker_podcast(
     report_date = metrics.get('report_date', datetime.now().strftime('%d %b %Y'))
 
     prompt = f"""Generate a professional, high-impact 90-second conversational executive podcast briefing between two hosts:
-- Alex (Host / Program Delivery Analyst, voice: Puck): Neutral, crisp, direct.
-- Jordan (Co-Host / Technical Director, voice: Aoede): Authoritative, technical, solutions-focused.
+- Alex (Host / Program Delivery Analyst): Neutral, crisp, direct, executive delivery focus.
+- Jordan (Co-Host / Technical Director): Authoritative, technical, solutions-focused.
 
 Reporting Week: {week_label} ({report_date})
 Executive Summary: {synthesis_result.get('synthesis', {}).get('executive', '')}
+Technical Assessment: {synthesis_result.get('synthesis', {}).get('technical', '')}
+Governance Summary: {synthesis_result.get('synthesis', {}).get('governance', '')}
 Top 3 Attention Items: {json.dumps(synthesis_result.get('top3', []))}
 Sleeper Outlier: {json.dumps(synthesis_result.get('sleeperOutlier', {}))}
 
-Return STRICT JSON as an array of dialogue turns:
-[
-  {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:00", "text": "Welcome to the Executive Briefing for {week_label}..."}},
-  {{"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:18", "text": "Thank you Alex..."}}
-]
+Return STRICT JSON as an object containing an array of 5 structured dialogue turns:
+1. Alex: Welcome to the Executive Briefing for {week_label} ending {report_date}, framing executive posture and core delivery focus.
+2. Jordan: Technical Director analysis on milestone velocity, engineering baseline, and risk compression metrics.
+3. Alex: Deep dive on the primary Top Attention item and critical-path decision required.
+4. Jordan: Technical mitigation on secondary priority, engineering interconnects, and sleeper outlier proactively treated.
+5. Alex: Summary of commercial, ATO accreditation, and governance posture, closing with executive action items.
+
+Schema:
+{{
+  "dialogue": [
+    {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:00", "text": "Welcome to the Executive Briefing for {week_label}..."}},
+    {{"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:18", "text": "Thank you Alex..."}},
+    {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:36", "text": "..."}},
+    {{"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:54", "text": "..."}},
+    {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "1:15", "text": "..."}}
+  ]
+}}
 """
 
     try:
@@ -269,15 +286,15 @@ Return STRICT JSON as an array of dialogue turns:
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=List[PodcastDialogueTurn],
+                response_schema=PodcastScriptResponse,
                 temperature=0.3
             )
         )
     except Exception as e:
         loc = get_default_gemini_region(location)
-        if "404" in str(e) and loc not in ['us', 'global']:
-            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on multi-region 'us' endpoint...")
-            fallback_client = get_gemini_client(location='us')
+        if "404" in str(e) and loc != 'us-central1':
+            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on 'us-central1' endpoint...")
+            fallback_client = get_gemini_client(location='us-central1')
             if not fallback_client:
                 raise
             response = fallback_client.models.generate_content(
@@ -285,7 +302,7 @@ Return STRICT JSON as an array of dialogue turns:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    response_schema=List[PodcastDialogueTurn],
+                    response_schema=PodcastScriptResponse,
                     temperature=0.3
                 )
             )
@@ -293,65 +310,16 @@ Return STRICT JSON as an array of dialogue turns:
             raise
 
     try:
-        script = json.loads(response.text)
+        raw = json.loads(response.text)
+        if isinstance(raw, dict) and 'dialogue' in raw:
+            script = raw['dialogue']
+        elif isinstance(raw, list):
+            script = raw
+        else:
+            raise ValueError(f"Unexpected JSON format: {raw}")
     except Exception as e:
-        logger.error(f"Failed to parse podcast script JSON: {e}")
+        logger.error(f"Failed to parse podcast script JSON: {e}\nRaw response: {response.text}")
         raise ValueError(f"Invalid podcast script JSON from {active_model}: {e}")
-
-    # Generate multi-speaker audio if audio_out_path is provided
-    if audio_out_path and script:
-        try:
-            tts_dialogue = "\n\n".join([
-                f"{turn.get('speaker', 'Alex')}: {turn.get('text', '')}"
-                for turn in script
-            ])
-            tts_prompt = f"Perform this executive podcast briefing naturally:\n\n{tts_dialogue}"
-
-            speaker_configs = [
-                types.SpeakerVoiceConfig(
-                    speaker="Alex",
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Puck")
-                    )
-                ),
-                types.SpeakerVoiceConfig(
-                    speaker="Jordan",
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Aoede")
-                    )
-                )
-            ]
-
-            speech_config = types.SpeechConfig(
-                multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
-                    speaker_voice_configs=speaker_configs
-                )
-            )
-
-            tts_model = os.getenv("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
-            tts_resp = client.models.generate_content(
-                model=tts_model,
-                contents=tts_prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["AUDIO"],
-                    speech_config=speech_config
-                )
-            )
-
-            audio_data = None
-            if tts_resp.candidates and tts_resp.candidates[0].content and tts_resp.candidates[0].content.parts:
-                for part in tts_resp.candidates[0].content.parts:
-                    if hasattr(part, 'inline_data') and part.inline_data and part.inline_data.data:
-                        audio_data = part.inline_data.data
-                        break
-
-            if audio_data:
-                os.makedirs(os.path.dirname(audio_out_path), exist_ok=True)
-                with open(audio_out_path, "wb") as f:
-                    f.write(audio_data)
-                logger.info(f"Generated multi-speaker podcast audio at {audio_out_path}")
-        except Exception as tts_err:
-            logger.warning(f"Multi-speaker audio generation warning: {tts_err}")
 
     return script
 

@@ -346,7 +346,7 @@ drive_access.folder_read                                     [INHERITED]    Goog
 8. **Scheduled Ingestion Pipeline & Model Workaround**:
    * Provisions Cloud Run Job `monaro-risk-sync-job` in Sydney (`australia-southeast1`) with Cloud Storage FUSE mount `gs://${PROJECT_ID}-data`.
    * Standardizes on **`gemini-3.5-flash`** for multimodal document inspection, executive synthesis, and podcast script generation.
-   * **Multi-Region US Workaround**: Because Gemini 3.5 Flash is not yet published in Sydney, the client connects to Google Cloud's official US multi-region endpoint (`https://aiplatform.us.rep.googleapis.com` with `location="us"`). All compute, data storage, and CI/CD remain 100% in Sydney (`australia-southeast1`).
+   * **Vertex AI Region Strategy (`us-central1`)**: Because Gemini 3.5 Flash is currently served from `us-central1` rather than Sydney, the pipeline and Cloud Run Job default to `GEMINI_REGION="us-central1"`. The client incorporates automatic fallback retry logic if any regional endpoint returns 404. All compute, data storage, web serving, and CI/CD remain 100% in Sydney (`australia-southeast1`).
    * **Seamless Domestic Migration**: In a few weeks when Gemini 3.5 Flash is deployed to Sydney, changing `GEMINI_REGION="australia-southeast1"` on the Cloud Run Job (or via Cloud Build substitution `_GEMINI_REGION`) will immediately cut over to 100% local Australian processing with zero functional regression or code changes.
    * Provisions Cloud Tasks queue `monaro-sync-queue` and Cloud Scheduler job `monaro-sync-schedule` (Friday 5 PM Sydney time).
 9. **Google Drive Access Governance**: Inspects Google Drive folder permissions via internal Drive CLI, verifies reader access for both viewer group and deployer service account, and automatically shares access if missing.
@@ -629,8 +629,8 @@ The standalone ingestion script ([`scripts/sync_drive.py`](../scripts/sync_drive
    - Inspects the existing [`data/monaro/snapshots.json`](../data/monaro/snapshots.json) dataset.
    - Any report whose week number already exists in `snapshots.json` is safely skipped, avoiding redundant API calls and model latency.
 
-3. **Multimodal AI Analysis with Gemini 3.7 Flash**:
-   - Unprocessed PDF reports are sent to **`gemini-3.7-flash`** via Google GenAI SDK.
+3. **Multimodal AI Analysis with Gemini 3.5 Flash**:
+   - Unprocessed PDF reports are sent to **`gemini-3.5-flash`** via Google GenAI SDK.
    - Extracts structured executive briefings (Executive, Technical, Governance perspectives), Top 3 critical action items, and sleeper outlier warnings.
    - Computes inherent and residual risk delta distributions across the 5×5 matrix.
 
@@ -776,5 +776,32 @@ gcloud tasks create-http-task \
   --oauth-service-account-email="github-deployer@monaro-risk-dev.iam.gserviceaccount.com" \
   --header="Content-Type:application/json"
 ```
+
+---
+
+#### 7.5 Verifying Podcast Generation & Freshness (`scripts/check_podcast_status.py`)
+
+To verify whether executive podcast briefings are up to date with **Gemini 3.5 Flash** across all project workspaces, use the standalone audit utility:
+
+```bash
+# Audit podcast generation status across all projects (monaro, f-dse, sample):
+python3 scripts/check_podcast_status.py
+
+# Inspect a specific project:
+python3 scripts/check_podcast_status.py --project monaro
+
+# Output structured JSON for monitoring / CI integration:
+python3 scripts/check_podcast_status.py --json
+
+# Automatically generate or refresh podcasts for projects with missing or fallback scripts:
+python3 scripts/check_podcast_status.py --project monaro --fix
+```
+
+**Audit Checks Performed**:
+1. **Latest Week Detection**: Dynamically locates the latest reporting week snapshot.
+2. **Provenance Verification**: Asserts that `generatedBy` is `gemini-3.5-flash` rather than a fallback rule engine.
+3. **Dialogue Quality**: Confirms alternating turns between Alex (Program Delivery Analyst) and Jordan (Technical Director).
+4. **Self-Healing Regeneration (`--fix`)**: Connects to Vertex AI (`us-central1`) to generate high-fidelity 5-turn dialogue turns if missing or outdated.
+
 
 

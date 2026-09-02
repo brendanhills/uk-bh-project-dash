@@ -31,6 +31,7 @@ from scripts.pipeline import (
 logger = logging.getLogger('server')
 PORT = int(os.getenv('PORT', '9000'))
 DIRECTORY = BASE_DIR
+DATA_BASE_DIR = os.path.join(DIRECTORY, "data")
 SNAPSHOTS_FILE = os.path.join(DIRECTORY, "data", "sample", "snapshots.json")
 
 def get_default_project():
@@ -227,6 +228,17 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception as e:
                     logger.warning(f"Drive sync failed or skipped: {e}")
 
+            # Ensure latest podcast generation if not already executed by drive sync
+            podcast_updated = False
+            if sync_result and isinstance(sync_result, dict):
+                podcast_updated = bool(sync_result.get('podcast_generated', False))
+            elif proj != 'sample':
+                try:
+                    from scripts.sync_drive import ensure_latest_podcast_generated
+                    podcast_updated = ensure_latest_podcast_generated(project_name=proj)
+                except Exception as e:
+                    logger.warning(f"Podcast generation in handle_sync: {e}")
+
             snaps = load_json_file(os.path.join(p_dir, 'snapshots.json'), {})
             risks = load_json_file(os.path.join(p_dir, 'risks.json'), [])
             issues = load_json_file(os.path.join(p_dir, 'issues.json'), [])
@@ -235,9 +247,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             if sync_result and isinstance(sync_result, dict):
                 new_ingested = sync_result.get('new_ingested_count', 0)
 
-            is_updated = new_ingested > 0
-            if is_updated:
+            is_updated = (new_ingested > 0) or podcast_updated
+            if new_ingested > 0 and podcast_updated:
+                msg = f'Synchronized project "{proj}": {new_ingested} new report(s) ingested & Gemini 3.5 Flash podcast generated.'
+            elif new_ingested > 0:
                 msg = f'Synchronized project "{proj}": {new_ingested} new report(s) ingested.'
+            elif podcast_updated:
+                msg = f'Synchronized project "{proj}": Gemini 3.5 Flash executive podcast generated/refreshed.'
             else:
                 msg = f'Live data synchronized for project "{proj}". Dashboard is already up to date.'
 
@@ -246,6 +262,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 'project': proj,
                 'updated': is_updated,
                 'new_ingested_count': new_ingested,
+                'podcast_updated': podcast_updated,
                 'message': msg,
                 'timestamp': datetime.now().isoformat(),
                 'summary': {

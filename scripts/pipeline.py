@@ -269,6 +269,16 @@ def sync_project_data(project_name: str = 'sample', data_root: Optional[str] = N
     risks = load_json_file(os.path.join(proj_dir, 'risks.json'), [])
     issues = load_json_file(os.path.join(proj_dir, 'issues.json'), [])
 
+    podcast_updated = False
+    if project_name != 'sample':
+        try:
+            from scripts.sync_drive import ensure_latest_podcast_generated
+            podcast_updated = ensure_latest_podcast_generated(project_name=project_name, data_root=data_root)
+            if podcast_updated:
+                snapshots = load_json_file(os.path.join(proj_dir, 'snapshots.json'), {})
+        except Exception as e:
+            logger.debug(f"Sync ensure podcast check: {e}")
+
     return {
         'success': True,
         'project': project_name,
@@ -276,6 +286,7 @@ def sync_project_data(project_name: str = 'sample', data_root: Optional[str] = N
         'total_snapshots': len(snapshots),
         'total_risks': len(risks),
         'total_issues': len(issues),
+        'podcast_updated': podcast_updated,
         'timestamp': datetime.now().isoformat()
     }
 
@@ -387,6 +398,8 @@ def ingest_report_file(
         'top3': synthesis.get('top3', []),
         'sleeperOutlier': synthesis.get('sleeperOutlier', {}),
         'podcastScript': podcast_script,
+        'generatedBy': synthesis.get('generatedBy', 'gemini-3.5-flash'),
+        'podcastGeneratedBy': synthesis.get('generatedBy', 'gemini-3.5-flash') if podcast_script else 'deterministic_rule_engine',
         'driveFileId': resolved_file_id,
         'driveFileName': meta['file_name'],
         'driveFile': {

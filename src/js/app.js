@@ -1121,8 +1121,25 @@
                 }
             }
 
-            if (!audioEl || !src) {
-                console.warn("[Audio] No audio source available for playback.");
+            // Fallback to speech synthesis if audio source is missing but transcript script is present
+            if (!audioEl || !src || (audioSrc && typeof PODCAST_AUDIO_CACHE !== 'undefined' && PODCAST_AUDIO_CACHE[audioSrc] === false)) {
+                const script = getPodcastScriptForWeek(activeKey);
+                if (script && script.length > 0) {
+                    if (isPodcastPlaying) {
+                        isPodcastPlaying = false;
+                        if (window.speechSynthesis) window.speechSynthesis.cancel();
+                        if (playBtn) playBtn.innerText = '▶';
+                        if (timeLabel) timeLabel.innerText = 'Paused';
+                        animateWaveform(false);
+                    } else {
+                        isPodcastPlaying = true;
+                        if (playBtn) playBtn.innerText = '⏸';
+                        animateWaveform(true);
+                        playPodcastFromIndex(0);
+                    }
+                    return;
+                }
+                console.warn("[Audio] No audio source or script available for playback.");
                 if (timeLabel) timeLabel.innerText = 'Audio unavailable';
                 return;
             }
@@ -1642,33 +1659,55 @@
 
             function setAudioUnavailable() {
                 if (audioSrc) PODCAST_AUDIO_CACHE[audioSrc] = false;
+                const script = getPodcastScriptForWeek(weekKey);
+                const hasScript = Boolean(script && script.length > 0);
+
                 if (timeLabel) {
-                    timeLabel.innerText = 'Audio briefing unavailable';
-                    timeLabel.className = 'font-mono text-xs text-slate-400';
+                    timeLabel.innerText = hasScript ? 'AI Speech (Gemini Script)' : 'Audio briefing unavailable';
+                    timeLabel.className = hasScript ? 'font-mono text-xs text-indigo-700 font-semibold' : 'font-mono text-xs text-slate-400';
                 }
                 if (playBtn) {
-                    playBtn.disabled = true;
-                    playBtn.className = 'w-10 h-10 rounded-xl bg-slate-200 text-slate-400 border border-slate-300 flex items-center justify-center text-lg shadow-xs transition-all cursor-not-allowed opacity-60 shrink-0';
-                    playBtn.innerText = '▶';
-                    playBtn.title = `Audio briefing unavailable for ${weekLabel}`;
+                    if (hasScript) {
+                        playBtn.disabled = false;
+                        playBtn.className = 'w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center text-lg shadow-sm transition-all cursor-pointer shrink-0';
+                        playBtn.innerText = '▶';
+                        playBtn.title = `Play ${weekLabel} AI Executive Briefing (Speech)`;
+                    } else {
+                        playBtn.disabled = true;
+                        playBtn.className = 'w-10 h-10 rounded-xl bg-slate-200 text-slate-400 border border-slate-300 flex items-center justify-center text-lg shadow-xs transition-all cursor-not-allowed opacity-60 shrink-0';
+                        playBtn.innerText = '▶';
+                        playBtn.title = `Audio briefing unavailable for ${weekLabel}`;
+                    }
                 }
                 if (downloadEl) {
                     downloadEl.removeAttribute('href');
                     downloadEl.removeAttribute('download');
                     downloadEl.className = 'bg-slate-200 text-slate-400 border border-slate-300 font-bold px-3 py-1 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-not-allowed pointer-events-none opacity-60';
-                    downloadEl.title = `Audio briefing unavailable for ${weekLabel}`;
+                    downloadEl.title = `Audio briefing download unavailable for ${weekLabel}`;
                 }
                 if (transcriptBtn) {
-                    transcriptBtn.disabled = true;
-                    transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-60 pointer-events-none text-xs flex items-center gap-1';
-                    transcriptBtn.title = `Transcript unavailable (audio briefing not available for ${weekLabel})`;
+                    if (hasScript) {
+                        transcriptBtn.disabled = false;
+                        transcriptBtn.className = 'text-indigo-700 hover:text-indigo-900 font-bold bg-white border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 cursor-pointer text-xs flex items-center gap-1';
+                        transcriptBtn.title = `View ${weekLabel} podcast transcript`;
+                    } else {
+                        transcriptBtn.disabled = true;
+                        transcriptBtn.className = 'text-slate-400 font-bold bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-lg shadow-2xs cursor-not-allowed opacity-60 pointer-events-none text-xs flex items-center gap-1';
+                        transcriptBtn.title = `Transcript unavailable for ${weekLabel}`;
+                    }
                 }
-                const transcriptModal = document.getElementById('transcriptModal');
-                if (transcriptModal && !transcriptModal.classList.contains('hidden')) {
-                    transcriptModal.classList.add('hidden');
+                if (!hasScript) {
+                    const transcriptModal = document.getElementById('transcriptModal');
+                    if (transcriptModal && !transcriptModal.classList.contains('hidden')) {
+                        transcriptModal.classList.add('hidden');
+                    }
                 }
                 if (speedControls) {
-                    speedControls.classList.add('opacity-40', 'pointer-events-none');
+                    if (hasScript) {
+                        speedControls.classList.remove('opacity-40', 'pointer-events-none');
+                    } else {
+                        speedControls.classList.add('opacity-40', 'pointer-events-none');
+                    }
                 }
                 if (waveformContainer) {
                     waveformContainer.classList.add('opacity-30');
