@@ -395,6 +395,7 @@ def ingest_report_file(
         'podcastScript': podcast_script,
         'generatedBy': synthesis.get('generatedBy', 'gemini-3.5-flash'),
         'podcastGeneratedBy': synthesis.get('generatedBy', 'gemini-3.5-flash') if podcast_script else 'deterministic_rule_engine',
+        'podcastGeneratedAt': datetime.now().isoformat() if podcast_script else None,
         'driveFileId': resolved_file_id,
         'driveFileName': meta['file_name'],
         'driveFile': {

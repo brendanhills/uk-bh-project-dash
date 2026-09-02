@@ -341,3 +341,72 @@ def test_check_podcast_status_reports_up_to_date_when_gemini_35(mock_project_env
     assert "Alex" in status["speakers"]
     assert "Jordan" in status["speakers"]
 
+
+def test_check_podcast_status_rich_metadata(mock_project_env):
+    """Verify check_project_podcast_status returns complete metadata: size, dates, ingestion, length."""
+    from scripts.check_podcast_status import (
+        check_project_podcast_status,
+        parse_time_str,
+        format_duration,
+        format_bytes,
+        format_datetime_display
+    )
+
+    # 1. Test helper utilities
+    assert parse_time_str("1:15") == 75
+    assert parse_time_str("0:00") == 0
+    assert parse_time_str("invalid") is None
+    assert format_duration(75) == "1m 15s"
+    assert format_duration(0) == "0m 00s"
+    assert format_bytes(1024) == "1.0 KB"
+    assert format_bytes(1048576) == "1.00 MB"
+    assert "2026-09-01" in format_datetime_display("2026-09-01T06:48:39.348921")
+
+    # 2. Check rich metadata on generated project
+    mock_script = [
+        {"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:00", "text": "Audited Week 30 briefing with executive details."},
+        {"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:15", "text": "All metrics green and verified for release."}
+    ]
+
+    with patch('scripts.gemini_generator.generate_multispeaker_podcast', return_value=mock_script):
+        ensure_latest_podcast_generated(
+            project_name=mock_project_env["project"],
+            data_root=str(Path(mock_project_env["root"]) / "data"),
+            force=True
+        )
+
+    status = check_project_podcast_status(
+        project_name=mock_project_env["project"],
+        data_root=str(Path(mock_project_env["root"]) / "data")
+    )
+
+    # Size assertions
+    assert "size_bytes" in status and status["size_bytes"] > 0
+    assert "size_formatted" in status and "B" in status["size_formatted"]
+    assert "script_size_bytes" in status and status["script_size_bytes"] > 0
+    assert "size_summary" in status
+
+    # Date of generation assertions
+    assert "generated_at" in status and status["generated_at"] is not None
+    assert "generated_at_formatted" in status and status["generated_at_formatted"] != "--"
+
+    # Data ingestion date assertions
+    assert "data_ingested_at" in status
+    assert "data_ingested_at_formatted" in status and status["data_ingested_at_formatted"] != "--"
+
+    # Length assertions
+    assert "duration_seconds" in status and status["duration_seconds"] > 0
+    assert "duration_formatted" in status and "m" in status["duration_formatted"]
+    assert "length" in status and "turns" in status["length"]
+    assert status["length_type"] == "script_estimate"
+
+    # Metadata & Cast assertions
+    assert status["turn_count"] == 2
+    assert status["word_count"] > 10
+    assert status["char_count"] > 50
+    assert len(status["speakers_detail"]) == 2
+    assert status["speakers_detail"][0]["speaker"] == "Alex"
+    assert status["speakers_detail"][0]["role"] == "Program Analyst"
+    assert status["speakers_detail"][1]["speaker"] == "Jordan"
+    assert status["speakers_detail"][1]["role"] == "Technical Director"
+
