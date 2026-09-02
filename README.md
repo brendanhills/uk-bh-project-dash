@@ -64,6 +64,11 @@ Project Dash runs across **three distinct environments** with strict separation 
 | **2. Cloud Run Development** (`monaro-risk-dash-dev`) | **Sydney (`australia-southeast1`)**<br>[👉 Dev Dashboard](https://monaro-risk-dash-dev-525025654699.australia-southeast1.run.app/?project=monaro) | **Developers & Testers Only**<br>Restricted via Google Cloud Identity-Aware Proxy (IAP) with Google SSO (`monaro-risk-dev@google.com`). For engineering operators, dashboard testers, and staging validation. | **Push to `dev` Branch**<br>Triggered automatically by Cloud Build on every push to the `dev` branch (runs automated unit tests, builds container, and updates Cloud Run). | 🟡 **Low / Contained Impact**<br>Isolated staging sandbox to validate new features, ingestion pipelines, and GCS volume mounts before tagging production. |
 | **3. Local Development Server** (`server.py`) | **Local Workstation / Cloudtop**<br>`http://localhost:9000/?project=monaro`<br>`http://uk-bh-cloudtop.c.googlers.com:9000` | **Developer Only (Local Only)**<br>Bound to localhost / Cloudtop session. **Strictly viewable by the active developer**; cannot be accessed by external users or project stakeholders. | **Manual Execution**<br>Run on-demand by the developer via `python3 server.py` or `./run_server.sh`. | 🟢 **Zero External Impact**<br>Sandboxed entirely to local iteration, rapid debugging, offline UI development, and running unit tests (`pytest`). |
 
+> [!TIP]
+> **Decoupled CI/CD Architecture**:
+> - **GitHub Actions CI** ([`.github/workflows/deploy_monaro_dashboard.yml`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/.github/workflows/deploy_monaro_dashboard.yml)): Runs automated `pytest` test suites on every PR and push with zero GCP credentials/secrets required.
+> - **Google Cloud Build CD** ([`deploy/cloudbuild.yaml`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/cloudbuild.yaml)): Native privileged deployment pipeline deploying container images to Cloud Run in Sydney (`australia-southeast1`).
+
 ### 4. Run the Local Development Server (Developer Only)
 
 > [!NOTE]

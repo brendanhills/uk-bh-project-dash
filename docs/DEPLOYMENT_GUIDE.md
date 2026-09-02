@@ -372,15 +372,44 @@ drive_access.folder_read                                     [INHERITED]    Goog
 
 ---
 
-## 📦 Automated Pipeline Reference (`deploy/cloudbuild.yaml`)
+## 📦 Automated Pipeline Reference & CI/CD Architecture
 
-The CI/CD pipeline definition lives in [`deploy/cloudbuild.yaml`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/cloudbuild.yaml). It executes 5 streamlined, high-efficiency stages:
+Project Monaro implements a **decoupled, two-tier CI/CD architecture** that cleanly separates open code validation from privileged cloud infrastructure deployments:
 
-1. **Automated Pytest (`~22s`)**: Executes the full test suite (159 unit and regression tests) in `python:3.13-slim`.
-2. **Dynamic Build Metadata Injection (`<1s`)**: Reuses the cached `python:3.13-slim` container from Step 1 to inject dynamic commit SHA, branch/tag, region, and UTC timestamp into `data/build_info.json`. Reusing the cached runner avoids downloading multi-GB SDK images.
-3. **Container Build (`~7s`)**: Builds the production container using multi-stage [`deploy/Dockerfile`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/Dockerfile), tagged with both `$COMMIT_SHA` and `latest`.
-4. **Concurrent Image Push (`~3s`)**: Pushes container tags to Artifact Registry in Sydney using `docker push --all-tags`.
-5. **Cloud Run Deployment (`~16s`)**: Deploys the revision to Cloud Run using Google's dedicated and pre-warmed `gcr.io/cloud-builders/gcloud` builder with `--iap`, `--no-allow-unauthenticated`, and build provenance annotations.
+```mermaid
+flowchart TD
+    subgraph GitHubLayer["1. Open CI Layer (GitHub Actions)"]
+        GHTrigger["Push / PR to dev or main\n(paths: project_dash/**)"]
+        GHAction["GitHub Actions (.github/workflows/deploy_monaro_dashboard.yml)\n• Python 3.13 Setup\n• Fast Automated Pytest Execution\n• ZERO GCP Secrets / ZERO Keys Needed"]
+        GHBadge["🟢 Green CI Status Badge on Pull Requests"]
+    end
+
+    subgraph GCPLayer["2. Privileged CD Layer (Google Cloud Build)"]
+        CBTrigger["Cloud Build Trigger (deploy-monaro-risk-dash-dev)\n• Authenticated via Native GitHub App\n• Bound to least-privilege github-deployer SA"]
+        CBBuild["Cloud Build Execution (deploy/cloudbuild.yaml)\n1. Dynamic build_info.json Generation\n2. Docker BuildKit Image Compilation with Layer Caching\n3. In-Container Pytest Gate\n4. Artifact Registry Push in Sydney\n5. Cloud Run Deploy with IAP & GCS Data Volume Mount\n6. Ingestion Sync Job Update"]
+        CloudRun["🚀 Live Cloud Run Service (australia-southeast1)"]
+    end
+
+    GHTrigger --> GHAction --> GHBadge
+    GHTrigger --> CBTrigger --> CBBuild --> CloudRun
+```
+
+### 1. GitHub Actions CI (`.github/workflows/deploy_monaro_dashboard.yml`)
+- **Role**: Continuous Integration & Regression Validation.
+- **Trigger**: Every `push` and `pull_request` touching `project_dash/**` on `dev` or `main`.
+- **Security & Frictionless CI**: Requires **zero Google Cloud credentials or GitHub secrets** (`GCP_SA_KEY`). All tests execute locally in the GitHub Actions runner, preventing credential leakage while providing instant feedback on PRs.
+
+### 2. Google Cloud Build CD (`deploy/cloudbuild.yaml`)
+- **Role**: Continuous Deployment, Container Compilation & Infrastructure Rollout.
+- **Trigger**: Native Cloud Build GitHub App triggers (`deploy-monaro-risk-dash-dev` for pushes to `dev`, and `deploy-monaro-risk-dash-prod` for production release tags).
+- **Execution Stages**:
+  1. **Dynamic Build Metadata (`build-info`)**: Injects dynamic commit SHA, branch/tag, region, and UTC timestamp into `build_info.json` at root (`/app/build_info.json`) and `data/build_info.json`.
+  2. **Docker Layer Cache Pull (`pull-cache`)**: Starts non-blocking at `t=0` to pull the latest image for BuildKit caching.
+  3. **Container Build (`build-image`)**: Builds the unified container image (`deploy/Dockerfile`) with BuildKit layer caching.
+  4. **Automated Pytest Gate (`run-tests`)**: Runs the full pytest suite inside the compiled container image before pushing to registry.
+  5. **Artifact Registry Push (`push-image`)**: Pushes container tags to Artifact Registry in Sydney (`australia-southeast1`).
+  6. **Cloud Run Service Deployment (`deploy-web`)**: Deploys private IAP Cloud Run service with GCS bucket volume mount (`monaro-risk-dev-data`) to `/app/data`.
+  7. **Cloud Run Sync Job Update (`update-job`)**: Deploys the latest sync worker container to `monaro-risk-sync-job`.
 
 ### ⚙️ Worker Pool Architecture: Why the Default Pool is Optimal
 
