@@ -9,11 +9,12 @@
 - **Runtime Model:** Lightweight containerized Python/Nginx server (`server.py`) serving the client-side SPA, project data files, and on-demand sync APIs.
 - **Local / Cloudtop Runner:** Local Python 3.11+ server managed via 1-command tmux lifecycle (`run_server.sh`) on port 9000 for development and review.
 
-## 2. Data & Storage Layer (Google Drive-Native)
-- **Primary Source of Truth:** Google Drive Shared Folder / Workspace Storage (zero GCP bucket overhead).
+## 2. Data & Storage Layer (Google Drive & GCS Bucket)
+- **Primary Source of Truth:** Google Drive Shared Folder / Workspace Storage.
+- **Podcast Audio & Snapshot Persistence:** Rendered audio binaries (`.mp3`) and snapshot registries are persisted to Google Cloud Storage (`gs://${PROJECT_ID}-data/{project}/`) via Cloud Run volume mounts (`/app/data`) and direct pipeline upload.
 - **Weekly Ingestion Pipeline:** Google Drive PDF reports (Week 27, 26, 25...) and Google Sheets risk registers.
-- **Historical Persistence:** `weekly_snapshots.json` and `live_synced_data.json` stored directly in Google Drive and cached in browser `localStorage` / local JSON.
-- **User-Triggered Ingestion:** On-demand sync and PDF extraction triggered directly from the web UI.
+- **Historical Persistence:** `weekly_snapshots.json` and `live_synced_data.json` stored in Google Drive and GCS bucket.
+- **User-Triggered Ingestion:** On-demand sync, PDF extraction, and Chirp 3 HD neural podcast audio synthesis triggered directly from the web UI.
 
 ## 3. Access Control & Governance (Multi-Tier Architecture)
 - **Identity-Aware Proxy (IAP) Web Access Layer (Primary User Interface):**

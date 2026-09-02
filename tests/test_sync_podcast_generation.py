@@ -322,7 +322,15 @@ def test_check_podcast_status_reports_up_to_date_when_gemini_35(mock_project_env
         {"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:15", "text": "All metrics green."}
     ]
 
-    with patch('scripts.gemini_generator.generate_multispeaker_podcast', return_value=mock_script):
+    def fake_podcast_generator(*args, **kwargs):
+        audio_out = kwargs.get('audio_out_path')
+        if audio_out:
+            os.makedirs(os.path.dirname(audio_out), exist_ok=True)
+            with open(audio_out, 'wb') as f:
+                f.write(b"MOCK_MP3_AUDIO_STREAM_DATA")
+        return mock_script
+
+    with patch('scripts.gemini_generator.generate_multispeaker_podcast', side_effect=fake_podcast_generator):
         ensure_latest_podcast_generated(
             project_name=mock_project_env["project"],
             data_root=str(Path(mock_project_env["root"]) / "data"),

@@ -1,14 +1,14 @@
 # Project Monaro Risk Governance & Intelligence Platform — Session Resume
 
-**Checkpoint Timestamp:** `2026-09-02 16:45:00 AEST`  
+**Checkpoint Timestamp:** `2026-09-02 17:50:00 AEST`  
 **Active Git Branch:** `dev`  
 **Workspace:** `/usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash`  
 **Deployment Region:** **`australia-southeast1`** (Sydney, Australia)  
 **Live Cloud Run Dev Service:** `monaro-risk-dash-dev`  
 **Live Cloud Run Prod Service:** `monaro-risk-dash-prod`  
 **Local Cloudtop Dev Server:** [Monaro Project (Default)](http://uk-bh-cloudtop.c.googlers.com:9000/?project=monaro) | [Aurora Sample](http://uk-bh-cloudtop.c.googlers.com:9000/?project=sample)  
-**Test Suite Health:** **106 / 106 Tests Passing (100%)** (`pytest` in 12.96s).  
-**Active Conductor Track:** `migrate_from_unittest_to_pytest_20260827` (Status: `[x] Completed / Final Verification`)
+**Test Suite Health:** **105 / 105 Tests Passing (100%)** (`pytest` in 24.98s).  
+**Active Conductor Track:** `dual_speaker_audio_podcast_generation_20260902` (Status: `[x] Completed / Verified`)
 
 ---
 
@@ -105,11 +105,17 @@ git push origin project_dash/prod-v1.0.0
 
 9. **Podcast Generation on Sync Remediation & Status Inspection Tool (FR-102)**:
    - Completely remediated podcast briefing generation during sync: added `ensure_latest_podcast_generated()` to `scripts/sync_drive.py` and `scripts/pipeline.py`, ensuring Gemini 3.5 Flash generates/refreshes dual-host executive briefings on every sync (even with 0 new Drive files).
-   - Strict Zero-TTS Mandate: Removed all external TTS models and modalities in favor of Gemini 3.5 Flash structured dialogue turns, with frontend browser speech synthesis as local audio playback fallback.
    - Resolved Cloud Run 404 region mismatch by standardizing `GEMINI_REGION="us-central1"` across Cloud Build, `setup.sh`, and `gemini_generator.py`.
    - Decoupled frontend transcript modal from audio file availability in `src/js/app.js`, ensuring executive scripts are immediately readable.
    - Created standalone audit and self-healing CLI utility `scripts/check_podcast_status.py` (FR-102) with `--fix` and `--json` support.
-   - Added unit test suite `tests/test_sync_podcast_generation.py` (100% test pass rate across 106 tests).
+
+10. **Dual-Speaker Audio Generation (Chirp 3 HD) & GCS Persistence**:
+   - Upgraded audio generation pipeline to produce studio-grade natural multi-speaker audio using Google Cloud Text-to-Speech **Chirp 3 HD**:
+     - **Alex** (Host / Program Delivery Analyst): `en-AU-Chirp3-HD-Puck` (with Neural2-B / Journey-D fallbacks)
+     - **Jordan** (Co-Host / Technical Director): `en-AU-Chirp3-HD-Aoede` (with Neural2-A / Journey-F fallbacks)
+   - Dynamic Turn Duration Measurement: MP3 frame headers are parsed on the fly to accurately calibrate dialogue timestamp tags (`0:00`, `0:27`, etc.) in `snapshots.json`.
+   - End-to-End Persistence: Synchronously writes `.mp3` audio files to local project assets (`assets/podcast_w{week}.mp3`, `data/{project}/podcast_w{week}.mp3`) and streams audio + snapshots directly to the Google Cloud Storage data bucket (`gs://monaro-risk-dev-data/`).
+   - Achieved **100% test pass rate across all 105 automated unit tests** in `pytest`.
 
 
 ---
