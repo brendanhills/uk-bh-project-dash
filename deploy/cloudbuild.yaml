@@ -1,5 +1,5 @@
 steps:
-  # 1. Inject dynamic build metadata into data/build_info.json for dashboard footer
+  # 1. Inject dynamic build metadata into build_info.json for dashboard footer
   # Uses python:3.13-slim; runs concurrently with cache pull at t=0
   - name: 'python:3.13-slim'
     id: 'build-info'
@@ -17,17 +17,19 @@ steps:
           BUILD_TAG="dev"
         fi
         BUILD_TIME=$(date -u +'%Y-%m-%d %H:%M UTC')
-        cat << BUILD_JSON > data/build_info.json
+        cat << BUILD_JSON > build_info.json
         {
           "tag": "$$BUILD_TAG",
           "commit": "$COMMIT_SHA",
           "region": "${_REGION}",
           "timestamp": "$$BUILD_TIME",
-          "service": "${_SERVICE_NAME}"
+          "service": "${_SERVICE_NAME}",
+          "build_id": "$BUILD_ID"
         }
         BUILD_JSON
-        echo "=== Generated data/build_info.json ==="
-        cat data/build_info.json
+        cp build_info.json data/build_info.json
+        echo "=== Generated build_info.json ==="
+        cat build_info.json
 
   # 2. Pull previous image for Docker layer caching (non-blocking, starts at t=0)
   - name: 'gcr.io/cloud-builders/docker'

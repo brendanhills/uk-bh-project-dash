@@ -280,7 +280,15 @@ def test_check_drive_sync_queries_live_folder_on_demand_and_merges_real_urls(dum
         }
     ]
 
-    with patch("server.query_live_drive_folder") as mock_live_query:
+    with patch("server.query_live_drive_folder") as mock_live_query, \
+         patch("server.load_json_file") as mock_load:
+        def side_effect(path, default=None):
+            if "snapshots.json" in path:
+                return {"snapshots": {"w28": {"weekNumber": 28, "weekLabel": "Week 28", "driveFileId": "real_gdrive_w28_id_abc"}}}
+            if "config.json" in path:
+                return {"sources": {"googleDrive": {"folderId": "1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C"}}}
+            return default or {}
+        mock_load.side_effect = side_effect
         mock_live_query.return_value = mock_live_reports
 
         server.DashboardHandler.handle_check_drive_sync(dummy_handler, query_str="project=monaro")
@@ -420,4 +428,21 @@ def test_bug_98_sync_endpoint_returns_updated_flag_and_lock(dummy_handler: Dummy
         assert 'already running' in dummy_handler_2.sent_data.get('message', '')
     finally:
         server._sync_lock.release()
+
+
+def test_handle_build_info_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify handle_build_info serves unmasked build metadata and env vars."""
+    monkeypatch.setenv("COMMIT_SHA", "testcommit123456789")
+    monkeypatch.setenv("BUILD_ID", "test-build-id")
+    monkeypatch.setenv("REGION", "australia-southeast1")
+    monkeypatch.setenv("BUILD_TIMESTAMP", "2026-09-02 05:40 UTC")
+
+    server.DashboardHandler.handle_build_info(dummy_handler)
+    assert dummy_handler.sent_code == 200
+    assert dummy_handler.sent_data is not None
+    assert dummy_handler.sent_data.get("commit") == "testcommit123456789"
+    assert dummy_handler.sent_data.get("region") == "australia-southeast1"
+    assert dummy_handler.sent_data.get("timestamp") == "2026-09-02 05:40 UTC"
+    assert dummy_handler.sent_data.get("build_id") == "test-build-id"
+
 
