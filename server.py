@@ -144,6 +144,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_sync_notebook(parsed.query)
         elif parsed.path == '/api/ingest-report':
             self.handle_ingest_report(parsed.query)
+        elif parsed.path in ('/data/build_info.json', '/build_info.json', '/api/build-info'):
+            self.handle_build_info(parsed.query)
         else:
             super().do_GET()
 
@@ -634,6 +636,57 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
     def process_ingest(self, params):
         DashboardHandler.handle_ingest(self, params)
+
+    def handle_build_info(self, query=None):
+        info = {}
+        # 1. Base info from root build_info.json if present
+        root_build_info = os.path.join(DIRECTORY, "build_info.json")
+        if os.path.exists(root_build_info):
+            try:
+                with open(root_build_info, "r", encoding="utf-8") as f:
+                    file_info = json.load(f)
+                    if isinstance(file_info, dict):
+                        info.update(file_info)
+            except Exception as e:
+                logger.warning(f"Failed to read root build_info.json: {e}")
+
+        # 2. Dynamic environment variable overrides (highest precedence)
+        env_commit = os.getenv("COMMIT_SHA")
+        if env_commit:
+            info["commit"] = env_commit
+        elif not info.get("commit"):
+            info["commit"] = "HEAD"
+
+        env_tag = os.getenv("BUILD_TAG") or os.getenv("TAG_NAME") or os.getenv("BRANCH_NAME")
+        if env_tag:
+            info["tag"] = env_tag
+        elif not info.get("tag"):
+            info["tag"] = "dev"
+
+        env_region = os.getenv("REGION") or os.getenv("GCP_REGION")
+        if env_region:
+            info["region"] = env_region
+        elif not info.get("region"):
+            info["region"] = "australia-southeast1"
+
+        env_service = os.getenv("SERVICE_NAME") or os.getenv("K_SERVICE")
+        if env_service:
+            info["service"] = env_service
+        elif not info.get("service"):
+            info["service"] = "monaro-risk-dash-dev"
+
+        env_build_id = os.getenv("BUILD_ID")
+        if env_build_id:
+            info["build_id"] = env_build_id
+
+        env_timestamp = os.getenv("BUILD_TIMESTAMP")
+        if env_timestamp:
+            info["timestamp"] = env_timestamp
+        elif not info.get("timestamp") or info.get("timestamp") == "2026-09-01 00:00 UTC":
+            info["timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+        self.send_json(info)
+
 
 def get_startup_urls(port=PORT):
     return [
