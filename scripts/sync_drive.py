@@ -305,9 +305,11 @@ def ensure_latest_podcast_generated(
         return False
 
     if new_script:
+        gen_timestamp = datetime.now(timezone.utc).isoformat()
         latest_snap['podcastScript'] = new_script
         latest_snap['generatedBy'] = active_model
         latest_snap['podcastGeneratedBy'] = active_model
+        latest_snap['podcastGeneratedAt'] = gen_timestamp
 
         # If flat format with both 'w30' and 'Week 30', update both
         if not is_wrapped:
@@ -316,6 +318,7 @@ def ensure_latest_podcast_generated(
                 snapshots_map[alt_key]['podcastScript'] = new_script
                 snapshots_map[alt_key]['generatedBy'] = active_model
                 snapshots_map[alt_key]['podcastGeneratedBy'] = active_model
+                snapshots_map[alt_key]['podcastGeneratedAt'] = gen_timestamp
 
         snapshots_data['lastSynced'] = datetime.now(timezone.utc).isoformat()
         save_json_file(snapshots_path, snapshots_data)
