@@ -57,16 +57,22 @@ def get_default_project():
         return 'monaro'
     return 'sample'
 
+from scripts.security_utils import sanitize_slug, safe_join
+
 def get_project_dir(project_slug=''):
     if not project_slug:
         project_slug = get_default_project()
-    p_dir = os.path.join(DIRECTORY, 'data', project_slug)
-    if os.path.exists(p_dir):
-        return p_dir
-    sample_dir = os.path.join(DIRECTORY, 'data', 'sample')
+    try:
+        clean_slug = sanitize_slug(project_slug, default=get_default_project())
+        p_dir = safe_join(DATA_BASE_DIR, clean_slug)
+        if os.path.exists(p_dir):
+            return p_dir
+    except (ValueError, Exception):
+        pass
+    sample_dir = os.path.join(DATA_BASE_DIR, 'sample')
     if os.path.exists(sample_dir):
         return sample_dir
-    return os.path.join(DIRECTORY, 'data')
+    return DATA_BASE_DIR
 
 def parse_request_params(query_or_params):
     if isinstance(query_or_params, dict):
