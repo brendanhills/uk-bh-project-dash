@@ -21,6 +21,7 @@ if PARENT_DIR not in sys.path:
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
+from scripts.security_utils import sanitize_slug, validate_safe_path, safe_join
 from scripts.pipeline import (
     load_json_file,
     save_json_file,
@@ -37,16 +38,6 @@ logging.basicConfig(
 logger = logging.getLogger('sync_drive')
 
 DEFAULT_DRIVE_FOLDER_ID = '1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C'
-
-
-def validate_safe_path(target_path: str, allowed_parents: List[str]) -> str:
-    """Ensures target_path resolves strictly inside one of the allowed parent directories."""
-    resolved_target = os.path.realpath(os.path.abspath(target_path))
-    for parent in allowed_parents:
-        resolved_parent = os.path.realpath(os.path.abspath(parent))
-        if resolved_target == resolved_parent or resolved_target.startswith(resolved_parent + os.sep):
-            return resolved_target
-    raise ValueError(f"Path traversal detected: {target_path} is outside allowed directories {allowed_parents}")
 
 
 def get_drive_service():

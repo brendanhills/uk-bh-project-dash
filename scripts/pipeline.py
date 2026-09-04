@@ -17,16 +17,14 @@ DATA_BASE_DIR = os.path.join(BASE_DIR, 'data')
 logger = logging.getLogger('pipeline')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
+from scripts.security_utils import sanitize_slug, validate_safe_path, safe_join
+
 # --- Helper Functions ---
 
 def get_project_dir(project_name: str = 'monaro', data_root: Optional[str] = None) -> str:
-    clean_name = os.path.basename(str(project_name or 'monaro'))
-    if not re.match(r'^[a-zA-Z0-9_-]+$', clean_name):
-        raise ValueError(f"Invalid project name '{project_name}': must be alphanumeric, hyphen, or underscore.")
+    clean_name = sanitize_slug(project_name, default='monaro')
     root = os.path.realpath(os.path.abspath(data_root or DATA_BASE_DIR))
-    proj_dir = os.path.realpath(os.path.abspath(os.path.join(root, clean_name)))
-    if proj_dir != root and not proj_dir.startswith(root + os.sep):
-        raise ValueError(f"Path traversal detected: {proj_dir} is outside data root {root}")
+    proj_dir = safe_join(root, clean_name)
     os.makedirs(proj_dir, exist_ok=True)
     return proj_dir
 
