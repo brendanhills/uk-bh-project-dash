@@ -14,7 +14,7 @@ The **Project Monaro Risk Governance & Intelligence Platform** is a zero-build, 
 * **Where does the app run?**: The dashboard runs directly in the user's web browser as a pure static Single-Page Application (`index.html`) modularized with ES6 modules in `src/js/`.
 * **Who maintains backend servers?**: **No one.** There are no complex long-running stateful databases required.
 * **Storage Backend**: The single source of truth is your team's **Google Drive Shared Folder** containing weekly PDF risk reports, Google Sheets registers, and `data/sample/snapshots.json`.
-* **Unified Processing Engine**: Ingestion, Google Sheets synchronization, and Gemini AI executive briefings are handled by [`scripts/pipeline.py`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/scripts/pipeline.py) with deterministic self-healing fallbacks.
+* **Unified Processing Engine**: Ingestion, Google Sheets synchronization, and Gemini AI executive briefings are handled by [`scripts/pipeline.py`](../scripts/pipeline.py) with deterministic self-healing fallbacks.
 * **Clean REST API**: The optional local and Cloud Run backend exposes clean endpoints: `GET /api/status`, `POST /api/sync`, `POST /api/ingest`, and `POST /api/briefing/generate`.
 
 ---

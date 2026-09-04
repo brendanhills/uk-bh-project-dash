@@ -27,7 +27,7 @@ Because the production runtime compiles all frontend logic and structured JSON d
 
 ## 1. Inventory of All 14 GCP APIs & Cloud Services
 
-The environment provisioning script ([`deploy/provision_environment.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/provision_environment.sh)) enables 14 Google Cloud APIs. Below is the operational justification and architectural role for each service:
+The environment provisioning script ([`deploy/provision_environment.sh`](../deploy/provision_environment.sh)) enables 14 Google Cloud APIs. Below is the operational justification and architectural role for each service:
 
 | # | Service / API Identifier | Primary Domain | Purpose & Architectural Role in Project Dash |
 | :-: | :--- | :--- | :--- |
@@ -160,7 +160,7 @@ Because Project Dash runs a lightweight C-based Nginx binary on Alpine Linux (no
 To guarantee that running costs remain strictly at or near zero as usage scales, the following four optimizations are recommended:
 
 ### 1. Browser Caching for Application Code (`/src/`)
-- **Current State**: [`deploy/nginx.conf`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/nginx.conf) explicitly configures caching for `/assets/` (`expires 1d`) and no-cache for `/data/` (`max-age=0`), but `/src/` (containing `app.js`) falls into the default root location.
+- **Current State**: [`deploy/nginx.conf`](../deploy/nginx.conf) explicitly configures caching for `/assets/` (`expires 1d`) and no-cache for `/data/` (`max-age=0`), but `/src/` (containing `app.js`) falls into the default root location.
 - **Action**: Add an explicit `location /src/` block with `expires 1d; Cache-Control: "public, no-transform"`.
 - **Benefit**: Reduces repeated JavaScript downloads by 85% for returning users, cutting egress and Cloud Run invocation latency to zero on repeat visits.
 

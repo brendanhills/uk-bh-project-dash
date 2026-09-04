@@ -549,16 +549,29 @@ echo "=== 5. Configuring Automated Cloud Build Trigger in ${REGION} ==="
 if gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
   echo "ℹ️ Cloud Build trigger '${TRIGGER_NAME}' already exists in ${REGION}."
 else
+  # Resolve repo name, owner, and build config based on monorepo vs standalone repo
+  REPO_NAME="${REPO_NAME:-uk-bh-experiments}"
+  REPO_OWNER="${REPO_OWNER:-cloud-gtm}"
+  if [[ -f "${SCRIPT_DIR}/deploy/cloudbuild.yaml" && ! -d "${SCRIPT_DIR}/project_dash" ]]; then
+    BUILD_CONFIG="deploy/cloudbuild.yaml"
+    INCLUDED_FILES="**"
+    IGNORED_FILES="**/*.md,docs/**,.agents/**,conductor/**"
+  else
+    BUILD_CONFIG="project_dash/deploy/cloudbuild.yaml"
+    INCLUDED_FILES="project_dash/**"
+    IGNORED_FILES="project_dash/**/*.md,project_dash/docs/**,project_dash/.agents/**,project_dash/conductor/**"
+  fi
+
   if [[ -n "$TAG_PATTERN" ]]; then
     echo "Creating Tag-based trigger for pattern '${TAG_PATTERN}' in ${REGION}..."
     gcloud builds triggers create github \
       --project="${PROJECT_ID}" \
       --region="${REGION}" \
       --name="${TRIGGER_NAME}" \
-      --repo-name="uk-bh-experiments" \
-      --repo-owner="cloud-gtm" \
+      --repo-name="${REPO_NAME}" \
+      --repo-owner="${REPO_OWNER}" \
       --tag-pattern="${TAG_PATTERN}" \
-      --build-config="project_dash/deploy/cloudbuild.yaml" \
+      --build-config="${BUILD_CONFIG}" \
       --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL}" \
       --substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
       --description="Automated Production Deployment on release tags in Sydney"
@@ -568,14 +581,14 @@ else
       --project="${PROJECT_ID}" \
       --region="${REGION}" \
       --name="${TRIGGER_NAME}" \
-      --repo-name="uk-bh-experiments" \
-      --repo-owner="cloud-gtm" \
+      --repo-name="${REPO_NAME}" \
+      --repo-owner="${REPO_OWNER}" \
       --branch-pattern="${BRANCH_PATTERN}" \
-      --build-config="project_dash/deploy/cloudbuild.yaml" \
+      --build-config="${BUILD_CONFIG}" \
       --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL}" \
       --substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
-      --included-files="project_dash/**" \
-      --ignored-files="project_dash/**/*.md,project_dash/docs/**,project_dash/.agents/**,project_dash/conductor/**" \
+      --included-files="${INCLUDED_FILES}" \
+      --ignored-files="${IGNORED_FILES}" \
       --description="Automated Dev Deployment on push to dev in Sydney"
   fi
   echo "✅ Cloud Build trigger created in ${REGION}."
