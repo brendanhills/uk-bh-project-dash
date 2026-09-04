@@ -120,7 +120,7 @@ git add project_dash/
 git commit -m "feat(dashboard): add new risk indicator widget"
 git push origin dev
 ```
-* **Trigger**: Cloud Build trigger `deploy-monaro-risk-dash-dev` automatically executes [`deploy/cloudbuild.yaml`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/cloudbuild.yaml).
+* **Trigger**: Cloud Build trigger `deploy-monaro-risk-dash-dev` automatically executes [`deploy/cloudbuild.yaml`](../deploy/cloudbuild.yaml).
 * **Target**: Deploys to `monaro-risk-dash-dev` in `australia-southeast1`.
 
 ### 2. Promoting a Release to Production (`prod`)
@@ -233,7 +233,7 @@ gcloud services enable \
 
 ## ⚡ Turnkey Environment Provisioning & State Engine (`setup.sh`)
 
-The repository root provides [`setup.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/setup.sh) as the single canonical CLI tool to idempotently provision environments and inspect live cloud infrastructure in Sydney (`australia-southeast1`):
+The repository root provides [`setup.sh`](../setup.sh) as the single canonical CLI tool to idempotently provision environments and inspect live cloud infrastructure in Sydney (`australia-southeast1`):
 
 ```bash
 Usage: ./setup.sh [options] [dev|prod]
@@ -421,11 +421,11 @@ The pipeline deliberately omits custom `machineType` overrides in `options:` to 
 
 > [!NOTE]
 > **Static Infrastructure Separation**:
-> Infrastructure provisioning (creating Artifact Registry repositories, service account permissions, and Cloud Run / IAP access policies) is strictly decoupled from the per-commit build pipeline and is codified in [`setup.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/setup.sh). These idempotent checks are omitted from `cloudbuild.yaml` to ensure sub-minute deployment speeds.
+> Infrastructure provisioning (creating Artifact Registry repositories, service account permissions, and Cloud Run / IAP access policies) is strictly decoupled from the per-commit build pipeline and is codified in [`setup.sh`](../setup.sh). These idempotent checks are omitted from `cloudbuild.yaml` to ensure sub-minute deployment speeds.
 
 > [!IMPORTANT]
 > **Mandatory IAP Access Policy Requirement (`roles/iap.httpsResourceAccessor`)**:
-> Whenever Identity-Aware Proxy (`--iap`) is enabled on Cloud Run, granting `roles/run.invoker` alone causes `403 Forbidden` errors at the Google IAP proxy layer. You **must** also grant `roles/iap.httpsResourceAccessor` on the Cloud Run IAP resource via `gcloud beta iap web add-iam-policy-binding` in the deployment region (`australia-southeast1`) for all user and group accounts (`@google.com` and `@twosync.google.com`). This is managed during environment setup via [`setup.sh`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/setup.sh).
+> Whenever Identity-Aware Proxy (`--iap`) is enabled on Cloud Run, granting `roles/run.invoker` alone causes `403 Forbidden` errors at the Google IAP proxy layer. You **must** also grant `roles/iap.httpsResourceAccessor` on the Cloud Run IAP resource via `gcloud beta iap web add-iam-policy-binding` in the deployment region (`australia-southeast1`) for all user and group accounts (`@google.com` and `@twosync.google.com`). This is managed during environment setup via [`setup.sh`](../setup.sh).
 
 ---
 

@@ -67,8 +67,8 @@ Project Dash runs across **three distinct environments** with strict separation 
 
 > [!TIP]
 > **Decoupled CI/CD Architecture**:
-> - **GitHub Actions CI** ([`.github/workflows/deploy_monaro_dashboard.yml`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/.github/workflows/deploy_monaro_dashboard.yml)): Runs automated `pytest` test suites on every PR and push with zero GCP credentials/secrets required.
-> - **Google Cloud Build CD** ([`deploy/cloudbuild.yaml`](file:///usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash/deploy/cloudbuild.yaml)): Native privileged deployment pipeline deploying container images to Cloud Run in Sydney (`australia-southeast1`).
+> - **GitHub Actions CI** ([`.github/workflows/deploy_monaro_dashboard.yml`](../.github/workflows/deploy_monaro_dashboard.yml)): Runs automated `pytest` test suites on every PR and push with zero GCP credentials/secrets required.
+> - **Google Cloud Build CD** ([`deploy/cloudbuild.yaml`](deploy/cloudbuild.yaml)): Native privileged deployment pipeline deploying container images to Cloud Run in Sydney (`australia-southeast1`).
 
 ### 4. Run the Local Development Server (Developer Only)
 

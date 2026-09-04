@@ -2,7 +2,7 @@
 
 **Checkpoint Timestamp:** `2026-09-02 17:50:00 AEST`  
 **Active Git Branch:** `dev`  
-**Workspace:** `/usr/local/google/home/brendanhills/dev/uk-bh-experiments/project_dash`  
+**Workspace:** `project_dash` (`~/dev/apps/project_dash` or `~/dev/experiments/uk-bh-experiments/project_dash`)  
 **Deployment Region:** **`australia-southeast1`** (Sydney, Australia)  
 **Live Cloud Run Dev Service:** `monaro-risk-dash-dev`  
 **Live Cloud Run Prod Service:** `monaro-risk-dash-prod`  
