@@ -20,8 +20,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 # --- Helper Functions ---
 
 def get_project_dir(project_name: str = 'monaro', data_root: Optional[str] = None) -> str:
-    root = data_root or DATA_BASE_DIR
-    proj_dir = os.path.join(root, project_name)
+    clean_name = os.path.basename(str(project_name or 'monaro'))
+    if not re.match(r'^[a-zA-Z0-9_-]+$', clean_name):
+        raise ValueError(f"Invalid project name '{project_name}': must be alphanumeric, hyphen, or underscore.")
+    root = os.path.realpath(os.path.abspath(data_root or DATA_BASE_DIR))
+    proj_dir = os.path.realpath(os.path.abspath(os.path.join(root, clean_name)))
+    if proj_dir != root and not proj_dir.startswith(root + os.sep):
+        raise ValueError(f"Path traversal detected: {proj_dir} is outside data root {root}")
     os.makedirs(proj_dir, exist_ok=True)
     return proj_dir
 
