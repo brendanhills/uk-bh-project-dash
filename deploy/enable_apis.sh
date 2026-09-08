@@ -2,12 +2,13 @@
 # ==============================================================================
 # Project Monaro — Dedicated GCP API Enablement Helper
 #
+# DEPRECATION NOTICE: This script is deprecated in favor of the canonical
+# root developer cockpit:
+#   ./setup.sh --apis-only --env dev
+#   ./setup.sh --apis-only --env prod
+#
 # Fast, idempotent script to enable all 16 required Google Cloud APIs for
 # Project Dash without interactive prompts.
-#
-# Usage:
-#   ./deploy/enable_apis.sh --project monaro-risk-dev
-#   ./deploy/enable_apis.sh --project monaro-risk-prod
 # ==============================================================================
 set -euo pipefail
 

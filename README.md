@@ -90,19 +90,19 @@ python3 server.py
 2. **Data Provenance Hub**: Click **"Workspace Sync"** in the top navigation header to view verified data provenance across Google Sheets, Drive status report archives, and NotebookLM blueprints.
 3. **Checking for Updates**: In the Provenance Hub, click **"↻ Check for Updates"** (`checkForUpdates()`). The browser checks `snapshots.json` using non-cached query timestamps, smoothly reloading the dashboard if new weekly data was published by the ingestion pipeline.
 
-### 6. Environment Setup & State Inspection Engine (`setup.sh`)
+### 6. Developer Cockpit & Infrastructure as Code (`setup.sh` & Terraform)
 
-The repository root includes [`setup.sh`](./setup.sh), an idempotent CLI tool for both **turnkey infrastructure provisioning** and **sub-5s parallel state inspection** across Development (`monaro-risk-dev`) and Production (`monaro-risk-prod`) environments in Sydney (`australia-southeast1`).
+The repository root includes [`setup.sh`](./setup.sh), the canonical developer cockpit wrapping **declarative Terraform IaC** (`deploy/terraform/`) and **sub-5s parallel state inspection** across Development (`monaro-risk-dev`) and Production (`monaro-risk-prod`) environments in Sydney (`australia-southeast1`).
 
-#### A. Read-Only State Inspection Mode (`-l`, `--list`, `--status`)
-Run `./setup.sh -l` to instantly inspect and verify the live state of all 46 tracked project assets without mutating cloud resources:
+#### A. Read-Only State & Manual Checkpoint Inspection (`-l`, `--list`, `--status`)
+Run `./setup.sh -l` to instantly inspect and verify the live state of all 46 tracked project assets and interactive manual checkpoints without mutating cloud resources:
 
 ```bash
-# Inspect all 46 resources (APIs, IAM, Cloud Run, IAP, Monitoring, Drive) in < 5 seconds:
+# Inspect all 46 resources and manual checkpoints in < 5 seconds:
 ./setup.sh -l --env dev
 ./setup.sh -l --env prod
 
-# Filter strictly to missing or unhealthy resources (highlighted in amber/yellow):
+# Filter strictly to missing or unhealthy resources:
 ./setup.sh -l --env dev -m
 
 # Output canonical machine-readable state addresses (matching terraform state list format):
@@ -111,30 +111,36 @@ Run `./setup.sh -l` to instantly inspect and verify the live state of all 46 tra
 
 **Key Inspection Features**:
 - **High-Speed Parallel Execution**: Dispatches audit checks simultaneously across background subshells, auditing 46 cloud resources in under 5 seconds rather than minutes.
+- **Transparent Manual Checkpoint Status**: Explicitly checks and surfaces interactive manual requirements (GitHub repo connection, OAuth Consent Screen, Google Drive folder sharing, 90-day sandbox billing expiration, and Google Groups) complete with 1-click Pantheon console deep links.
 - **Structured Address Schema**: Resources follow standard canonical addresses (`category.resource_id`):
   - `gcp_api.<service>` (16 required Google Cloud APIs)
-  - `iam_service_account.<email>` & `iam_binding.<role>` (Deployer identity and 9 least-privilege roles)
-  - `gar_repo.<name>` (Artifact Registry repository in Sydney)
+  - `iam_service_account.<name>` & `iam_role_binding.<name>.<role>` (Deployer identity and least-privilege roles)
+  - `artifact_registry.<name>` (Artifact Registry repository in Sydney)
   - `cloudbuild_trigger.<name>` (Automated CI/CD build triggers)
-  - `notification_channel.<type>` & `monitoring_policy.<name>` (Admin alerting channels & 5xx error policies)
-  - `cloud_run_service.<name>` & `run_invoker_binding.<member>` (Web service and SSO invoker bindings)
-  - `iap_web_binding.<member>` (Identity-Aware Proxy Google SSO access policies)
+  - `monitoring_channel.<type>` & `monitoring_alert_policy.<name>` (Admin alerting channels & error policies)
+  - `cloud_run_service.<name>` & `cloud_run_iam.<member>.<role>` (Web service and SSO invoker bindings)
+  - `iap_iam.<member>.<role>` (Identity-Aware Proxy Google SSO access policies)
   - `cloud_run_job.<name>`, `cloud_tasks_queue.<name>`, `cloud_scheduler_job.<name>` (Ingestion cron pipeline)
-  - `drive_access.folder_read` (Google Drive report pack folder reader access)
-- **Visual Ergonomics**: Missing resources and status counts are visually emphasized with warm amber/yellow highlighting for rapid diagnosis.
-- **Inherited Access Awareness**: Correctly accounts for group memberships (`@google.com`) and broad parent roles (`roles/storage.admin`) so inherited permissions are accurately evaluated.
+  - `drive_folder.<id>` & `drive_permission.<type>.<id>` (Google Drive report pack governance)
 
-#### B. Turnkey Environment Provisioning Mode
+#### B. Declarative Terraform Provisioning Mode
 ```bash
-# Provision all 46 resources end-to-end (idempotent, self-healing, guarantees 0 missing items):
+# Provision end-to-end via Terraform (pre-flight bootstraps state bucket and applies plan):
 ./setup.sh --env dev
 ./setup.sh --env prod
 
 # Enable only the 16 required Google Cloud APIs:
 ./setup.sh --env dev --apis-only
+```
 
-# Override notification email or Google Drive folder ID:
-./setup.sh --env dev --admin-email "alerts@example.com" --folder-id "<DRIVE_FOLDER_ID>"
+#### C. Direct Terraform Workflows (`deploy/terraform/`)
+For direct Infrastructure as Code operations:
+```bash
+cd deploy/terraform/environments/dev
+terraform init
+terraform plan
+terraform apply
+./import.sh  # Safe, non-destructive import of live GCP resources into state
 ```
 
 ---

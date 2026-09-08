@@ -1,7 +1,7 @@
 # Implementation Plan: Terraform Infrastructure as Code (IaC) Migration
 
 **Track ID:** `terraform_iac_migration_20260901`  
-**Status:** `[ ] In Progress`  
+**Status:** `[x] Complete`  
 
 ## Implementation Roadmap
 
@@ -32,10 +32,10 @@
   - [x] Task: Verify `./setup.sh --status` reports 100% healthy (0 missing items) against imported Terraform infrastructure
   - [x] Task: Phase Verification & Checkpoint (Dry-run plan validation)
 
-- [ ] **Phase 4: Documentation & Operations Transition**
-  - [ ] Task: Update `conductor/spec.md` (Master Specification) and `conductor/tech-stack.md` establishing Terraform modules as the canonical infrastructure standard and documenting the `./setup.sh` developer cockpit
-  - [ ] Task: Update `docs/DEPLOYMENT_GUIDE.md` with comprehensive Terraform operator manual (`init`, `plan`, `apply`, `import`), manual checkpoints guide, and `./setup.sh --status` audit instructions
-  - [ ] Task: Update `README.md` to document `./setup.sh --status`, manual checkpoints reporting, and Terraform IaC architecture
-  - [ ] Task: Deprecate `deploy/enable_apis.sh` in favor of root `./setup.sh`
-  - [ ] Task: Verify `tests/test_frontend_contracts.py` passes syntax and contract checks for refactored `setup.sh` (including `--status`, `-l`, and `-m`)
-  - [ ] Task: Final Track Verification & Checkpoint
+- [x] **Phase 4: Documentation & Operations Transition**
+  - [x] Task: Update `conductor/spec.md` (Master Specification) and `conductor/tech-stack.md` establishing Terraform modules as the canonical infrastructure standard and documenting the `./setup.sh` developer cockpit
+  - [x] Task: Update `docs/DEPLOYMENT_GUIDE.md` with comprehensive Terraform operator manual (`init`, `plan`, `apply`, `import`), manual checkpoints guide, and `./setup.sh --status` audit instructions
+  - [x] Task: Update `README.md` to document `./setup.sh --status`, manual checkpoints reporting, and Terraform IaC architecture
+  - [x] Task: Deprecate `deploy/enable_apis.sh` in favor of root `./setup.sh`
+  - [x] Task: Verify `tests/test_frontend_contracts.py` passes syntax and contract checks for refactored `setup.sh` (including `--status`, `-l`, and `-m`)
+  - [x] Task: Final Track Verification & Checkpoint
