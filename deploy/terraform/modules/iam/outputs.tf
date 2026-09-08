@@ -12,3 +12,9 @@ output "service_account_name" {
   description = "Fully-qualified name of the service account"
   value       = google_service_account.deployer.name
 }
+
+output "deployer_sa_email" {
+  description = "Email address of the deployer service account (alias for convenience)"
+  value       = google_service_account.deployer.email
+}
+
