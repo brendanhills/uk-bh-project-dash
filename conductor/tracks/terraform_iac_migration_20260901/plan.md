@@ -24,13 +24,13 @@
   - [x] Task: Implement `modules/monitoring` for alert policies and email notification channels (`brendanhills@google.com`, `allins@google.com`)
   - [x] Task: Phase Verification & Checkpoint (Verify plan generation on dummy/staging vars)
 
-- [ ] **Phase 3: Environment Composition (`dev` and `prod`) & Import Runbook**
-  - [ ] Task: Configure `environments/dev` root module, `backend.tf`, and `terraform.tfvars` (`monaro-risk-dev`)
-  - [ ] Task: Configure `environments/prod` root module, `backend.tf`, and `terraform.tfvars` (`monaro-risk-prod`)
-  - [ ] Task: Author `import.sh` script to import existing live GCP resources (`monaro-risk-dev`) without service disruption
-  - [ ] Task: Execute `terraform plan` against `monaro-risk-dev` and verify zero-destructive diffs
-  - [ ] Task: Verify `./setup.sh --status` reports 100% healthy (0 missing items) against imported Terraform infrastructure
-  - [ ] Task: Phase Verification & Checkpoint (Dry-run plan validation)
+- [x] **Phase 3: Environment Composition (`dev` and `prod`) & Import Runbook**
+  - [x] Task: Configure `environments/dev` root module, `backend.tf`, and `terraform.tfvars` (`monaro-risk-dev`)
+  - [x] Task: Configure `environments/prod` root module, `backend.tf`, and `terraform.tfvars` (`monaro-risk-prod`)
+  - [x] Task: Author `import.sh` script to import existing live GCP resources (`monaro-risk-dev`) without service disruption
+  - [x] Task: Execute `terraform plan` against `monaro-risk-dev` and verify zero-destructive diffs
+  - [x] Task: Verify `./setup.sh --status` reports 100% healthy (0 missing items) against imported Terraform infrastructure
+  - [x] Task: Phase Verification & Checkpoint (Dry-run plan validation)
 
 - [ ] **Phase 4: Documentation & Operations Transition**
   - [ ] Task: Update `conductor/spec.md` (Master Specification) and `conductor/tech-stack.md` establishing Terraform modules as the canonical infrastructure standard and documenting the `./setup.sh` developer cockpit
