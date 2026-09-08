@@ -489,9 +489,9 @@ For a workload of **10 to 50 active stakeholders** visiting the dashboard 3 to 5
   - Guarantees 0ms cold start latency for all initial morning requests. Useful for customer-facing production services with strict SLA requirements.
 
 ### 3. Active Cost Guardrails Implemented in the Codebase
-1. **Application Code Browser Caching (`deploy/nginx.conf`)**:
-   - Explicit `location /src/` block with `expires 1d; Cache-Control: "public, no-transform"`.
-   - Client browsers cache JavaScript and CSS modules for 24 hours, reducing repeat asset requests by ~85% while keeping `/data/` and `index.html` strictly un-cached (`max-age=0`) for real-time freshness.
+1. **Application Code Browser Caching (`server.py`)**:
+   - HTTP server serves static assets and modules with calibrated `Cache-Control` response headers.
+   - Dynamic data endpoints (`/data/`, `snapshots.json`, and API responses) are strictly un-cached (`max-age=0, no-cache, no-store`) for real-time freshness.
 2. **Artifact Registry Automated Lifecycle Policy (`deploy/cleanup-policy.json`)**:
    - Caps repository storage by keeping only the 10 most recent version tags and automatically deleting untagged image digests older than 14 days, permanently preventing storage drift past the 0.5 GB Free Tier.
    - Automatically applied by `setup.sh`.

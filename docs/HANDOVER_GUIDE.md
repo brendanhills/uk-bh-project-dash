@@ -108,9 +108,9 @@ http://localhost:9000
 ### 2. Immediate Service Shutdown (Emergency Stop)
 If you ever need to immediately take any running service offline:
 ```bash
-./deploy/provision_environment.sh
-# or
-./deploy/provision_environment.sh
+# Route 0% traffic to stop serving requests instantly:
+gcloud run services update monaro-risk-dash-dev --region=australia-southeast1 --project=monaro-risk-dev --no-traffic
+gcloud run services update monaro-risk-dash-prod --region=australia-southeast1 --project=monaro-risk-prod --no-traffic
 ```
 
 ---
