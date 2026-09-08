@@ -5,17 +5,17 @@
 
 ## Implementation Roadmap
 
-- [ ] **Phase 1: Module Scaffolding & Foundation (Bootstrap, APIs, Storage, Artifact Registry, IAM)**
-  - [ ] Task: Refactor root `setup.sh` developer cockpit:
-    - Preserve sub-5s parallel health audit (`--status`, `-l`, `-m`, `--state-only`)
-    - Implement explicit auditing for manual checkpoints (GitHub connection, OAuth Consent Screen, Drive access, Billing expiration, Google Groups) showing `[✓] COMPLETE` vs `[!] OUTSTANDING` with 1-click console URLs
-    - Implement pre-flight bootstrap (APIs, state bucket, data seeding) and wire provisioning to Terraform
-  - [ ] Task: Create `deploy/terraform/` directory structure and module skeletons
-  - [ ] Task: Implement `modules/apis` declaring all 16 required GCP services in `australia-southeast1`
-  - [ ] Task: Implement `modules/storage` declaring GCS data persistence bucket (`${PROJECT_ID}-data`) and state bucket
-  - [ ] Task: Implement `modules/artifact_registry` with native cleanup policies (`cleanup_policies`) matching `cleanup-policy.json`
-  - [ ] Task: Implement `modules/iam` for `github-deployer` and least-privilege role bindings
-  - [ ] Task: Phase Verification & Checkpoint (Validate syntax with `terraform fmt` and `terraform validate`)
+- [x] **Phase 1: Module Scaffolding & Foundation (Bootstrap, APIs, Storage, Artifact Registry, IAM)**
+  - [x] Task: Refactor root `setup.sh` developer cockpit:
+    - [x] Preserve sub-5s parallel health audit (`--status`, `-l`, `-m`, `--state-only`)
+    - [x] Implement explicit auditing for manual checkpoints (GitHub connection, OAuth Consent Screen, Drive access, Billing expiration, Google Groups) showing `[✓] COMPLETE` vs `[!] OUTSTANDING` with 1-click console URLs
+    - [x] Implement pre-flight bootstrap (APIs, state bucket, data seeding) and wire provisioning to Terraform
+  - [x] Task: Create `deploy/terraform/` directory structure and module skeletons
+  - [x] Task: Implement `modules/apis` declaring all 16 required GCP services in `australia-southeast1`
+  - [x] Task: Implement `modules/storage` declaring GCS data persistence bucket (`${PROJECT_ID}-data`) and state bucket
+  - [x] Task: Implement `modules/artifact_registry` with native cleanup policies (`cleanup_policies`) matching `cleanup-policy.json`
+  - [x] Task: Implement `modules/iam` for `github-deployer` and least-privilege role bindings
+  - [x] Task: Phase Verification & Checkpoint (Validate syntax with `terraform fmt` and `terraform validate`)
 
 - [ ] **Phase 2: Compute, Scheduling & Ingestion Pipeline Modules**
   - [ ] Task: Implement `modules/cloud_run` for static web service and sync job (Gen2 execution environment + GCS volume mount)
