@@ -163,6 +163,7 @@ else
   BRANCH_PATTERN="^(main|dev)$"
 fi
 
+IMAGE_NAME="${IMAGE_NAME:-${SERVICE_NAME}}"
 SA_NAME="github-deployer"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 SYNC_JOB_NAME="monaro-risk-sync-job"
@@ -546,33 +547,88 @@ echo ""
 
 # 5. Cloud Build Trigger
 echo "=== 5. Configuring Automated Cloud Build Trigger in ${REGION} ==="
-if gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
-  echo "ℹ️ Cloud Build trigger '${TRIGGER_NAME}' already exists in ${REGION}."
-else
-  # Resolve repo name, owner, and build config based on monorepo vs standalone repo
-  if [[ -z "${REPO_NAME:-}" || -z "${REPO_OWNER:-}" ]]; then
-    GIT_ORIGIN=$(git config --get remote.origin.url 2>/dev/null || true)
-    if [[ "$GIT_ORIGIN" =~ [:|/]([^/]+)/([^/]+?)(\.git)?$ ]]; then
-      DETECTED_OWNER="${BASH_REMATCH[1]}"
-      DETECTED_REPO="${BASH_REMATCH[2]}"
-      REPO_OWNER="${REPO_OWNER:-$DETECTED_OWNER}"
-      REPO_NAME="${REPO_NAME:-$DETECTED_REPO}"
-    fi
-  fi
-  REPO_NAME="${REPO_NAME:-uk-bh-experiments}"
-  REPO_OWNER="${REPO_OWNER:-cloud-gtm}"
-  if [[ -f "${SCRIPT_DIR}/deploy/cloudbuild.yaml" && ! -d "${SCRIPT_DIR}/project_dash" ]]; then
-    BUILD_CONFIG="deploy/cloudbuild.yaml"
-    INCLUDED_FILES="**"
-    IGNORED_FILES="**/*.md,docs/**,.agents/**,conductor/**"
-  else
-    BUILD_CONFIG="project_dash/deploy/cloudbuild.yaml"
-    INCLUDED_FILES="project_dash/**"
-    IGNORED_FILES="project_dash/**/*.md,project_dash/docs/**,project_dash/.agents/**,project_dash/conductor/**"
-  fi
 
+# Resolve repo name, owner, and build config based on monorepo vs standalone repo
+if [[ -z "${REPO_NAME:-}" || -z "${REPO_OWNER:-}" ]]; then
+  GIT_ORIGIN=$(git config --get remote.origin.url 2>/dev/null || true)
+  if [[ "$GIT_ORIGIN" =~ [:|/]([^/]+)/([^/]+)$ ]]; then
+    DETECTED_OWNER="${BASH_REMATCH[1]}"
+    DETECTED_REPO="${BASH_REMATCH[2]%.git}"
+    REPO_OWNER="${REPO_OWNER:-$DETECTED_OWNER}"
+    REPO_NAME="${REPO_NAME:-$DETECTED_REPO}"
+  fi
+fi
+REPO_NAME="${REPO_NAME:-uk-bh-experiments}"
+REPO_OWNER="${REPO_OWNER:-cloud-gtm}"
+if [[ -f "${SCRIPT_DIR}/deploy/cloudbuild.yaml" && ! -d "${SCRIPT_DIR}/project_dash" ]]; then
+  BUILD_CONFIG="deploy/cloudbuild.yaml"
+  INCLUDED_FILES="**"
+  IGNORED_FILES="**/*.md,docs/**,.agents/**,conductor/**"
+else
+  BUILD_CONFIG="project_dash/deploy/cloudbuild.yaml"
+  INCLUDED_FILES="project_dash/**"
+  IGNORED_FILES="project_dash/**/*.md,project_dash/docs/**,project_dash/.agents/**,project_dash/conductor/**"
+fi
+
+if gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  CURRENT_REPO=$(gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" --format="value(github.name)" 2>/dev/null || true)
+  CURRENT_OWNER=$(gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" --format="value(github.owner)" 2>/dev/null || true)
+  CURRENT_CONFIG=$(gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" --format="value(filename)" 2>/dev/null || true)
+  CURRENT_BRANCH=$(gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --project="${PROJECT_ID}" --format="value(github.push.branch)" 2>/dev/null || true)
+
+  if [[ "${CURRENT_REPO}" == "${REPO_NAME}" && "${CURRENT_OWNER}" == "${REPO_OWNER}" && "${CURRENT_CONFIG}" == "${BUILD_CONFIG}" ]]; then
+    echo "ℹ️ Cloud Build trigger '${TRIGGER_NAME}' already configured for ${REPO_OWNER}/${REPO_NAME} in ${REGION}."
+  else
+    echo "⚠️ Existing trigger '${TRIGGER_NAME}' is currently pointed to:"
+    echo "   Repo:   ${CURRENT_OWNER}/${CURRENT_REPO} (watching: ${CURRENT_BRANCH})"
+    echo "   Config: ${CURRENT_CONFIG}"
+    echo "   Target: ${REPO_OWNER}/${REPO_NAME} (Config: ${BUILD_CONFIG})"
+    echo ""
+    echo "Attempting to update trigger '${TRIGGER_NAME}' to ${REPO_OWNER}/${REPO_NAME}..."
+    UPDATE_ERR=$(mktemp)
+    if [[ -n "$TAG_PATTERN" ]]; then
+      gcloud builds triggers update github "${TRIGGER_NAME}" \
+        --project="${PROJECT_ID}" \
+        --region="${REGION}" \
+        --repo-name="${REPO_NAME}" \
+        --repo-owner="${REPO_OWNER}" \
+        --tag-pattern="${TAG_PATTERN}" \
+        --build-config="${BUILD_CONFIG}" \
+        --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL}" \
+        --update-substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
+        --description="Automated Production Deployment on release tags in Sydney" >/dev/null 2>"${UPDATE_ERR}" || true
+    else
+      gcloud builds triggers update github "${TRIGGER_NAME}" \
+        --project="${PROJECT_ID}" \
+        --region="${REGION}" \
+        --repo-name="${REPO_NAME}" \
+        --repo-owner="${REPO_OWNER}" \
+        --branch-pattern="${BRANCH_PATTERN}" \
+        --build-config="${BUILD_CONFIG}" \
+        --included-files="${INCLUDED_FILES}" \
+        --ignored-files="${IGNORED_FILES}" \
+        --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL}" \
+        --update-substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
+        --description="Automated Dev Deployment on push to dev in Sydney" >/dev/null 2>"${UPDATE_ERR}" || true
+    fi
+
+    if [[ -s "${UPDATE_ERR}" ]]; then
+      if grep -q "Repository mapping does not exist" "${UPDATE_ERR}"; then
+        echo "⚠️  Repository '${REPO_OWNER}/${REPO_NAME}' is not yet connected to Cloud Build in project ${PROJECT_ID}."
+        echo "   👉 Connect it here: https://console.cloud.google.com/cloud-build/triggers;region=${REGION}/connect?project=${PROJECT_ID}"
+        echo "   After connecting, re-run ./setup.sh to update the trigger."
+      else
+        echo "⚠️  Could not update trigger: $(cat "${UPDATE_ERR}")"
+      fi
+    else
+      echo "✅ Successfully updated Cloud Build trigger '${TRIGGER_NAME}' to ${REPO_OWNER}/${REPO_NAME}."
+    fi
+    rm -f "${UPDATE_ERR}"
+  fi
+else
   if [[ -n "$TAG_PATTERN" ]]; then
     echo "Creating Tag-based trigger for pattern '${TAG_PATTERN}' in ${REGION}..."
+    CREATE_ERR=$(mktemp)
     gcloud builds triggers create github \
       --project="${PROJECT_ID}" \
       --region="${REGION}" \
@@ -583,9 +639,10 @@ else
       --build-config="${BUILD_CONFIG}" \
       --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL}" \
       --substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
-      --description="Automated Production Deployment on release tags in Sydney"
+      --description="Automated Production Deployment on release tags in Sydney" >/dev/null 2>"${CREATE_ERR}" || true
   else
     echo "Creating Branch-based trigger for branch '${BRANCH_PATTERN}' in ${REGION}..."
+    CREATE_ERR=$(mktemp)
     gcloud builds triggers create github \
       --project="${PROJECT_ID}" \
       --region="${REGION}" \
@@ -598,9 +655,21 @@ else
       --substitutions="_SERVICE_NAME=${SERVICE_NAME},_ACCESS_GROUP=${ACCESS_GROUP},_REGION=${REGION},_IMAGE_NAME=${SERVICE_NAME}" \
       --included-files="${INCLUDED_FILES}" \
       --ignored-files="${IGNORED_FILES}" \
-      --description="Automated Dev Deployment on push to dev in Sydney"
+      --description="Automated Dev Deployment on push to dev in Sydney" >/dev/null 2>"${CREATE_ERR}" || true
   fi
-  echo "✅ Cloud Build trigger created in ${REGION}."
+
+  if [[ -s "${CREATE_ERR}" ]]; then
+    if grep -q "Repository mapping does not exist" "${CREATE_ERR}"; then
+      echo "⚠️  Repository '${REPO_OWNER}/${REPO_NAME}' is not yet connected to Cloud Build in project ${PROJECT_ID}."
+      echo "   👉 Connect it here: https://console.cloud.google.com/cloud-build/triggers;region=${REGION}/connect?project=${PROJECT_ID}"
+      echo "   After connecting, re-run ./setup.sh to create the trigger."
+    else
+      echo "⚠️  Could not create trigger: $(cat "${CREATE_ERR}")"
+    fi
+  else
+    echo "✅ Cloud Build trigger created in ${REGION}."
+  fi
+  rm -f "${CREATE_ERR}"
 fi
 echo ""
 
@@ -758,7 +827,7 @@ else
 fi
 
 # Create or Update Cloud Run Job (reusing unified container image)
-SYNC_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${IMAGE_NAME}:latest"
+SYNC_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${IMAGE_NAME:-${SERVICE_NAME}}:latest"
 DATA_BUCKET="${PROJECT_ID}-data"
 if ! gcloud run jobs describe "${SYNC_JOB_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
   gcloud run jobs create "${SYNC_JOB_NAME}" \
