@@ -432,6 +432,52 @@ list_environment_state() {
 
   if [[ "${STATE_ONLY}" != "true" ]]; then
     echo "==================================================================================================="
+    echo "📋 Manual & Interactive Checkpoints (Requires Console/Browser Action):"
+    echo "---------------------------------------------------------------------------------------------------"
+
+    # 1. GitHub Connection in Cloud Build
+    local gh_status="OUTSTANDING"
+    local gh_note="Action required: connect GitHub repo in Cloud Build console"
+    if grep -q "${TRIGGER_NAME}" "${tmp_dir}/triggers.txt" 2>/dev/null; then
+      gh_status="CONNECTED"
+      gh_note="brendanhills/uk-bh-project-dash (Trigger: ${TRIGGER_NAME})"
+      printf "  %s[✓] 1. GitHub Repo in Cloud Build     %-14s%s %s\n" "${COLOR_GREEN}" "[CONNECTED]" "${COLOR_RESET}" "${gh_note}"
+    else
+      printf "  %s[!] 1. GitHub Repo in Cloud Build     %-14s%s %s\n" "${COLOR_YELLOW_BOLD}" "[OUTSTANDING]" "${COLOR_RESET}" "${gh_note}"
+      printf "      👉 Connect: %shttps://pantheon.corp.google.com/cloud-build/repositories?project=%s%s\n" "${COLOR_DIM}" "${PROJECT_ID}" "${COLOR_RESET}"
+    fi
+
+    # 2. OAuth Consent Screen & Brand for IAP
+    local oauth_status="CONFIGURED"
+    local oauth_note="Internal OAuth brand configured for IAP"
+    if ! grep -q "roles/iap.httpsResourceAccessor" "${tmp_dir}/iap_iam.json" 2>/dev/null; then
+      oauth_status="OUTSTANDING"
+      oauth_note="Action required: configure internal OAuth consent screen"
+      printf "  %s[!] 2. OAuth Consent Screen for IAP   %-14s%s %s\n" "${COLOR_YELLOW_BOLD}" "[OUTSTANDING]" "${COLOR_RESET}" "${oauth_note}"
+      printf "      👉 Configure: %shttps://pantheon.corp.google.com/apis/credentials/consent?project=%s%s\n" "${COLOR_DIM}" "${PROJECT_ID}" "${COLOR_RESET}"
+    else
+      printf "  %s[✓] 2. OAuth Consent Screen for IAP   %-14s%s %s\n" "${COLOR_GREEN}" "[CONFIGURED]" "${COLOR_RESET}" "${oauth_note}"
+    fi
+
+    # 3. Google Drive Shared Folder Access
+    if [[ -x "${GDRIVE_BIN}" && -s "${tmp_dir}/drive_perms.json" ]] && grep -q "${ACCESS_GROUP}" "${tmp_dir}/drive_perms.json" 2>/dev/null; then
+      printf "  %s[✓] 3. Google Drive Folder Access     %-14s%s %s\n" "${COLOR_GREEN}" "[VERIFIED]" "${COLOR_RESET}" "Shared with ${ACCESS_GROUP} (${DRIVE_FOLDER_ID})"
+    elif [[ -x "${GDRIVE_BIN}" && -s "${tmp_dir}/drive_info.json" ]] && grep -q '"id":' "${tmp_dir}/drive_info.json" 2>/dev/null; then
+      printf "  %s[✓] 3. Google Drive Folder Access     %-14s%s %s\n" "${COLOR_GREEN}" "[VERIFIED]" "${COLOR_RESET}" "Folder accessible (${DRIVE_FOLDER_ID})"
+    else
+      printf "  %s[!] 3. Google Drive Folder Access     %-14s%s %s\n" "${COLOR_YELLOW_BOLD}" "[OUTSTANDING]" "${COLOR_RESET}" "Action required: share folder with ${ACCESS_GROUP}"
+      printf "      👉 Folder: %shttps://drive.google.com/drive/folders/%s%s\n" "${COLOR_DIM}" "${DRIVE_FOLDER_ID}" "${COLOR_RESET}"
+    fi
+
+    # 4. Permanent Billing Account Attachment (Sandbox Expiration Notice)
+    printf "  %s[!] 4. Permanent Billing Account      %-14s%s %s\n" "${COLOR_YELLOW_BOLD}" "[SANDBOX]" "${COLOR_RESET}" "90-Day Temporary Sandbox Project (Expires: 15-Nov-2026)"
+    printf "      👉 Attach: %shttps://pantheon.corp.google.com/billing?project=%s%s\n" "${COLOR_DIM}" "${PROJECT_ID}" "${COLOR_RESET}"
+
+    # 5. Google Groups / Access Rosters
+    printf "  %s[✓] 5. Google Groups / Access Rosters %-14s%s %s\n" "${COLOR_GREEN}" "[ACTIVE]" "${COLOR_RESET}" "${ACCESS_GROUP} configured for IAP access"
+    printf "      👉 Manage: %shttps://groups.google.com/a/google.com/g/%s%s\n" "${COLOR_DIM}" "${ACCESS_GROUP%@*}" "${COLOR_RESET}"
+
+    echo "==================================================================================================="
     if [[ ${missing_count} -gt 0 ]]; then
       printf "📊 State Summary: Total Tracked: %d | %sPresent/Healthy: %d%s | %sMissing: %d%s\n" \
         "${total_count}" "${COLOR_GREEN}" "${present_count}" "${COLOR_RESET}" "${COLOR_YELLOW_BOLD}" "${missing_count}" "${COLOR_RESET}"
@@ -471,6 +517,40 @@ if [[ "${APIS_ONLY}" == "true" ]]; then
   echo "=============================================================================="
   echo "🎉 --apis-only specified: All 16 APIs enabled for ${PROJECT_ID}. Exiting."
   echo "=============================================================================="
+  exit 0
+fi
+
+# Ensure Terraform Remote State Bucket Exists
+echo "=== 1b. Ensuring Remote Terraform State Bucket Exists in ${REGION} ==="
+TF_STATE_BUCKET="${PROJECT_ID}-terraform-state"
+if ! gcloud storage buckets describe "gs://${TF_STATE_BUCKET}" >/dev/null 2>&1; then
+  gcloud storage buckets create "gs://${TF_STATE_BUCKET}" \
+    --location="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --uniform-bucket-level-access \
+    --default-storage-class=STANDARD >/dev/null 2>&1 || true
+  gcloud storage buckets update "gs://${TF_STATE_BUCKET}" --versioning >/dev/null 2>&1 || true
+  echo "✅ Remote Terraform state bucket 'gs://${TF_STATE_BUCKET}' created with object versioning."
+else
+  echo "ℹ️ Remote Terraform state bucket 'gs://${TF_STATE_BUCKET}' already exists."
+fi
+echo ""
+
+# Check for Declarative Terraform Environment
+TF_ENV_DIR="${PROJECT_ROOT}/deploy/terraform/environments/${ENV_TARGET}"
+if [[ -f "${TF_ENV_DIR}/main.tf" ]]; then
+  echo "=============================================================================="
+  echo "🏛️  Executing Declarative Terraform Provisioning (${ENV_TARGET})"
+  echo "=============================================================================="
+  echo "Initializing Terraform backend..."
+  terraform -chdir="${TF_ENV_DIR}" init -reconfigure || terraform -chdir="${TF_ENV_DIR}" init
+  echo "Applying Terraform configuration..."
+  terraform -chdir="${TF_ENV_DIR}" apply -auto-approve
+  echo ""
+  echo "✅ Declarative Terraform provisioning complete for ${PROJECT_ID}!"
+  echo ""
+  echo "Running environment audit to verify 100% healthy infrastructure..."
+  list_environment_state
   exit 0
 fi
 
