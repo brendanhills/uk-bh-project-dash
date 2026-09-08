@@ -1741,13 +1741,14 @@
     "reporter": "Brendan Hills",
     "date_reported": "2026-09-01",
     "date_triaged": "2026-09-02",
-    "date_resolved": "",
+    "date_resolved": "2026-09-08",
     "priority": "P3",
     "impact": "Low",
     "risk": "Low",
     "phase": "Phase 2: Sync Architecture & Terminology",
-    "status": "Investigated",
-    "workspace_context": "project_dash"
+    "status": "Fix Implemented",
+    "workspace_context": "project_dash",
+    "resolution_notes": "Updated the header button label from 'Sync' to 'Data' with 'Data Provenance & Source Hub' tooltip and database icon in index.html. Added window.openDataModal and window.closeDataModal aliases in src/js/app.js, and added regression test test_bug_96_data_button_and_provenance_hub."
   },
   {
     "id": 97,
@@ -1862,5 +1863,23 @@
     "status": "Fix Implemented",
     "workspace_context": "project_dash",
     "resolution_notes": "1. Implemented scripts/check_podcast_status.py providing check_project_podcast_status() and CLI entrypoint to audit snapshots.json across all or specific projects.\n2. Verifies latest week, turn counts, dialogue speaker alternation (Alex & Jordan), model provenance ('gemini-3.5-flash'), and audio presence.\n3. Added --fix option to automatically invoke ensure_latest_podcast_generated() via Vertex AI us-central1.\n4. Added automated unit tests test_check_podcast_status_reports_needs_regeneration_on_fallback and test_check_podcast_status_reports_up_to_date_when_gemini_35 in tests/test_sync_podcast_generation.py.\n5. Documented in README.md and docs/DEPLOYMENT_GUIDE.md."
+  },
+  {
+    "id": 103,
+    "type": "FR",
+    "title": "Add the list of admins/owners to the setup --status output",
+    "description": "Add the list of admins/owners to the setup.sh --status output so that operators and administrators can view who has admin or owner permissions in the environment.",
+    "cause": "",
+    "plan": "",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-08",
+    "date_triaged": "",
+    "date_resolved": "",
+    "priority": "",
+    "impact": "",
+    "risk": "",
+    "phase": "",
+    "status": "Reported",
+    "workspace_context": "project_dash"
   }
 ]

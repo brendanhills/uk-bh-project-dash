@@ -143,7 +143,7 @@ if [[ -z "$PROJECT_ID" ]]; then
     ACCESS_GROUP="monaro-risk-prod@google.com"
     ADMIN_GROUP="${ADMIN_EMAIL:-monaro-risk-prod@google.com}"
     TRIGGER_NAME="deploy-monaro-risk-dash-prod"
-    TAG_PATTERN="^project_dash/prod-.*$"
+    TAG_PATTERN="^(project_dash/)?prod-.*$|^v[0-9].*$"
     BRANCH_PATTERN=""
   else
     PROJECT_ID="monaro-risk-dev"
@@ -152,7 +152,7 @@ if [[ -z "$PROJECT_ID" ]]; then
     ADMIN_GROUP="${ADMIN_EMAIL:-monaro-risk-dev@google.com}"
     TRIGGER_NAME="deploy-monaro-risk-dash-dev"
     TAG_PATTERN=""
-    BRANCH_PATTERN="^dev$"
+    BRANCH_PATTERN="^(main|dev)$"
   fi
 else
   SERVICE_NAME="monaro-risk-dash-${ENV_TARGET}"
@@ -160,7 +160,7 @@ else
   ADMIN_GROUP="${ADMIN_EMAIL:-${ACCESS_GROUP}}"
   TRIGGER_NAME="deploy-${SERVICE_NAME}"
   TAG_PATTERN=""
-  BRANCH_PATTERN="^dev$"
+  BRANCH_PATTERN="^(main|dev)$"
 fi
 
 SA_NAME="github-deployer"
@@ -550,6 +550,15 @@ if gcloud builds triggers describe "${TRIGGER_NAME}" --region="${REGION}" --proj
   echo "ℹ️ Cloud Build trigger '${TRIGGER_NAME}' already exists in ${REGION}."
 else
   # Resolve repo name, owner, and build config based on monorepo vs standalone repo
+  if [[ -z "${REPO_NAME:-}" || -z "${REPO_OWNER:-}" ]]; then
+    GIT_ORIGIN=$(git config --get remote.origin.url 2>/dev/null || true)
+    if [[ "$GIT_ORIGIN" =~ [:|/]([^/]+)/([^/]+?)(\.git)?$ ]]; then
+      DETECTED_OWNER="${BASH_REMATCH[1]}"
+      DETECTED_REPO="${BASH_REMATCH[2]}"
+      REPO_OWNER="${REPO_OWNER:-$DETECTED_OWNER}"
+      REPO_NAME="${REPO_NAME:-$DETECTED_REPO}"
+    fi
+  fi
   REPO_NAME="${REPO_NAME:-uk-bh-experiments}"
   REPO_OWNER="${REPO_OWNER:-cloud-gtm}"
   if [[ -f "${SCRIPT_DIR}/deploy/cloudbuild.yaml" && ! -d "${SCRIPT_DIR}/project_dash" ]]; then
