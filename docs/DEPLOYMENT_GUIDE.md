@@ -181,16 +181,14 @@ Administrators can enable all 16 APIs instantly using any of the following four 
 ./setup.sh --env prod --apis-only
 ```
 
-*(Note: `./deploy/enable_apis.sh` is maintained as a deprecated backward-compatible wrapper).*
-
-#### Option 3: Full End-to-End Environment Provisioning
+#### Option 2: Full End-to-End Environment Provisioning
 ```bash
 # Provisions all 16 APIs, Service Accounts, Cloud Run Jobs, Cloud Tasks, and Cloud Scheduler:
 ./setup.sh --env dev
 ./setup.sh --env prod
 ```
 
-#### Option 4: Direct Copy-Paste `gcloud` Batch Command
+#### Option 3: Direct Copy-Paste `gcloud` Batch Command
 ```bash
 gcloud services enable \
   run.googleapis.com \
@@ -212,7 +210,7 @@ gcloud services enable \
   --project="monaro-risk-dev" --quiet
 ```
 
-#### Option 5: Read-Only Environment State List (`-l` / `--list`)
+#### Option 4: Read-Only Environment State List (`-l` / `--list`)
 ```bash
 # Inspect and display live status of all 46 tracked resources in sub-5s:
 ./setup.sh -l --env dev
