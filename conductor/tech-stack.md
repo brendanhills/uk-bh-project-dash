@@ -36,6 +36,9 @@
 - **Unified Pipeline Engine (`pipeline.py`):** Consolidated master ingestion CLI (`python3 scripts/pipeline.py --sync`).
 
 ## 5. Turnkey Operations & Handover Tooling
-- **Automated Testing Suite:** Idiomatic `pytest` test runner (`tests/`) with root discovery via `pyproject.toml` and shared session/function fixtures in `tests/conftest.py`. Executed via `pytest` (156 tests passing).
-- **Operator Runbook:** `docs/HANDOVER_GUIDE.md` for self-service maintenance by team members (`allins@`, `sdeacon@`, `waynedavis@`).
+- **Declarative Infrastructure as Code (Terraform):** Canonical GCP infrastructure codification via reusable Terraform modules (`deploy/terraform/modules/`) covering APIs, Storage, Artifact Registry, IAM, Cloud Run, Ingestion Pipeline, Cloud Build, and Monitoring. Managed through environment roots (`deploy/terraform/environments/dev` and `prod`).
+- **Root Developer Cockpit (`setup.sh`):** Unified developer interface providing pre-flight bootstrap, declarative Terraform provisioning, and sub-5s parallel cloud health auditing (`--status`, `-l`, `-m`, `--state-only`) with transparent manual checkpoints validation.
+- **Automated Testing Suite:** Idiomatic `pytest` test runner (`tests/`) with root discovery via `pyproject.toml` and shared session/function fixtures in `tests/conftest.py`. Executed via `pytest`.
+- **Operator Runbook:** `docs/DEPLOYMENT_GUIDE.md` and `docs/HANDOVER_GUIDE.md` for self-service maintenance by team members (`allins@`, `sdeacon@`, `waynedavis@`).
 - **Server Lifecycle:** Managed via Cloud Run in Sydney (`australia-southeast1`) and local `run_server.sh`.
+

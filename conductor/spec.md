@@ -92,10 +92,14 @@ All project data is strictly isolated within `data/<project-slug>/`:
 project_dash/
 ├── index.html                   # Core presentation frontend
 ├── server.py                    # Parameterized REST API & static server
-├── setup.sh                     # Canonical root environment provisioning & audit CLI
-├── deploy/                      # Turnkey Cloud Run provisioning & Dockerfile
+├── setup.sh                     # Canonical root developer cockpit & health audit CLI
+├── deploy/                      # Infrastructure as Code & CI/CD
 │   ├── cloudbuild.yaml          # Streamlined automated CI/CD pipeline (~45s)
-│   └── Dockerfile               # Unified container specification (python:3.13-slim)
+│   ├── Dockerfile               # Unified container specification (python:3.13-slim)
+│   ├── cleanup-policy.json      # Artifact Registry Docker retention policy
+│   └── terraform/               # Declarative Terraform IaC Modules & Environments
+│       ├── modules/             # Reusable GCP modules (apis, storage, artifact_registry, iam, cloud_run, ingestion_pipeline, cloud_build, monitoring)
+│       └── environments/        # Environment configurations (dev, prod) and import runbooks
 ├── docs/                        # Project manuals & guides
 │   ├── HANDOVER_GUIDE.md        # Turnkey operator & handover manual
 │   ├── TEAM_PRESENTATION_GUIDE.md # 5-minute showcase narrative
@@ -450,6 +454,23 @@ All ingestion, parsing, metric calculation, and AI generation logic is consolida
   # 1-Command Weekly Report Ingestion
   python3 scripts/pipeline.py --project=monaro --ingest-report="Weekly Reporting - Week 28 - 14 Aug 2026.pdf"
   ```
+
+### 5.3 Declarative Terraform Infrastructure & Developer Cockpit (`setup.sh`)
+The entire Google Cloud infrastructure across `monaro-risk-dev` and `monaro-risk-prod` in `australia-southeast1` is codified using modular, declarative Terraform (`deploy/terraform/`):
+- **Modular IaC Architecture**: Reusable modules under `deploy/terraform/modules/`:
+  - `apis`: Idempotently manages all 16 required GCP APIs.
+  - `storage`: Manages persistent GCS data buckets (`${PROJECT_ID}-data`) and versioned remote Terraform state buckets.
+  - `artifact_registry`: Manages Docker container repositories with automated image cleanup policies.
+  - `iam`: Manages deployer service accounts (`github-deployer`) with least-privilege role bindings.
+  - `cloud_run`: Declares the IAP-secured web service and the scheduled ingestion job with GCS volume mounts.
+  - `ingestion_pipeline`: Configures Cloud Tasks queues and Cloud Scheduler weekly cron jobs.
+  - `cloud_build`: Configures branch (`dev`/`main`) and tag-triggered (`project_dash/prod-*`) CI/CD deployment pipelines.
+  - `monitoring`: Declares alerting policies for container crashes and 5xx errors with email notification channels.
+- **Root Developer Cockpit (`setup.sh`)**:
+  - Acts as the unified CLI cockpit wrapping Terraform bootstrap, state initialization, and live resource auditing.
+  - **Sub-5s Parallel Health Audit (`./setup.sh --status` / `-l`)**: Probes all 46 tracked GCP resources concurrently across background subshells in under 5 seconds.
+  - **Transparent Manual Checkpoint Status**: Explicitly checks and surfaces interactive manual requirements (GitHub repo connection, OAuth Consent Screen, Google Drive folder sharing, 90-day sandbox billing expiration, and Google Groups) complete with 1-click Pantheon console deep links.
+  - **State-Only Output (`--state-only`)**: Outputs exact canonical resource addresses matching `terraform state list`.
 
 ---
 

@@ -174,18 +174,14 @@ The Project Dash platform requires **16 Google Cloud APIs** across compute, sche
 
 Administrators can enable all 16 APIs instantly using any of the following four methods:
 
-#### Option 1: Fast Dedicated Helper Script (Fastest)
-```bash
-# Enables all 16 APIs in a single batch call with zero interactive prompt friction:
-./deploy/enable_apis.sh --project monaro-risk-dev
-```
-
-#### Option 2: Provisioning Script `--apis-only` Flag
+#### Option 1: Root Developer Cockpit `--apis-only` (Recommended)
 ```bash
 # Enables all 16 APIs and verifies configuration without deploying resources:
 ./setup.sh --env dev --apis-only
 ./setup.sh --env prod --apis-only
 ```
+
+*(Note: `./deploy/enable_apis.sh` is maintained as a deprecated backward-compatible wrapper).*
 
 #### Option 3: Full End-to-End Environment Provisioning
 ```bash
@@ -296,25 +292,61 @@ STATE ADDRESS                                                STATUS         DETA
 gcp_api.clouderrorreporting.googleapis.com                   [ENABLED]      Required GCP API
 gcp_api.logging.googleapis.com                               [ENABLED]      Required GCP API
 gcp_api.monitoring.googleapis.com                            [ENABLED]      Required GCP API
-gcp_api.cloudbuild.googleapis.com                            [ENABLED]      Required GCP API
-gcp_api.run.googleapis.com                                   [ENABLED]      Required GCP API
 ...
-iam_binding.roles/run.admin                                  [GRANTED]      Deployer IAM Role
-iam_binding.roles/artifactregistry.admin                     [GRANTED]      Deployer IAM Role
-gar_repo.cloud-run-source-deploy                             [PRESENT]      Artifact Registry Docker Repo
-cloudbuild_trigger.deploy-monaro-risk-dash-dev               [PRESENT]      Cloud Build Trigger
-cloud_run_service.monaro-risk-dash-dev                       [READY]        Cloud Run Web Service (rev: 00004-xyz)
-iap_web_binding.group:monaro-risk-dev@google.com             [BOUND]        IAP Web Access
-cloud_run_job.monaro-risk-sync-job                           [PRESENT]      Cloud Run Ingestion Job
-cloud_tasks_queue.monaro-sync-queue                          [RUNNING]      Cloud Tasks Queue
-cloud_scheduler_job.monaro-sync-schedule                     [ENABLED]      Cloud Scheduler (0 17 * * 5)
-drive_access.folder_read                                     [INHERITED]    Google Drive Shared Access
----------------------------------------------------------------------------------------------------
-📊 Executive State Summary:
-   Total Tracked Resources: 46
-   Present / Healthy:       46
-   Missing / Incomplete:    0
+cloud_run_service.monaro-risk-dash-dev                       [READY]        https://monaro-risk-dash-dev-...
+cloud_run_iam.serviceAccount:iap_service_agent.roles/run.invoker [BOUND]    IAP Service Agent
+cloud_run_iam.group:monaro-risk-dev@google.com.roles/run.invoker [BOUND]    Viewer Group
+cloud_tasks_queue.monaro-sync-queue                          [RUNNING]      Cloud Tasks Queue (australia-southeast1)
+cloud_run_job.monaro-risk-sync-job                           [EXISTS]       Cloud Run Ingestion Job (australia-southeast1)
+cloud_scheduler_job.monaro-sync-schedule                     [ENABLED]      Weekly Cron (0 17 * * 5 Australia/Sydney)
 ===================================================================================================
+📋 Manual & Interactive Checkpoints (Requires Console/Browser Action):
+---------------------------------------------------------------------------------------------------
+  [!] 1. GitHub Repo in Cloud Build     [OUTSTANDING]  Action required: connect GitHub repo in Cloud Build console
+      👉 Connect: https://pantheon.corp.google.com/cloud-build/repositories?project=monaro-risk-dev
+  [!] 2. OAuth Consent Screen for IAP   [OUTSTANDING]  Action required: configure internal OAuth consent screen
+      👉 Configure: https://pantheon.corp.google.com/apis/credentials/consent?project=monaro-risk-dev
+  [!] 3. Google Drive Folder Access     [OUTSTANDING]  Action required: share folder with monaro-risk-dev@google.com
+      👉 Folder: https://drive.google.com/drive/folders/1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C
+  [!] 4. Permanent Billing Account      [SANDBOX]      90-Day Temporary Sandbox Project (Expires: 15-Nov-2026)
+      👉 Attach: https://pantheon.corp.google.com/billing?project=monaro-risk-dev
+  [✓] 5. Google Groups / Access Rosters [ACTIVE]       monaro-risk-dev@google.com configured for IAP access
+      👉 Manage: https://groups.google.com/a/google.com/g/monaro-risk-dev
+===================================================================================================
+📊 State Summary: Total Tracked: 46 | Present/Healthy: 46 | Missing: 0
+===================================================================================================
+```
+
+---
+
+## 🏛️ Declarative Terraform Infrastructure as Code (IaC)
+
+All Google Cloud infrastructure is codified declaratively in `deploy/terraform/` using HashiCorp Terraform `>= 1.5.0` with the `hashicorp/google` provider (`~> 8.0`).
+
+### 📦 Module Architecture (`deploy/terraform/modules/`)
+* **`apis/`**: Idempotently enables the 16 required GCP APIs.
+* **`storage/`**: Provisions `${PROJECT_ID}-data` GCS bucket for application persistence (mounted to `/app/data` on Cloud Run) and the remote state bucket `${PROJECT_ID}-terraform-state`.
+* **`artifact_registry/`**: Provisions the `cloud-run-source-deploy` Docker repository with automated cleanup policies matching `cleanup-policy.json`.
+* **`iam/`**: Creates the `github-deployer` service account with least-privilege IAM bindings.
+* **`cloud_run/`**: Declares both the web presentation service (`monaro-risk-dash-{dev|prod}`) and the ingestion job (`monaro-risk-sync-job`) with Gen2 execution environment, IAP invoker bindings, and GCS volume mounts.
+* **`ingestion_pipeline/`**: Declares the Cloud Tasks queue (`monaro-sync-queue`) and the Cloud Scheduler weekly cron trigger (`monaro-sync-schedule`).
+* **`cloud_build/`**: Declares automated GitHub build triggers on `main`/`dev` branches (dev) and `^project_dash/prod-.*$` release tags (prod).
+* **`monitoring/`**: Declares email notification channels and log/metric alert policies for container crashes and 5xx errors.
+
+### 🌐 Environment Workflows (`deploy/terraform/environments/{dev|prod}`)
+```bash
+# 1. Initialize remote GCS backend
+cd deploy/terraform/environments/dev
+terraform init
+
+# 2. Plan changes against live GCP state
+terraform plan
+
+# 3. Apply changes declaratively
+terraform apply
+
+# 4. Safely import existing unmanaged resources (zero destruction)
+./import.sh
 ```
 
 ---
