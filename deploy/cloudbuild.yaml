@@ -4,11 +4,13 @@ steps:
   - name: 'python:3.13-slim'
     id: 'build-info'
     waitFor: ['-']
-    dir: 'project_dash'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
+        if [ -d "project_dash" ]; then
+          cd project_dash
+        fi
         BUILD_TAG="$TAG_NAME"
         if [ -z "$$BUILD_TAG" ]; then
           BUILD_TAG="$BRANCH_NAME"
@@ -45,20 +47,22 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-image'
     waitFor: ['build-info', 'pull-cache']
-    dir: 'project_dash'
+    entrypoint: 'bash'
     env:
       - 'DOCKER_BUILDKIT=1'
     args:
-      - 'build'
-      - '--cache-from'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
-      - '-f'
-      - 'deploy/Dockerfile'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
-      - '.'
+      - '-c'
+      - |
+        TARGET_DIR="."
+        if [ -d "project_dash" ]; then
+          TARGET_DIR="project_dash"
+        fi
+        docker build \
+          --cache-from "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest" \
+          -f "$$TARGET_DIR/deploy/Dockerfile" \
+          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA" \
+          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest" \
+          "$$TARGET_DIR"
 
   # 4. Run Automated Unit & Ingestion Tests inside the built container (zero pip install overhead!)
   - name: 'gcr.io/cloud-builders/docker'

@@ -251,3 +251,14 @@ def test_bug_101_get_latest_week_key_resolves_highest_week(full_html: str):
     assert "let maxWeek = -1;" in full_html
     assert "wn > maxWeek" in full_html
 
+
+def test_bug_96_data_button_and_provenance_hub(full_html: str):
+    """Bug #96: Top navigation button is labeled 'Data' with Data Provenance & Source Hub tooltip and opens #sheetsModal."""
+    assert 'id="headerDataButton"' in full_html
+    assert 'title="Data Provenance &amp; Source Hub"' in full_html or 'title="Data Provenance & Source Hub"' in full_html
+    assert '<span>Data</span>' in full_html
+    assert 'openSheetsModal()' in full_html
+    assert 'id="sheetsModal"' in full_html
+    assert 'window.openDataModal' in full_html
+
+
