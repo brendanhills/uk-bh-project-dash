@@ -529,7 +529,22 @@ gcloud run services update-traffic monaro-risk-dash-prod \
 
 ---
 
-### Runbook 2: Emergency Container Image Rollback
+### Runbook 2: Immediate Service Shutdown (Emergency Stop)
+If an active vulnerability, severe data leak, or misconfiguration requires taking the web service offline immediately:
+
+```bash
+# 1-Command shutdown via root developer cockpit:
+./setup.sh --stop --env dev
+./setup.sh --stop --env prod
+
+# Or via direct gcloud command (shifts 0% traffic to all revisions):
+gcloud run services update monaro-risk-dash-dev --region=australia-southeast1 --project=monaro-risk-dev --no-traffic
+gcloud run services update monaro-risk-dash-prod --region=australia-southeast1 --project=monaro-risk-prod --no-traffic
+```
+
+---
+
+### Runbook 3: Emergency Container Image Rollback
 To redeploy a specific historical container image from Artifact Registry:
 
 ```bash

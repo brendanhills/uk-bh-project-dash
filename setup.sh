@@ -22,6 +22,7 @@ ENV_TARGET="dev"
 PROJECT_ID=""
 REGION="australia-southeast1"
 APIS_ONLY=false
+STOP_SERVICE=false
 LIST_MODE=false
 STATE_ONLY=false
 MISSING_ONLY=false
@@ -72,6 +73,7 @@ usage() {
   echo "  --project <project-id>  Override GCP Project ID explicitly"
   echo "  --region <region>       GCP Region (default: australia-southeast1)"
   echo "  --apis-only             Only enable the 16 required GCP APIs and exit"
+  echo "  --stop, --shutdown      Emergency stop: route 0% traffic to Cloud Run web service immediately"
   echo "  -l, --list, --status    Inspect and list status of all APIs, permissions, services, and Drive access (read-only)"
   echo "  -m, --missing           Only display missing/unhealthy resources in list mode"
   echo "  --state-only            Print only resource addresses (exact terraform state list format)"
@@ -101,6 +103,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --apis-only)
       APIS_ONLY=true
+      shift
+      ;;
+    --stop|--shutdown|--kill-service)
+      STOP_SERVICE=true
       shift
       ;;
     -l|--list|--view|--status)
@@ -491,6 +497,27 @@ list_environment_state() {
 
 if [[ "${LIST_MODE}" == "true" ]]; then
   list_environment_state
+  exit 0
+fi
+
+if [[ "${STOP_SERVICE}" == "true" ]]; then
+  echo "=============================================================================="
+  echo "🛑 Emergency Shutdown: Routing 0% traffic to Cloud Run Web Service"
+  echo "=============================================================================="
+  echo "• Target Environment: ${ENV_TARGET}"
+  echo "• GCP Project:        ${PROJECT_ID}"
+  echo "• Service Name:       ${SERVICE_NAME}"
+  echo "• Region:             ${REGION}"
+  echo "------------------------------------------------------------------------------"
+  if gcloud run services describe "${SERVICE_NAME}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    echo "Updating traffic allocation to 0%..."
+    gcloud run services update "${SERVICE_NAME}" --region="${REGION}" --project="${PROJECT_ID}" --no-traffic
+    echo "✅ Successfully routed 0% traffic to ${SERVICE_NAME}."
+    echo "Service is now safely offline and not serving requests."
+  else
+    echo "⚠️ Notice: Cloud Run service '${SERVICE_NAME}' does not exist in ${PROJECT_ID} (${REGION})."
+  fi
+  echo "=============================================================================="
   exit 0
 fi
 
