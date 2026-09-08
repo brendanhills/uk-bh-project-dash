@@ -17,12 +17,12 @@
   - [x] Task: Implement `modules/iam` for `github-deployer` and least-privilege role bindings
   - [x] Task: Phase Verification & Checkpoint (Validate syntax with `terraform fmt` and `terraform validate`)
 
-- [ ] **Phase 2: Compute, Scheduling & Ingestion Pipeline Modules**
-  - [ ] Task: Implement `modules/cloud_run` for static web service and sync job (Gen2 execution environment + GCS volume mount)
-  - [ ] Task: Implement `modules/ingestion_pipeline` for Cloud Tasks queue (`monaro-sync-queue`) and Cloud Scheduler cron (`monaro-sync-schedule`)
-  - [ ] Task: Implement `modules/cloud_build` for GitHub triggers (`brendanhills/uk-bh-project-dash`, `main` branch and `^project_dash/prod-.*$` tags)
-  - [ ] Task: Implement `modules/monitoring` for alert policies and email notification channels (`brendanhills@google.com`, `allins@google.com`)
-  - [ ] Task: Phase Verification & Checkpoint (Verify plan generation on dummy/staging vars)
+- [x] **Phase 2: Compute, Scheduling & Ingestion Pipeline Modules**
+  - [x] Task: Implement `modules/cloud_run` for static web service and sync job (Gen2 execution environment + GCS volume mount)
+  - [x] Task: Implement `modules/ingestion_pipeline` for Cloud Tasks queue (`monaro-sync-queue`) and Cloud Scheduler cron (`monaro-sync-schedule`)
+  - [x] Task: Implement `modules/cloud_build` for GitHub triggers (`brendanhills/uk-bh-project-dash`, `main` branch and `^project_dash/prod-.*$` tags)
+  - [x] Task: Implement `modules/monitoring` for alert policies and email notification channels (`brendanhills@google.com`, `allins@google.com`)
+  - [x] Task: Phase Verification & Checkpoint (Verify plan generation on dummy/staging vars)
 
 - [ ] **Phase 3: Environment Composition (`dev` and `prod`) & Import Runbook**
   - [ ] Task: Configure `environments/dev` root module, `backend.tf`, and `terraform.tfvars` (`monaro-risk-dev`)
