@@ -2,7 +2,7 @@
   "track_id": "terraform_iac_migration_20260901",
   "title": "Terraform Infrastructure as Code (IaC) Migration",
   "type": "refactor",
-  "status": "new",
+  "status": "in_progress",
   "created_at": "2026-09-01T11:42:00+10:00",
-  "updated_at": "2026-09-01T11:42:00+10:00"
+  "updated_at": "2026-09-08T13:27:00+10:00"
 }
