@@ -67,9 +67,35 @@ In this session, we completed the full implementation of Conductor track `terraf
    - Deprecated `deploy/enable_apis.sh` in favor of root `./setup.sh`.
    - Verified 100% test pass rate across `tests/test_frontend_contracts.py` (8/8 passed).
 
+## 📝 Session Summary (2026-09-09)
+In this session, we migrated Project Dash to Google's internal GitHub Enterprise Server (**Depot** at `depot.code.corp.goog/sovops-au/monaro-dash`), resolved commit signing rules, configured Depot GitHub Actions CI, and updated the Gemini Vertex AI default region:
+
+1. **Repository Handover & Upstream Migration to Depot**:
+   - Configured `depot` remote targeting `git@depot.code.corp.goog:sovops-au/monaro-dash.git`.
+   - Identified and resolved the `GH013` commit signature verification policy: registered SSH signing key `auto_init_ed25519.pub` under Depot user account settings.
+   - Batch re-signed all 217 commits across linear git history (`git rebase --root --exec "git commit --amend --no-edit -S"`) ensuring 100% verified signatures.
+   - Pushed complete 217-commit history to `depot/main` with upstream tracking configured.
+
+2. **Depot CI/CD Architecture Migration**:
+   - Authored Depot-compatible GitHub Actions CI workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+   - Configured runner labels for Depot's ephemeral Cloud Build worker pool (`[self-hosted, sh-ubuntu-latest]`).
+   - Configured Python 3.13 with pip caching and zero GCP credentials required (decoupled CI model).
+   - Updated Terraform environment definitions (`environments/dev/terraform.tfvars` and `environments/prod/terraform.tfvars`) to target `sovops-au/monaro-dash`.
+
+3. **Gemini Vertex AI Multi-Region 'us' Endpoint Default**:
+   - Diagnosed Cloud Run Job warning: `Model 'gemini-3.5-flash' not found in region 'us-central1'. Retrying on multi-region 'us' endpoint...`.
+   - Updated default region from `us-central1` to `us` across `scripts/gemini_generator.py`, `scripts/sync_drive.py`, `setup.sh`, `deploy/cloudbuild.yaml`, and Terraform configs.
+   - Updated test assertions in `tests/test_backend_pipeline.py` and `tests/test_sync_podcast_generation.py`.
+   - Verified 100% test pass rate (112/112 unit tests passing).
+
+4. **Documentation & Contributing Workflow Alignment**:
+   - Documented the Pull Request workflow enforced by `sovops-au` organization rulesets (`Protect default branches - all repositories`).
+   - Updated `README.md`, `docs/DEPLOYMENT_GUIDE.md`, and `docs/HANDOVER_GUIDE.md` with Depot clone URLs, branch protections, signed commit requirements, and PR contribution guides.
+
 ## 📍 Current Status
-- **Active Branch**: `main`
-- **Remote**: `git@github.com:brendanhills/uk-bh-project-dash.git`
-- **Working Tree**: Clean (all track phases completed)
-- **Track Status**: `terraform_iac_migration_20260901` Completed
+- **Active Branch**: `main` (tracking `depot/main`)
+- **Primary Remote**: `git@depot.code.corp.goog:sovops-au/monaro-dash.git`
+- **Working Tree**: Clean (all 112 pytest unit tests passing)
+- **Contribution Model**: Feature branch + Pull Request to `main` via Depot with verified SSH commit signatures
+
 

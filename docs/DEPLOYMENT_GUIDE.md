@@ -61,22 +61,24 @@ Secured with **Identity-Aware Proxy (IAP)** for corporate Google SSO login and a
 
 ```mermaid
 flowchart LR
-    subgraph DevPush["Development Flow"]
-        GitDev["git push origin dev\n(paths: project_dash/**)"]
+    subgraph DevPush["Feature / Bugfix Flow"]
+        GitFeat["git checkout -b feat/my-change\ngit commit -S -m '...'\ngit push -u depot feat/my-change"]
+        GitPR["Pull Request on Depot\n(Automated Pytest CI)"]
+        GitMerge["Merge PR to main"]
     end
 
     subgraph ProdPush["Production Release Flow"]
-        GitTag["git tag project_dash/prod-v1.0.0\ngit push origin project_dash/prod-v1.0.0"]
+        GitTag["git tag project_dash/prod-v1.0.0\ngit push depot project_dash/prod-v1.0.0"]
     end
 
     subgraph CloudBuildDev["Cloud Build (monaro-risk-dev)"]
         DevTrigger["Trigger: deploy-monaro-risk-dash-dev"]
-        DevSteps["1. Automated Pytest (158 tests)\n2. Docker Build & Push (Sydney)\n3. Cloud Run Deploy (--iap)\n4. IAM & IAP Sydney Group Bindings"]
+        DevSteps["1. Automated Pytest (112 tests)\n2. Docker Build & Push (Sydney)\n3. Cloud Run Deploy (--iap)\n4. IAM & IAP Sydney Group Bindings"]
     end
 
     subgraph CloudBuildProd["Cloud Build (monaro-risk-prod)"]
         ProdTrigger["Trigger: deploy-monaro-risk-dash-prod"]
-        ProdSteps["1. Automated Pytest (158 tests)\n2. Docker Build & Push (Sydney)\n3. Cloud Run Deploy (--iap)\n4. IAM & IAP Sydney Group Bindings"]
+        ProdSteps["1. Automated Pytest (112 tests)\n2. Docker Build & Push (Sydney)\n3. Cloud Run Deploy (--iap)\n4. IAM & IAP Sydney Group Bindings"]
     end
 
     subgraph SydneyGCP["Google Cloud Platform (australia-southeast1 — Sydney)"]
@@ -91,7 +93,7 @@ flowchart LR
         ProdUsers["Prod Stakeholders\n(monaro-risk-prod@google.com)"]
     end
 
-    GitDev --> DevTrigger --> DevSteps
+    GitFeat --> GitPR --> GitMerge --> DevTrigger --> DevSteps
     DevSteps --> AR
     DevSteps --> RunDev
 
@@ -107,36 +109,55 @@ flowchart LR
 
 ## 🚀 Workflows: Developing & Deploying
 
-### 1. Everyday Developer Workflow (`dev`)
-All day-to-day development occurs on the **`dev`** branch:
+The canonical repository is hosted on **Depot (Google GitHub Enterprise Server)**:
+👉 **Repository**: [`https://depot.code.corp.goog/sovops-au/monaro-dash`](https://depot.code.corp.goog/sovops-au/monaro-dash)
+
+### Organization Rulesets & Branch Protections:
+- **Default Branch (`main`) Protection**: Direct pushes to `main` are disabled by the `sovops-au` organization ruleset. **All changes must be submitted via Pull Request**.
+- **Mandatory Cryptographic Signatures**: Commits must be signed (`git commit -S`) using an SSH or GPG key registered as a **Signing Key** on Depot ([`https://depot.code.corp.goog/settings/keys`](https://depot.code.corp.goog/settings/keys)).
+- **Author Email Verification**: Commit author and committer emails must be `@google.com`.
+- **Automated CI Validation**: Depot GitHub Actions (`.github/workflows/ci.yml`) executes all 112 pytest unit and contract tests on ephemeral Cloud Build worker pool runners (`[self-hosted, sh-ubuntu-latest]`) on every PR and push.
+
+### 1. Everyday Developer Workflow (Feature Branches & PRs)
+All day-to-day development occurs via feature branches and Pull Requests:
 
 ```bash
-# 1. Edit code, templates, or scripts under project_dash/
-# 2. Run local unit tests to verify
+# 1. Create a feature branch from latest main
+git checkout main
+git pull
+git checkout -b feat/my-enhancement
+
+# 2. Edit code, templates, or scripts
+# 3. Run local unit tests to verify
 pytest
 
-# 3. Commit and push to dev branch
-git add project_dash/
-git commit -m "feat(dashboard): add new risk indicator widget"
-git push origin dev
+# 4. Commit with verified signature (-S)
+git add .
+git commit -S -m "feat(dashboard): add new risk indicator widget"
+
+# 5. Push feature branch to Depot
+git push -u depot feat/my-enhancement
+
+# 6. Open and merge Pull Request on Depot:
+# https://depot.code.corp.goog/sovops-au/monaro-dash/pull/new/feat/my-enhancement
 ```
-* **Trigger**: Cloud Build trigger `deploy-monaro-risk-dash-dev` automatically executes [`deploy/cloudbuild.yaml`](../deploy/cloudbuild.yaml).
-* **Target**: Deploys to `monaro-risk-dash-dev` in `australia-southeast1`.
+* **CI Validation**: Depot GitHub Actions runs the test suite automatically against the PR.
+* **Target**: Deploys to `monaro-risk-dash-dev` in `australia-southeast1` upon merge or via `./setup.sh --env dev`.
 
 ### 2. Promoting a Release to Production (`prod`)
-Production deployments do **not** use a separate code branch. All code remains on `dev` and promotions are gated via Git release tags:
+Production deployments are gated via Git release tags:
 
 ```bash
-# 1. Ensure you are on dev and all tests pass
-git checkout dev
-git pull origin dev
+# 1. Ensure you are on main and all tests pass
+git checkout main
+git pull
 pytest
 
 # 2. Create a versioned production tag
-git tag project_dash/prod-v1.0.0
+git tag -s project_dash/prod-v1.0.0 -m "Release v1.0.0"
 
-# 3. Push the tag to remote
-git push origin project_dash/prod-v1.0.0
+# 3. Push the tag to Depot
+git push depot project_dash/prod-v1.0.0
 ```
 * **Trigger**: Cloud Build trigger `deploy-monaro-risk-dash-prod` detects the tag matching `^project_dash/prod-.*$`.
 * **Target**: Builds and deploys container to `monaro-risk-dash-prod` in `australia-southeast1` with zero downtime.
@@ -408,9 +429,9 @@ Project Monaro implements a **decoupled, two-tier CI/CD architecture** that clea
 
 ```mermaid
 flowchart TD
-    subgraph GitHubLayer["1. Open CI Layer (GitHub Actions)"]
-        GHTrigger["Push / PR to dev or main\n(paths: project_dash/**)"]
-        GHAction["GitHub Actions (.github/workflows/deploy_monaro_dashboard.yml)\n• Python 3.13 Setup\n• Fast Automated Pytest Execution\n• ZERO GCP Secrets / ZERO Keys Needed"]
+    subgraph GitHubLayer["1. Open CI Layer (Depot GitHub Actions)"]
+        GHTrigger["Push / PR to dev or main"]
+        GHAction["Depot GitHub Actions (.github/workflows/ci.yml)\n• Runs on [self-hosted, sh-ubuntu-latest]\n• Python 3.13 Setup & pip cache\n• Fast Automated Pytest Execution\n• ZERO GCP Secrets / ZERO Keys Needed"]
         GHBadge["🟢 Green CI Status Badge on Pull Requests"]
     end
 
@@ -424,10 +445,11 @@ flowchart TD
     GHTrigger --> CBTrigger --> CBBuild --> CloudRun
 ```
 
-### 1. GitHub Actions CI (`.github/workflows/deploy_monaro_dashboard.yml`)
+### 1. GitHub Actions CI (`.github/workflows/ci.yml`)
 - **Role**: Continuous Integration & Regression Validation.
-- **Trigger**: Every `push` and `pull_request` touching `project_dash/**` on `dev` or `main`.
-- **Security & Frictionless CI**: Requires **zero Google Cloud credentials or GitHub secrets** (`GCP_SA_KEY`). All tests execute locally in the GitHub Actions runner, preventing credential leakage while providing instant feedback on PRs.
+- **Trigger**: Every `push` and `pull_request` on `dev` or `main`.
+- **Runner**: Executes on Depot's ephemeral self-hosted Cloud Build worker pool (`[self-hosted, sh-ubuntu-latest]`).
+- **Security & Frictionless CI**: Requires **zero Google Cloud credentials or GitHub secrets** (`GCP_SA_KEY`). All tests execute in the ephemeral runner, preventing credential leakage while providing instant feedback on PRs.
 
 ### 2. Google Cloud Build CD (`deploy/cloudbuild.yaml`)
 - **Role**: Continuous Deployment, Container Compilation & Infrastructure Rollout.

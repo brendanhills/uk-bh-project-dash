@@ -620,7 +620,7 @@ def main():
     parser.add_argument('--dry-run', action='store_true', help="Discover files without executing ingestion")
     parser.add_argument('--allow-empty', action='store_true', help="Do not exit with error if Drive returns no files")
     parser.add_argument('--model', default=None, help="Gemini model override (defaults to GEMINI_MODEL env var or system default)")
-    parser.add_argument('--gemini-region', default=None, help="Gemini Vertex AI region override (defaults to GEMINI_REGION env var or 'us-central1')")
+    parser.add_argument('--gemini-region', default=None, help="Gemini Vertex AI region override (defaults to GEMINI_REGION env var or 'us')")
     parser.add_argument('--doctor', action='store_true', help="Run comprehensive pre-flight health checks across Drive, Vertex AI, GCS Storage, and Schema")
 
     args = parser.parse_args()

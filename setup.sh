@@ -31,7 +31,7 @@ DRIVE_FOLDER_ID="${DRIVE_FOLDER_ID:-1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C}"
 GAR_REPO="cloud-run-source-deploy"
 GDRIVE_BIN="$(command -v gdrive 2>/dev/null || echo "/google/bin/releases/gemini-agents-gdrive/gdrive")"
 GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash}"
-GEMINI_REGION="${GEMINI_REGION:-us-central1}"
+GEMINI_REGION="${GEMINI_REGION:-us}"
 
 REQUIRED_APIS=(
   "clouderrorreporting.googleapis.com"

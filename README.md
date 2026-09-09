@@ -44,14 +44,14 @@ An ultra-responsive, decoupled executive governance and operational risk intelli
 
 ### 2. Setup
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/project-dash.git
-cd project_dash
+# Clone the repository from Depot (Google GitHub Enterprise Server)
+git clone git@depot.code.corp.goog:sovops-au/monaro-dash.git
+cd monaro-dash
 
 # Copy environment template
 cp .env.example .env
 
-# Authenticate with Google Cloud ADC for Vertex AI Gemini:
+# Authenticate with Google Cloud ADC for Vertex AI Gemini (multi-region 'us' endpoint):
 gcloud auth application-default login
 ```
 
@@ -67,7 +67,7 @@ Project Dash runs across **three distinct environments** with strict separation 
 
 > [!TIP]
 > **Decoupled CI/CD Architecture**:
-> - **GitHub Actions CI** ([`.github/workflows/deploy_monaro_dashboard.yml`](../.github/workflows/deploy_monaro_dashboard.yml)): Runs automated `pytest` test suites on every PR and push with zero GCP credentials/secrets required.
+> - **GitHub Actions CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): Runs automated `pytest` test suites on every PR and push using Depot ephemeral runners (`[self-hosted, sh-ubuntu-latest]`) with zero GCP credentials/secrets required.
 > - **Google Cloud Build CD** ([`deploy/cloudbuild.yaml`](deploy/cloudbuild.yaml)): Native privileged deployment pipeline deploying container images to Cloud Run in Sydney (`australia-southeast1`).
 
 ### 4. Run the Local Development Server (Developer Only)
@@ -141,6 +141,38 @@ terraform init
 terraform plan
 terraform apply
 ./import.sh  # Safe, non-destructive import of live GCP resources into state
+```
+
+#### D. Depot Git Repository & Pull Request Contributing Workflow
+The canonical codebase is hosted on **Depot** (Google GitHub Enterprise Server):
+👉 **Repository**: [`https://depot.code.corp.goog/sovops-au/monaro-dash`](https://depot.code.corp.goog/sovops-au/monaro-dash)
+
+##### Organization Rulesets & Branch Protections:
+- **Default Branch (`main`) Protection**: Direct pushes to `main` are prevented by the `sovops-au` organization ruleset. **All changes must be submitted via Pull Request**.
+- **Mandatory Commit Signatures**: Every commit must have a verified cryptographic signature (`git commit -S`). Your SSH/GPG key must be registered as a **Signing Key** under your Depot account settings: [`https://depot.code.corp.goog/settings/keys`](https://depot.code.corp.goog/settings/keys).
+- **Author Identity**: Commit author and committer emails must be from `@google.com`.
+
+##### Step-by-Step Feature/Bug Contribution Flow:
+```bash
+# 1. Create a dedicated feature or fix branch
+git checkout -b feat/my-enhancement
+
+# 2. Make changes and commit with verified signature (-S)
+git commit -S -m "feat: description of change"
+
+# 3. Push feature branch to Depot
+git push -u depot feat/my-enhancement
+
+# 4. Open a Pull Request on Depot:
+# https://depot.code.corp.goog/sovops-au/monaro-dash/pull/new/feat/my-enhancement
+
+# 5. Automated CI runs:
+# Depot GitHub Actions (.github/workflows/ci.yml) will execute all 112 pytest unit
+# and contract tests on ephemeral Cloud Build worker pool runners ([self-hosted, sh-ubuntu-latest]).
+
+# 6. Once approved and merged into main, sync local main:
+git checkout main
+git pull
 ```
 
 ---

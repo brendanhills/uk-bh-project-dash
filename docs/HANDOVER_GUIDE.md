@@ -37,6 +37,25 @@ User access is governed through three Google-native **Ganpati (MDB)** Prod group
 
 ---
 
+## 🏛️ Code Repository & Contributing Workflow (Depot)
+
+The official codebase is hosted on **Depot** (Google GitHub Enterprise Server):
+👉 **Repository**: [`https://depot.code.corp.goog/sovops-au/monaro-dash`](https://depot.code.corp.goog/sovops-au/monaro-dash)
+
+### Quick Clone:
+```bash
+git clone git@depot.code.corp.goog:sovops-au/monaro-dash.git
+cd monaro-dash
+```
+
+### Contributing Rules & Pull Request Workflow:
+1. **Default Branch Protection**: Direct pushes to `main` are disabled under `sovops-au` organization rulesets. All changes must be made via **Pull Requests**.
+2. **Mandatory Signed Commits**: Every commit must be cryptographically signed (`git commit -S`) using an SSH or GPG key registered as a **Signing Key** on your Depot account ([`https://depot.code.corp.goog/settings/keys`](https://depot.code.corp.goog/settings/keys)).
+3. **Automated CI Validation**: Depot GitHub Actions (`.github/workflows/ci.yml`) automatically runs the full 112-test suite on ephemeral self-hosted Cloud Build runners on every PR.
+4. **Deployments**: Production deployments are gated by Git release tags matching `project_dash/prod-v*` or via `./setup.sh --env prod`.
+
+---
+
 ## 🔄 How to Ingest New Weekly Reports (1-Click Workflow)
 
 When a new weekly risk register arrives (e.g., Week 28 PDF or updated Google Sheet):

@@ -264,8 +264,8 @@ def test_server_handle_sync_triggers_podcast_generation(mock_project_env):
 # ==============================================================================
 # Test 6: Gemini 3.5 Flash Model & Region Default Invariant
 # ==============================================================================
-def test_gemini_generator_defaults_to_gemini_35_flash_and_us_central1(monkeypatch):
-    """Verify gemini_generator defaults strictly to gemini-3.5-flash and us-central1 without TTS."""
+def test_gemini_generator_defaults_to_gemini_35_flash_and_us(monkeypatch):
+    """Verify gemini_generator defaults strictly to gemini-3.5-flash and us without TTS."""
     monkeypatch.delenv("GEMINI_MODEL", raising=False)
     monkeypatch.delenv("GEMINI_REGION", raising=False)
     monkeypatch.delenv("GCP_REGION", raising=False)
@@ -275,7 +275,7 @@ def test_gemini_generator_defaults_to_gemini_35_flash_and_us_central1(monkeypatc
     assert model == "gemini-3.5-flash", "Model must default to gemini-3.5-flash"
 
     region = get_default_gemini_region()
-    assert region == "us-central1", "Region must default to us-central1 for Vertex AI"
+    assert region == "us", "Region must default to us for Vertex AI"
 
 
 # ==============================================================================

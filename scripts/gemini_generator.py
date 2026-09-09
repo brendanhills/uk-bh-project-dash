@@ -67,7 +67,7 @@ def get_default_gemini_region(override: Optional[str] = None) -> str:
       3. GCP_REGION / GOOGLE_CLOUD_LOCATION environment variable
       4. System default fallback ('us' where gemini-3.5-flash multi-region endpoint is hosted)
     """
-    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "us-central1"
+    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "us"
 
 def get_default_gemini_model(override: Optional[str] = None) -> str:
     """
@@ -215,9 +215,9 @@ def generate_executive_synthesis(
         )
     except Exception as e:
         loc = get_default_gemini_region(location)
-        if "404" in str(e) and loc != 'us-central1':
-            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on 'us-central1' endpoint...")
-            fallback_client = get_gemini_client(location='us-central1')
+        if "404" in str(e) and loc != 'us':
+            logger.warning(f"Model '{active_model}' not found in region '{loc}'. Retrying on 'us' multi-region endpoint...")
+            fallback_client = get_gemini_client(location='us')
             if not fallback_client:
                 raise
             response = fallback_client.models.generate_content(
