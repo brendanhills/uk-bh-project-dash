@@ -429,33 +429,41 @@ Project Monaro implements a **decoupled, two-tier CI/CD architecture** that clea
 
 ```mermaid
 flowchart TD
-    subgraph GitHubLayer["1. Open CI Layer (Depot GitHub Actions)"]
-        GHTrigger["Push / PR to dev or main"]
-        GHAction["Depot GitHub Actions (.github/workflows/ci.yml)\n• Runs on [self-hosted, sh-ubuntu-latest]\n• Python 3.13 Setup & pip cache\n• Fast Automated Pytest Execution\n• ZERO GCP Secrets / ZERO Keys Needed"]
-        GHBadge["🟢 Green CI Status Badge on Pull Requests"]
+    subgraph PreMergeLayer["1. Pre-Merge Validation (PR Gate)"]
+        PRTrigger["Pull Request to main"]
+        PRAction["Depot GitHub Actions (.github/workflows/ci.yml)\n• Job: test\n• Runs on [self-hosted, sh-ubuntu-latest]\n• Python 3.13 Setup & pip cache\n• Fast Automated Pytest (112 tests)\n• ZERO GCP Secrets / ZERO Keys Needed"]
+        PRBadge["🟢 Green CI Status Badge on Pull Requests"]
     end
 
-    subgraph GCPLayer["2. Privileged CD Layer (Google Cloud Build)"]
-        CBTrigger["Cloud Build Trigger (deploy-monaro-risk-dash-dev)\n• Authenticated via Native GitHub App\n• Bound to least-privilege github-deployer SA"]
-        CBBuild["Cloud Build Execution (deploy/cloudbuild.yaml)\n1. Dynamic build_info.json Generation\n2. Docker BuildKit Image Compilation with Layer Caching\n3. In-Container Pytest Gate\n4. Artifact Registry Push in Sydney\n5. Cloud Run Deploy with IAP & GCS Data Volume Mount\n6. Ingestion Sync Job Update"]
+    subgraph PostMergeLayer["2. Post-Merge Continuous Delivery (main)"]
+        MergeTrigger["Merge PR into main"]
+        DeployAction["Depot GitHub Actions (.github/workflows/ci.yml)\n• Job: deploy (runs-on: sh-ubuntu-latest)\n• Authenticates via Depot WIF (or GCP_SA_KEY)\n• Submits deploy/cloudbuild.yaml to GCP"]
+        CBBuild["Cloud Build Execution (Sydney australia-southeast1)\n1. Dynamic build_info.json Generation\n2. Docker BuildKit Image Compilation with Layer Caching\n3. In-Container Pytest Gate\n4. Artifact Registry Push in Sydney\n5. Cloud Run Deploy with IAP & GCS Data Volume Mount\n6. Ingestion Sync Job Update"]
+        SyncRun["Cloud Run Job Execution\n• Runs monaro-risk-sync-job\n• Ingests Drive Reports & Gemini 3.5 Flash"]
         CloudRun["🚀 Live Cloud Run Service (australia-southeast1)"]
     end
 
-    GHTrigger --> GHAction --> GHBadge
-    GHTrigger --> CBTrigger --> CBBuild --> CloudRun
+    PRTrigger --> PRAction --> PRBadge
+    MergeTrigger --> DeployAction --> CBBuild --> CloudRun
+    CBBuild --> SyncRun
 ```
 
-### 1. GitHub Actions CI (`.github/workflows/ci.yml`)
-- **Role**: Continuous Integration & Regression Validation.
-- **Trigger**: Every `push` and `pull_request` on `dev` or `main`.
-- **Runner**: Executes on Depot's ephemeral self-hosted Cloud Build worker pool (`[self-hosted, sh-ubuntu-latest]`).
-- **Security & Frictionless CI**: Requires **zero Google Cloud credentials or GitHub secrets** (`GCP_SA_KEY`). All tests execute in the ephemeral runner, preventing credential leakage while providing instant feedback on PRs.
+### 1. GitHub Actions CI/CD (`.github/workflows/ci.yml`)
+- **Role**: Continuous Integration & Automated Continuous Deployment.
+- **Pre-Merge (`on: pull_request`)**:
+  - Automatically runs the `test` job on Depot's ephemeral Cloud Build worker pool (`[self-hosted, sh-ubuntu-latest]`).
+  - Executes all 112 pytest unit and frontend contract tests in ~25 seconds.
+  - The `deploy` job is cleanly skipped on PRs to guarantee shared cloud environments are never mutated before merge.
+- **Post-Merge (`on: push` to `main`)**:
+  - Automatically triggers the `deploy` job upon PR merge into `main`.
+  - Authenticates to `monaro-risk-dev` using Depot's built-in Workload Identity Federation (`vars.GHES_WIF_PROVIDER`) or `secrets.GCP_SA_KEY`.
+  - Submits `deploy/cloudbuild.yaml` to Cloud Build in Sydney, compiling the container image, pushing to Artifact Registry, updating Cloud Run, and executing `monaro-risk-sync-job`.
 
 ### 2. Google Cloud Build CD (`deploy/cloudbuild.yaml`)
-- **Role**: Continuous Deployment, Container Compilation & Infrastructure Rollout.
-- **Trigger**: Native Cloud Build GitHub App triggers (`deploy-monaro-risk-dash-dev` for pushes to `dev`, and `deploy-monaro-risk-dash-prod` for production release tags).
+- **Role**: Container Compilation, Security Gating & Infrastructure Rollout.
+- **Trigger**: Submitted automatically by the Depot GitHub Actions `deploy` job post-merge, or on-demand via `./setup.sh --deploy-only`.
 - **Execution Stages**:
-  1. **Dynamic Build Metadata (`build-info`)**: Injects dynamic commit SHA, branch/tag, region, and UTC timestamp into `build_info.json` at root (`/app/build_info.json`) and `data/build_info.json`.
+  1. **Dynamic Build Metadata (`build-info`)**: Injects dynamic commit SHA, release tag, region, and UTC timestamp into `build_info.json` at root (`/app/build_info.json`) and `data/build_info.json`.
   2. **Docker Layer Cache Pull (`pull-cache`)**: Starts non-blocking at `t=0` to pull the latest image for BuildKit caching.
   3. **Container Build (`build-image`)**: Builds the unified container image (`deploy/Dockerfile`) with BuildKit layer caching.
   4. **Automated Pytest Gate (`run-tests`)**: Runs the full pytest suite inside the compiled container image before pushing to registry.

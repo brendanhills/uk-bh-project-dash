@@ -1,18 +1,16 @@
-name: CI - Monaro Risk Dashboard
+name: CI/CD - Monaro Risk Dashboard
 
 on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     branches:
       - main
-      - dev
   workflow_dispatch:
 
 concurrency:
-  group: monaro-dash-ci-${{ github.ref }}
+  group: monaro-dash-cicd-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -38,3 +36,44 @@ jobs:
       - name: 🧪 Run Automated Pytest Suite
         run: |
           pytest -v
+
+  deploy:
+    name: Build & Deploy to Cloud Run (Dev)
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: [self-hosted, sh-ubuntu-latest]
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Authenticate to Google Cloud (WIF)
+        if: "${{ vars.GHES_WIF_PROVIDER != '' }}"
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: 'monaro-risk-dev'
+          workload_identity_provider: ${{ vars.GHES_WIF_PROVIDER }}
+          service_account: 'github-deployer@monaro-risk-dev.iam.gserviceaccount.com'
+
+      - name: 🔐 Authenticate to Google Cloud (SA Key Fallback)
+        if: "${{ vars.GHES_WIF_PROVIDER == '' && secrets.GCP_SA_KEY != '' }}"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: ☁️ Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🚀 Submit Cloud Build Pipeline
+        run: |
+          gcloud builds submit \
+            --config=deploy/cloudbuild.yaml \
+            --project=monaro-risk-dev \
+            --substitutions="_SERVICE_NAME=monaro-risk-dash-dev,_REGION=australia-southeast1,_IMAGE_NAME=monaro-risk-dash-dev"
+
+      - name: 🔄 Trigger Ingestion Sync Job
+        run: |
+          gcloud run jobs execute monaro-risk-sync-job \
+            --region=australia-southeast1 \
+            --project=monaro-risk-dev \
+            --wait

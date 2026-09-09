@@ -285,15 +285,36 @@ python3 scripts/check_podcast_status.py --project monaro --fix
 
 #### 🔧 How to Update the Process When Needed
 
-1. **Updating Ingestion Logic, Prompts, or Dashboard Frontend**:
-   - Edit scripts or frontend assets.
-   - Verify locally: `pytest`.
-   - Push to `dev`: `git push origin dev`.
-   - The unified Cloud Build trigger in Sydney automatically runs unit tests, builds both container images (`monaro-risk-dash-dev` and `monaro-risk-sync`) with Docker layer caching, deploys the web service, and updates the sync job.
-   - Alternatively, trigger manually in Sydney:
+1. **Updating Ingestion Logic, Prompts, or Dashboard Frontend (Continuous Delivery Flow)**:
+   - Edit scripts or frontend assets on a dedicated feature branch.
+   - **Checkpoint 1 (Local Pre-Commit Verification)**:
      ```bash
-     gcloud builds submit --config=deploy/cloudbuild.yaml --region=australia-southeast1 --project=monaro-risk-dev
+     pytest -v
+     python3 scripts/sync_drive.py --doctor
      ```
+   - Commit changes with verified SSH signing (`git commit -S`) and push branch to Depot:
+     ```bash
+     git push -u depot <feature-branch>
+     ```
+   - Open a Pull Request targeting `main` at `https://depot.code.corp.goog/sovops-au/monaro-dash`.
+   - **Checkpoint 2 (PR Pre-Merge Verification)**:
+     - Inspect the **Checks** section on the PR: confirm `test` (`pytest -v` on ephemeral `sh-ubuntu-latest` runner) and Wiz scanners are green.
+     - Confirm `deploy` is **Skipped** (PR branches never prematurely deploy to shared cloud infrastructure).
+   - **Merge PR into `main`**:
+     - Merging automatically triggers the Depot `deploy` job.
+     - The Action authenticates to GCP, submits `deploy/cloudbuild.yaml` in Sydney, deploys `monaro-risk-dash-dev`, and executes `monaro-risk-sync-job`.
+   - **Checkpoint 3 (Post-Merge Cloud Run Verification)**:
+     - Check deployment metadata:
+       ```bash
+       curl -s https://monaro-risk-dash-dev-tvrdx-ts.a.run.app/data/build_info.json | jq .
+       ```
+     - Open the web application and verify the updated release tag in the footer.
+   - **Checkpoint 4 (Data Sync Job Verification)**:
+     - Inspect the sync execution in Cloud Logging:
+       ```bash
+       gcloud logging read 'resource.type="cloud_run_job" AND resource.labels.job_name="monaro-risk-sync-job"' --limit=25 --format="value(textPayload)" --project=monaro-risk-dev
+       ```
+     - Confirm Drive reports ingested and Gemini 3.5 Flash ran without `us-central1` warnings.
 
 2. **Changing the Schedule Timing**:
    ```bash

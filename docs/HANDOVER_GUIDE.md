@@ -51,8 +51,18 @@ cd monaro-dash
 ### Contributing Rules & Pull Request Workflow:
 1. **Default Branch Protection**: Direct pushes to `main` are disabled under `sovops-au` organization rulesets. All changes must be made via **Pull Requests**.
 2. **Mandatory Signed Commits**: Every commit must be cryptographically signed (`git commit -S`) using an SSH or GPG key registered as a **Signing Key** on your Depot account ([`https://depot.code.corp.goog/settings/keys`](https://depot.code.corp.goog/settings/keys)).
-3. **Automated CI Validation**: Depot GitHub Actions (`.github/workflows/ci.yml`) automatically runs the full 112-test suite on ephemeral self-hosted Cloud Build runners on every PR.
-4. **Deployments**: Production deployments are gated by Git release tags matching `project_dash/prod-v*` or via `./setup.sh --env prod`.
+3. **Automated Pre-Merge CI Validation**: Depot GitHub Actions (`.github/workflows/ci.yml`) automatically runs the `test` job (112 pytest unit and contract tests) on ephemeral self-hosted Cloud Build runners on every PR, alongside Wiz security scanning.
+4. **Hands-Free Post-Merge Continuous Delivery**: Merging a PR into `main` automatically triggers the `deploy` job in GitHub Actions. The Action authenticates to GCP, submits `deploy/cloudbuild.yaml` in Sydney, updates the Cloud Run web service (`monaro-risk-dash-dev`), and executes `monaro-risk-sync-job` with zero manual developer intervention.
+5. **Production Release Gating**: Deployments to `monaro-risk-prod` are strictly decoupled from `main` and gated by annotated Git release tags (`v*.*.*`) or explicit promotion via `./setup.sh --env prod`.
+
+### Developer Verification Checkpoints:
+* **Checkpoint 1 (Local Pre-Commit)**: Run `pytest -v` and `python3 scripts/sync_drive.py --doctor`.
+* **Checkpoint 2 (Depot PR Checks)**: Verify `test` shows green checkmark and `deploy` is skipped on PR.
+* **Checkpoint 3 (Post-Merge Cloud Run)**: Check `https://monaro-risk-dash-dev-tvrdx-ts.a.run.app/data/build_info.json` for updated commit SHA and release tag.
+* **Checkpoint 4 (Sync Job Logs)**: Query Cloud Logging to verify clean data ingestion and absence of Gemini region warnings:
+  ```bash
+  gcloud logging read 'resource.type="cloud_run_job" AND resource.labels.job_name="monaro-risk-sync-job"' --limit=25 --format="value(textPayload)" --project=monaro-risk-dev
+  ```
 
 ---
 

@@ -1,8 +1,9 @@
 {
-  "tag": "dev",
+  "tag": "v2.0.1",
+  "version": "2.0.1",
   "commit": "HEAD",
   "region": "australia-southeast1",
-  "timestamp": "2026-09-02 05:40 UTC",
+  "timestamp": "2026-09-09 02:30 UTC",
   "environment": "development",
   "service": "monaro-risk-dash-dev"
 }

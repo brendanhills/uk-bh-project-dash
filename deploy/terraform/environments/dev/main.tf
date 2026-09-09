@@ -92,7 +92,7 @@ module "cloud_build" {
   service_account_email = module.iam.deployer_sa_email
   repo_owner            = var.github_repo_owner
   repo_name             = var.github_repo_name
-  branch_pattern        = "^(main|dev)$"
+  branch_pattern        = "^main$"
   tag_pattern           = ""
 
   depends_on = [

@@ -1,6 +1,6 @@
 [project]
 name = "project-dash"
-version = "2.0.0"
+version = "2.0.1"
 description = "Project Monaro Risk Governance & Intelligence Platform"
 authors = [
     { name = "Brendan Hills", email = "brendanhills@google.com" }
