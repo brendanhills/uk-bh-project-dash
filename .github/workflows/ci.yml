@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
   workflow_dispatch:
 
 concurrency:
@@ -40,7 +42,7 @@ jobs:
   deploy:
     name: Build & Deploy to Cloud Run (Dev)
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: [self-hosted, sh-ubuntu-latest]
 
     steps:
@@ -56,7 +58,7 @@ jobs:
           service_account: 'github-deployer@monaro-risk-dev.iam.gserviceaccount.com'
 
       - name: 🔐 Authenticate to Google Cloud (SA Key Fallback)
-        if: "${{ vars.GHES_WIF_PROVIDER == '' && secrets.GCP_SA_KEY != '' }}"
+        if: "${{ vars.GHES_WIF_PROVIDER == '' }}"
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
