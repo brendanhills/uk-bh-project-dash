@@ -150,10 +150,10 @@ def test_live_synced_data_schema_if_present(project_root: Path):
     assert len(data["issues"]) == 29
 
 
-# --- Bug #80 Confidentiality Audit ---
+# --- Data Confidentiality & Leak Prevention Audit ---
 
-def test_bug_80_aurora_sample_data_isolation(project_root: Path):
-    """Bug #80: Audit and eliminate confidential Monaro data leaks from Project Aurora sample dashboard."""
+def test_sample_data_confidentiality_isolation(project_root: Path):
+    """Audit and eliminate confidential Monaro data leaks from Project Aurora sample dashboard (Bug #80)."""
     sample_dir = project_root / "data" / "sample"
     assert sample_dir.exists(), "data/sample must exist"
 

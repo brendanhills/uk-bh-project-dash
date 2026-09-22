@@ -113,3 +113,87 @@ def test_cloudbuild_pipeline_efficiency(project_root: Path):
     assert "roles/iap.httpsResourceAccessor" not in cb_content, "Static IAM bindings must not repeat per-commit"
     assert "'--all-tags'" in cb_content
     assert "name: 'gcr.io/cloud-builders/gcloud'" in cb_content
+
+
+# --- Consolidated Frontend UI & Feature Contracts ---
+
+def test_dashboard_shell_elements_and_layout(full_html: str):
+    """Consolidated contract: verifies responsive shell layout, NTK badge, data button, and 5x5 axes (Bugs #23, #26, #36, #40, #42, #96, #99)."""
+    # Widescreen container sizing
+    assert any(cls in full_html for cls in ["max-w-[1750px]", "max-w-[1800px]", "max-w-7xl", "max-w-screen-2xl", "max-w-[1680px]"])
+    # KPI pill flex/wrap defense
+    assert "whitespace-nowrap shrink-0" in full_html
+    # Google Need to Know (NTK) classification banner
+    assert 'id="ntkClassificationBadge"' in full_html
+    assert 'Google Need to Know (NTK)' in full_html
+    # Top navigation Data button & provenance modal hook
+    assert 'id="headerDataButton"' in full_html
+    assert 'openSheetsModal()' in full_html
+    assert '<span>Data</span>' in full_html
+    # Risk explorer cards container
+    assert 'id="explorerCardsContainer"' in full_html or 'explorerCardsContainer' in full_html
+    # 5x5 matrix axes standardization
+    assert "Rare" in full_html and "Almost Certain" in full_html
+    assert "Consequence (Y) ↓ / Likelihood (X) →" in full_html
+    assert "[writing-mode:vertical-rl]" not in full_html
+    # Sleeper outlier container hook
+    assert 'id="sleeperOutlierContainer"' in full_html
+    assert "sl.warning" in full_html or "sl.risk || sl.description" in full_html
+
+
+def test_exec_briefing_and_gap_plan_contracts(full_html: str):
+    """Consolidated contract: verifies executive briefing synthesis, Top 5 lists, and Gap Close navigation (Bugs #27, #39, #41, #47, #53)."""
+    # Briefing renderer and catalog datasets
+    assert "function renderExecBriefing" in full_html
+    assert any(k in full_html for k in ["LIVE_TEAM_GOOGLE_RISKS", "teamGoogle", "Team Google"])
+    assert any(k in full_html for k in ["NOTEBOOK_CATALOG", "BUNDLE_ANNEX_MAPPING", "Blueprint", "NotebookLM"])
+    # Top 5 risks and issues lists
+    assert "execTopRisksFullList" in full_html
+    assert "execTopIssuesFullList" in full_html
+    # Blueprint badges & drilldowns
+    assert any(fn in full_html for fn in ["switchTab('blueprints')", "filterRiskExplorerByBundle", "jumpToBlueprintBundle"])
+    assert "openItemDetailModal" in full_html
+    # Gap close plan navigation
+    assert 'id="gapPlan_${g.num}"' in full_html or "gapPlan_" in full_html
+    assert "jumpToGapClose" in full_html
+
+
+def test_risk_explorer_and_driver_tree_contracts(full_html: str):
+    """Consolidated contract: verifies Blueprint bundle filtering, card expansion, driver tree, and outlier handling (Bugs #33, #45, #46, #50, #71)."""
+    # Blueprint bundle filtering and mapping
+    assert "filterRiskExplorerByBundle" in full_html
+    assert "BUNDLE_ANNEX_MAPPING" in full_html
+    # Detail modal and blueprint traceability
+    assert "openItemDetailModal" in full_html
+    assert "Contract Blueprint Traceability" in full_html or "Blueprint" in full_html
+    # Driver tree interactive rendering
+    assert "renderDriverTree" in full_html
+    assert any(fn in full_html for fn in ["filterByDriverTreeDeliverable", "openDeliverableModal", "openRiskModal", "openItemDetailModal"])
+    # Sleeper outlier normalization
+    assert "slContainer" in full_html or "sleeperOutlier" in full_html
+
+
+def test_audio_studio_and_sync_contracts(project_root: Path, full_html: str):
+    """Consolidated contract: verifies podcast assets, availability gating, deck export, and sync feedback (Bugs #1, #28, #35, #38, #48, #56, #72, #97, #98, #100)."""
+    # Natural audio asset on disk
+    assets_dir = project_root / "assets"
+    assert assets_dir.exists()
+    assert (assets_dir / "podcast_w27.mp3").exists() or (assets_dir / "podcast_w27.wav").exists()
+    # Dynamic audio availability gating and metadata resolution
+    assert "hasAudioForWeek" in full_html
+    assert "updatePodcastAudioForWeek" in full_html
+    assert "resolvePodcastAudioSrc" in full_html
+    assert "PODCAST_AUDIO_CACHE" in full_html
+    assert 'src="assets/podcast_w27.mp3?v=au3"' not in full_html
+    # Executive deck export
+    assert 'id="exportDeckBtn"' in full_html
+    # Live Sync modal & inputs
+    assert 'id="sheetsModal"' in full_html
+    assert 'id="teamGoogleSheetUrlInput"' in full_html
+    assert 'id="notebookUrlInput"' in full_html
+    # Update check feedback UI
+    assert 'id="btnCheckUpdates"' in full_html
+    assert "Checking for updates..." in full_html
+    # Time Machine chronological descending sort
+    assert "wnB - wnA" in full_html or "entries.sort" in full_html
+

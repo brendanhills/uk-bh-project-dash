@@ -263,6 +263,29 @@ list_environment_state() {
     fi
   }
 
+  # 0. Local Tools & Frontend Dependencies
+  if command -v node &>/dev/null; then
+    local node_ver
+    node_ver="$(node -v 2>/dev/null || echo "installed")"
+    emit_state "tool.node" "READY" "Node.js ${node_ver}"
+  else
+    emit_state "tool.node" "MISSING" "Install Node.js: https://nodejs.org/"
+  fi
+
+  if command -v npm &>/dev/null; then
+    local npm_ver
+    npm_ver="$(npm -v 2>/dev/null || echo "installed")"
+    emit_state "tool.npm" "READY" "npm v${npm_ver}"
+  else
+    emit_state "tool.npm" "MISSING" "npm not found (run: corepack enable --install-directory ~/.local/bin)"
+  fi
+
+  if [[ -d "${PROJECT_ROOT}/node_modules" ]]; then
+    emit_state "frontend.deps" "READY" "node_modules present in project root"
+  else
+    emit_state "frontend.deps" "MISSING" "Run: npm install"
+  fi
+
   # 1. APIs
   for api in "${REQUIRED_APIS[@]}"; do
     if grep -qx "${api}" "${tmp_dir}/apis.txt" 2>/dev/null; then

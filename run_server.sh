@@ -111,6 +111,19 @@ do_run() {
     local should_restart="$1"
     local no_attach="$2"
 
+    # Frontend JavaScript AST Syntax Pre-Flight Gate (< 15ms)
+    if command -v node &>/dev/null; then
+        for js_dir in "src/js" "src/js/modules"; do
+            if [[ -d "${js_dir}" ]] && compgen -G "${js_dir}/*.js" > /dev/null; then
+                if ! node --check "${js_dir}"/*.js 2>/dev/null; then
+                    echo -e "\n\033[1;31m[ERROR] Frontend JavaScript syntax check failed in ${js_dir}!\033[0m"
+                    echo "Run: node --check ${js_dir}/*.js"
+                    exit 1
+                fi
+            fi
+        done
+    fi
+
     if ! session_exists; then
         echo "🚀 Creating new tmux session '$SESSION_NAME' in $PROJECT_DIR..."
         tmux new-session -d -s "$SESSION_NAME" -c "$PROJECT_DIR" "$COMMAND"

@@ -1,13 +1,13 @@
 # 🚀 Work Handover & Launchpad
 
 > **Active Focus**: Project Dash (Executive Risk & Horizon Dashboard)
-> **Branch**: `fix/ci-secrets-syntax` | **Last Synced**: 2026-09-11 14:00
+> **Branch**: `feat/prompt-eval-and-ui-harness` | **Last Synced**: 2026-09-22 11:00
 
 ## 🎯 Immediate Starting Point
 *Where to pick up work when you return:*
-- **Next Command / Action**: `uv run pytest` (112 tests, ~73s) or `./run_server.sh`
-- **Primary File to Open**: [`.github/workflows/ci.yml`](file:///usr/local/google/home/brendanhills/dev/apps/project_dash/.github/workflows/ci.yml)
-- **Active State / Handover Notes**: All 112 unit tests passing; Depot CI workflow configured for dev/main auto-deployment.
+- **Next Command / Action**: `uv run pytest tests/test_prompt_integrity.py` or `npm run verify`
+- **Primary File to Open**: [`scripts/gemini_generator.py:192`](file:///usr/local/google/home/brendanhills/dev/apps/project_dash/scripts/gemini_generator.py#L192) (`build_podcast_prompt`)
+- **Active State / Handover Notes**: Prompts standardized on RASCEF XML; prompt decoupling resolved via `build_podcast_prompt`; Tier 1 prompt integrity suite passing; 122/122 pytest unit tests & 6/6 Vitest UX tests passing.
 
 ## 📋 Actionable TODOs
 
@@ -21,10 +21,6 @@
 
 ### Demo Scope & Next Phases (Deferred Milestones)
 - [ ] **Stakeholder Views**: Implement tailored stakeholder views (Exec, PM, and Tech URL-driven views)
-
-### Done Recently (Pruned on Next Checkpoint)
-- [x] **Depot CI Fix**: Fixed secrets `if` condition and enabled auto-deploy on `dev` branch
-- [x] **Test Verification**: 112/112 pytest unit tests passing cleanly in standalone workspace
 
 ## ⚠️ Watch-outs & Blockers
 - Depot requires SSH signed commits (`auto_init_ed25519.pub`). Direct pushes to `main` are restricted by branch protections; use PRs.
