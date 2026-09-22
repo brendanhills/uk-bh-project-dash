@@ -46,3 +46,8 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# Frontend dependencies & test caches
+node_modules/
+npm-debug.log*
+.vitest/

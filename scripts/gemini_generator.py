@@ -19,21 +19,21 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger('gemini_generator')
 
 class ToneSynthesis(BaseModel):
-    executive: str = Field(description="60-80 word single-paragraph executive summary highlighting posture, velocity, and key decisions.")
-    technical: str = Field(description="60-80 word single-paragraph engineering summary covering platform status, security assessors, and delivery milestones.")
-    governance: str = Field(description="60-80 word single-paragraph commercial and governance summary detailing escalations and milestone verification.")
+    executive: str = Field(description="Authoritative 60-80 word single-paragraph executive briefing outlining program posture, velocity, and required leadership decisions.")
+    technical: Optional[str] = Field(default=None, description="Optional engineering notes, if applicable.")
+    governance: Optional[str] = Field(default=None, description="Optional governance notes, if applicable.")
 
 class Top3Item(BaseModel):
     num: int = Field(description="Priority order index (1, 2, or 3).")
     type: str = Field(description="Category type: 'decision', 'schedule', or 'win'.")
     tag: str = Field(description="Category label: '🚨 Immediate Executive Action', '⚡ Critical Schedule Alignment', or '🚀 Primary Delivery Win'.")
-    ref: str = Field(description="Exact deliverable or milestone reference code taken strictly from the input data. Do not hallucinate.")
+    ref: str = Field(description="Exact deliverable or milestone reference code taken strictly from the verified input context.")
     title: str = Field(description="Concise factual title of the action item.")
     impact: str = Field(description="Direct impact statement.")
     action: str = Field(description="Specific actionable next step or decision required.")
 
 class SleeperOutlier(BaseModel):
-    ref: str = Field(description="Exact deliverable or milestone reference code from the input data that is at risk of turning red. Do not hallucinate.")
+    ref: str = Field(description="Exact deliverable or milestone reference code from the verified input context at risk of schedule degradation.")
     title: str = Field(description="Factual deliverable name from the input data.")
     warning: str = Field(description="Operational rationale explaining why this item is at risk due to schedule compression, dependencies, or lead time.")
 
@@ -189,6 +189,97 @@ Provide an exception-first executive briefing based on the following weekly metr
 
     return prompt
 
+
+def build_podcast_prompt(metrics: Dict[str, Any], synthesis_result: Dict[str, Any]) -> str:
+    """Builds dual-speaker podcast prompt string from metrics and executive synthesis."""
+    prompt_template_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "prompts",
+        "podcast_prompt.md"
+    )
+    
+    if os.path.exists(prompt_template_path):
+        with open(prompt_template_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+    else:
+        template = """<!-- Fallback Podcast Prompt -->
+<role>
+You are generating a 90-second executive podcast briefing between Alex (Program Analyst) and Jordan (Technical Director).
+</role>
+<context>
+Reporting Period: {{REPORT_WEEK}} (Ending {{REPORT_DATE}})
+Overall Program Posture: {{OVERALL_STATUS}}
+Core Health: Commercial: {{COMMERCIAL_STATUS}} | Milestones: {{IBR_STATUS}} | Security: {{ATO_STATUS}}
+Executive Briefing: {{EXECUTIVE_SYNTHESIS}}
+Top 3 Attention Items: {{TOP_3_ITEMS}}
+Sleeper Outlier: {{SLEEPER_OUTLIER}}
+Risk Posture: Inherent {{INHERENT_AVG_SCORE}} -> Residual {{RESIDUAL_AVG_SCORE}} (Delta {{DELTA_COMPRESSION}})
+</context>
+<instructions>
+Generate 5 structured dialogue turns between Alex and Jordan.
+</instructions>
+"""
+
+    week_label = str(metrics.get('report_week', 'Current Reporting Cycle'))
+    report_date = str(metrics.get('report_date', datetime.now().strftime('%d %b %Y')))
+    overall_status = str(metrics.get('overall_status', 'AMBER (Stable)'))
+    
+    synthesis = synthesis_result.get('synthesis', {}) if isinstance(synthesis_result, dict) else {}
+    if not isinstance(synthesis, dict):
+        synthesis = {}
+
+    top3 = synthesis_result.get('top3', []) if isinstance(synthesis_result, dict) else []
+    if isinstance(top3, list):
+        top3_formatted = []
+        for idx, item in enumerate(top3):
+            if isinstance(item, dict):
+                cat = item.get('tag', item.get('type', f'Priority {idx+1}'))
+                title = item.get('title', '')
+                action = item.get('action', '')
+                impact = item.get('impact', '')
+                ref = item.get('ref', '')
+                ref_prefix = f"[{ref}] " if ref else ""
+                top3_formatted.append(f"- {cat}: {ref_prefix}{title} — Action: {action} (Impact: {impact})")
+            else:
+                top3_formatted.append(f"- {item}")
+        top3_str = '\n'.join(top3_formatted) if top3_formatted else 'No critical priority items flagged.'
+    else:
+        top3_str = str(top3)
+
+    sleeper = synthesis_result.get('sleeperOutlier', {}) if isinstance(synthesis_result, dict) else {}
+    if isinstance(sleeper, dict) and (sleeper.get('title') or sleeper.get('deliverable') or sleeper.get('warning') or sleeper.get('rationale')):
+        deliv = sleeper.get('title') or sleeper.get('deliverable') or 'Key Deliverable'
+        ref = sleeper.get('ref', '')
+        ref_prefix = f"[{ref}] " if ref else ""
+        warning = sleeper.get('warning') or sleeper.get('rationale') or 'Monitored for schedule compression.'
+        sleeper_str = f"{ref_prefix}{deliv}: {warning}"
+    elif isinstance(sleeper, str) and sleeper.strip():
+        sleeper_str = sleeper.strip()
+    else:
+        sleeper_str = 'No immediate sleeper outlier identified.'
+
+    replacements = {
+        "{{REPORT_WEEK}}": week_label,
+        "{{REPORT_DATE}}": report_date,
+        "{{OVERALL_STATUS}}": overall_status,
+        "{{COMMERCIAL_STATUS}}": str(metrics.get('commercial_status', 'ON TRACK')),
+        "{{IBR_STATUS}}": str(metrics.get('ibr_status', 'IN PROGRESS')),
+        "{{ATO_STATUS}}": str(metrics.get('ato_status', 'IN PROGRESS')),
+        "{{EXECUTIVE_SYNTHESIS}}": str(synthesis.get('executive', overall_status)),
+        "{{TOP_3_ITEMS}}": top3_str,
+        "{{SLEEPER_OUTLIER}}": sleeper_str,
+        "{{INHERENT_AVG_SCORE}}": str(metrics.get('inherent_avg_score', '0.0')),
+        "{{RESIDUAL_AVG_SCORE}}": str(metrics.get('residual_avg_score', '0.0')),
+        "{{DELTA_COMPRESSION}}": str(metrics.get('delta_compression', '0.0'))
+    }
+
+    prompt = template
+    for key, val in replacements.items():
+        prompt = prompt.replace(key, val)
+
+    return prompt
+
+
 def generate_executive_synthesis(
     metrics: Dict[str, Any],
     gap_close_plans: List[Dict[str, Any]],
@@ -203,15 +294,17 @@ def generate_executive_synthesis(
 
     prompt = build_synthesis_prompt(metrics, gap_close_plans)
     
+    synthesis_config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=ExecutiveSynthesisResult,
+        thinking_config=types.ThinkingConfig(thinking_level="HIGH")
+    )
+
     try:
         response = client.models.generate_content(
             model=active_model,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=ExecutiveSynthesisResult,
-                temperature=0.2
-            )
+            config=synthesis_config
         )
     except Exception as e:
         loc = get_default_gemini_region(location)
@@ -223,11 +316,7 @@ def generate_executive_synthesis(
             response = fallback_client.models.generate_content(
                 model=active_model,
                 contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ExecutiveSynthesisResult,
-                    temperature=0.2
-                )
+                config=synthesis_config
             )
         else:
             raise
@@ -444,48 +533,19 @@ def generate_multispeaker_podcast(
     if not client:
         raise RuntimeError("Gemini Client could not be initialized. Please configure Google Cloud ADC or GEMINI_API_KEY in .env.")
 
-    week_label = metrics.get('report_week', 'Current Reporting Cycle')
-    report_date = metrics.get('report_date', datetime.now().strftime('%d %b %Y'))
+    prompt = build_podcast_prompt(metrics, synthesis_result)
 
-    prompt = f"""Generate a professional, high-impact 90-second conversational executive podcast briefing between two hosts:
-- Alex (Host / Program Delivery Analyst): Neutral, crisp, direct, executive delivery focus.
-- Jordan (Co-Host / Technical Director): Authoritative, technical, solutions-focused.
-
-Reporting Week: {week_label} ({report_date})
-Executive Summary: {synthesis_result.get('synthesis', {}).get('executive', '')}
-Technical Assessment: {synthesis_result.get('synthesis', {}).get('technical', '')}
-Governance Summary: {synthesis_result.get('synthesis', {}).get('governance', '')}
-Top 3 Attention Items: {json.dumps(synthesis_result.get('top3', []))}
-Sleeper Outlier: {json.dumps(synthesis_result.get('sleeperOutlier', {}))}
-
-Return STRICT JSON as an object containing an array of 5 structured dialogue turns:
-1. Alex: Welcome to the Executive Briefing for {week_label} ending {report_date}, framing executive posture and core delivery focus.
-2. Jordan: Technical Director analysis on milestone velocity, engineering baseline, and risk compression metrics.
-3. Alex: Deep dive on the primary Top Attention item and critical-path decision required.
-4. Jordan: Technical mitigation on secondary priority, engineering interconnects, and sleeper outlier proactively treated.
-5. Alex: Summary of commercial, ATO accreditation, and governance posture, closing with executive action items.
-
-Schema:
-{{
-  "dialogue": [
-    {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:00", "text": "Welcome to the Executive Briefing for {week_label}..."}},
-    {{"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:18", "text": "Thank you Alex..."}},
-    {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:36", "text": "..."}},
-    {{"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:54", "text": "..."}},
-    {{"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "1:15", "text": "..."}}
-  ]
-}}
-"""
+    podcast_config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=PodcastScriptResponse,
+        thinking_config=types.ThinkingConfig(thinking_level="LOW")
+    )
 
     try:
         response = client.models.generate_content(
             model=active_model,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=PodcastScriptResponse,
-                temperature=0.3
-            )
+            config=podcast_config
         )
     except Exception as e:
         loc = get_default_gemini_region(location)
@@ -497,11 +557,7 @@ Schema:
                     response = fallback_client.models.generate_content(
                         model=active_model,
                         contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=PodcastScriptResponse,
-                            temperature=0.3
-                        )
+                        config=podcast_config
                     )
             except Exception as e2:
                 logger.warning(f"Fallback to 'us' failed ({e2}). Retrying with 'gemini-2.5-flash' in 'us-central1'...")
@@ -511,11 +567,7 @@ Schema:
                 response = fb_client_2.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=PodcastScriptResponse,
-                        temperature=0.3
-                    )
+                    config=podcast_config
                 )
         else:
             raise
@@ -582,15 +634,17 @@ def inspect_report_with_gemini(
 
         contents.append(prompt_text)
 
+        inspection_config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=ReportMetadataInspection,
+            thinking_config=types.ThinkingConfig(thinking_level="MINIMAL")
+        )
+
         try:
             response = client.models.generate_content(
                 model=active_model,
                 contents=contents,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ReportMetadataInspection,
-                    temperature=0.1
-                )
+                config=inspection_config
             )
         except Exception as e:
             loc = get_default_gemini_region(location)
@@ -602,11 +656,7 @@ def inspect_report_with_gemini(
                 response = fallback_client.models.generate_content(
                     model=active_model,
                     contents=contents,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=ReportMetadataInspection,
-                        temperature=0.1
-                    )
+                    config=inspection_config
                 )
             else:
                 raise

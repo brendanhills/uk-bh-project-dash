@@ -382,16 +382,20 @@ project_dash/
 
 ## 🧪 Testing & Quality Assurance
 
-Project Dash includes a comprehensive, idiomatic `pytest` suite covering data integrity, live client calculations, Gemini generation, server endpoints, and frontend decoupling:
+Project Dash includes a comprehensive testing and static analysis suite covering frontend UI, data integrity, Gemini decision synthesis, server endpoints, and prompt integrity:
 
 ```bash
-# Run all automated tests (181 tests)
-pytest
+# Run all automated Python unit & integrity tests (122 tests)
+uv run pytest
 
-# Run specific test suites
-pytest tests/test_gemini_generator.py
-pytest tests/test_pipeline.py
-pytest tests/test_server_parameterized.py
+# Run Frontend UI static analysis, linting, and DOM unit tests (ESLint + Vitest)
+npm run verify
+
+# Run individual test suites
+uv run pytest tests/test_prompt_integrity.py         # Prompt template variable coverage & RASCEF XML structure
+uv run pytest tests/test_frontend_integrity.py       # Node AST check & frontend verification bridge
+uv run pytest tests/test_sync_podcast_generation.py  # Podcast sync & Cloud TTS pipeline
+uv run pytest tests/test_backend_pipeline.py         # Ingestion, calculations, and fallback synthesis
 ```
 
 

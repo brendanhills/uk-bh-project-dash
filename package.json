@@ -1,0 +1,21 @@
+{
+  "name": "project-dash-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend static analysis, syntax validation, and UX unit testing harness for Project Monaro Risk Platform",
+  "type": "module",
+  "scripts": {
+    "check:syntax": "node --check src/js/*.js src/js/modules/*.js",
+    "lint": "eslint src/js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run check:syntax && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.0",
+    "globals": "^15.14.0",
+    "happy-dom": "^16.8.1",
+    "vitest": "^3.0.5"
+  }
+}

@@ -51,8 +51,8 @@ def test_get_project_dir_helper():
         assert default_dir.endswith(str(Path("data") / "sample"))
 
 
-def test_bug_94_default_project_resolution(monkeypatch):
-    """Verify Bug #94: server.get_default_project defaults to 'monaro' when data/monaro exists."""
+def test_default_project_resolution_fallback(monkeypatch):
+    """Verify default project resolution and fallback (Bug #94): defaults to 'monaro' when data/monaro exists, else 'sample'."""
     monkeypatch.delenv("DEFAULT_PROJECT", raising=False)
     monkeypatch.delenv("DEFAULT_PROJECTS", raising=False)
     default_proj = server.get_default_project()
@@ -409,8 +409,8 @@ def test_server_send_json_helper():
     handler.wfile.write.assert_called_once()
 
 
-def test_bug_98_sync_endpoint_returns_updated_flag_and_lock(dummy_handler: DummyHandler):
-    """Bug #98: /api/sync returns explicit updated boolean and enforces non-blocking mutex lock."""
+def test_sync_endpoint_lock_and_diff_status(dummy_handler: DummyHandler):
+    """Verify /api/sync diff status and concurrency lock (Bug #98): returns explicit updated boolean and enforces non-blocking mutex lock."""
     # Test 1: Standard sync returns updated: False when no new files ingested
     server.DashboardHandler.handle_sync(dummy_handler, {'project': 'sample'})
     assert dummy_handler.sent_code == 200

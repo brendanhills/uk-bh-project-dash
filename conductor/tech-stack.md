@@ -38,7 +38,27 @@
 ## 5. Turnkey Operations & Handover Tooling
 - **Declarative Infrastructure as Code (Terraform):** Canonical GCP infrastructure codification via reusable Terraform modules (`deploy/terraform/modules/`) covering APIs, Storage, Artifact Registry, IAM, Cloud Run, Ingestion Pipeline, Cloud Build, and Monitoring. Managed through environment roots (`deploy/terraform/environments/dev` and `prod`).
 - **Root Developer Cockpit (`setup.sh`):** Unified developer interface providing pre-flight bootstrap, declarative Terraform provisioning, and sub-5s parallel cloud health auditing (`--status`, `-l`, `-m`, `--state-only`) with transparent manual checkpoints validation.
-- **Automated Testing Suite:** Idiomatic `pytest` test runner (`tests/`) with root discovery via `pyproject.toml` and shared session/function fixtures in `tests/conftest.py`. Executed via `pytest`.
+- **Automated Testing Suite:** Idiomatic `pytest` test runner (`tests/`) with root discovery via `pyproject.toml` and shared session/function fixtures in `tests/conftest.py`. Executed via `pytest` or `uv run pytest`.
 - **Operator Runbook:** `docs/DEPLOYMENT_GUIDE.md` and `docs/HANDOVER_GUIDE.md` for self-service maintenance by team members (`allins@`, `sdeacon@`, `waynedavis@`).
 - **Server Lifecycle:** Managed via Cloud Run in Sydney (`australia-southeast1`) and local `run_server.sh`.
+
+## 6. Frontend Static Analysis & UI Testing Layer
+- **Node.js Pre-Flight Syntax Gates:** Native AST verification (`node --check src/js/app.js src/js/app_extensions.js`) integrated into `run_server.sh` and `tests/test_frontend_integrity.py` ensuring invalid JavaScript is flagged before runtime execution.
+- **ESLint 9 Flat Config (`eslint.config.js`):** Modern flat configuration enforcing ES2022 standards, browser globals, no unused expressions, and strict scoping rules across all client script assets.
+- **Vitest & Happy-DOM Headless Harness (`vitest.config.js`):** Fast, headless DOM test runner (`tests/frontend/dashboard_ux.test.js`) executing against realistic dashboard fixture states (`tests/frontend/fixtures/dashboard_mock_data.js`).
+  - Tests 5×5 risk matrix filtering and cell click isolation.
+  - Verifies multi-register tab navigation (`Internal Risks` vs `Team Google Risks`).
+  - Validates interactive modal lifecycle (opening, rendering risk details, backdrop click-to-dismiss).
+  - Tests executive podcast player audio control bindings and live transcript drawer synchronization.
+- **Unified Verification Script (`npm run verify`):** Single-command verification runner (`node --check`, `npm run lint`, and `npm test`) bridged directly into Python CI via `tests/test_frontend_integrity.py`.
+
+## 7. Prompt Engineering & LLM Evaluation Architecture
+- **Universal Prompt Architecture (RASCEF XML):** Production prompt templates (`prompts/exec_summary_prompt.md`, `prompts/podcast_prompt.md`) standardized on canonical XML boundary delimiters (`<role>`, `<context>`, `<instructions>`, `<guardrails>`) with internal Markdown formatting, adhering to Google Prompt Engineering Standards (`go/si-guide`, DARE framework).
+- **Frontier Reasoning Optimization (Gemini 3):** Standardized on `gemini-3.5-flash` with categorical `thinking_level` (`HIGH` for executive decision synthesis, `LOW` for dual-host podcast dialogue, `MINIMAL` for multimodal report inspection), omitting legacy custom temperature parameters.
+- **Tier 1 Prompt Integrity & Variable Coverage Suite (`tests/test_prompt_integrity.py`):** Automated unit test suite verifying:
+  - 100% template variable resolution (ensuring 0 orphaned `{{VARIABLE}}` tokens remain after substitution).
+  - Graceful fallback for sparse or empty input payloads.
+  - Runtime re-coupling: ensuring `generate_multispeaker_podcast` dynamically loads `prompts/podcast_prompt.md` via `build_podcast_prompt` instead of relying on inlined hardcoded prompt strings.
+- **Autonomous Advisory Auditing (`prompt-critic`):** Integrated with the background `prompt-critic` subagent for non-destructive semantic audits across the 5 canonical evaluation dimensions (Factual Grounding, Safety Boundaries, Tone/Cadence, Instruction Adherence, and Injection Resilience).
+
 

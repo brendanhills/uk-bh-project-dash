@@ -322,7 +322,7 @@
             renderTeamGoogleRiskExplorer();
         }
 
-        function filterTeamGoogleMatrixCell(l, c) {
+        function filterTeamGoogleMatrixCell_legacy(l, c) {
             if (teamGoogleActiveMatrixCellFilter && teamGoogleActiveMatrixCellFilter.l === l && teamGoogleActiveMatrixCellFilter.c === c) {
                 clearTeamGoogleMatrixCellFilter();
                 return;
