@@ -63,6 +63,10 @@
 ---
 - [~] **[ROBUSTNESS] Track: Decouple Hardcoded Values & Magic Constants across Runtime & Infrastructure**
   *Link: [./tracks/decouple_hardcoded_values_and_constants_20260923/index.md](./tracks/decouple_hardcoded_values_and_constants_20260923/index.md)*
+---
+- [ ] **[FOUNDATION] Track: Refactor Monolithic `src/js/app.js` into Google-Standard ES6 Modules**
+  *Link: [./tracks/refactor_app_js_es_modules_20260923/index.md](./tracks/refactor_app_js_es_modules_20260923/index.md)*
+
 
 
 
