@@ -10,11 +10,16 @@
 - **Local / Cloudtop Runner:** Local Python 3.11+ server managed via 1-command tmux lifecycle (`run_server.sh`) on port 9000 for development and review.
 
 ## 2. Data & Storage Layer (Google Drive & GCS Bucket)
+- **Authoritative Storage Directive (GCS-First):** All runtime project datasets (`snapshots.json`, `config.json`, `risks.json`, `issues.json`) and rendered podcast audio binaries (`data/<project>/podcast_w*.mp3`) MUST be stored authoritatively in **Google Cloud Storage** (`gs://${DATA_BUCKET}/{project}/`, e.g. `gs://monaro-risk-dev-data/monaro/`). Do not rely on local `DATA_DIR` folder overrides or offline local copies; both Cloud Run (via `/app/data` GCS volume mount) and local development servers (`server.py` / `scripts/pipeline.py` via `DATA_BUCKET`) read and write directly to the target GCS bucket.
+- **Mandatory 100% Read-Only Web Tier Invariant:** The Cloud Run Web Presentation Service (`monaro-risk-dash-dev` / `monaro-risk-dash-prod`) MUST mount the GCS data bucket strictly as **Read-Only (`read_only = true`)** and expose **zero web `POST` configuration mutation endpoints**. Only the scheduled/background ingestion job (`monaro-risk-sync-job`) and authorized developer/operator CLI commands (`scripts/pipeline.py`) authenticated via GCP IAM (`roles/storage.objectAdmin`) may write to GCS.
 - **Primary Source of Truth:** Google Drive Shared Folder / Workspace Storage.
-- **Podcast Audio & Snapshot Persistence:** Rendered audio binaries (`.mp3`) and snapshot registries are persisted to Google Cloud Storage (`gs://${PROJECT_ID}-data/{project}/`) via Cloud Run volume mounts (`/app/data`) and direct pipeline upload.
-- **Weekly Ingestion Pipeline:** Google Drive PDF reports (Week 27, 26, 25...) and Google Sheets risk registers.
-- **Historical Persistence:** `weekly_snapshots.json` and `live_synced_data.json` stored in Google Drive and GCS bucket.
-- **User-Triggered Ingestion:** On-demand sync, PDF extraction, and Chirp 3 HD neural podcast audio synthesis triggered directly from the web UI.
+- **Podcast Audio & Snapshot Persistence:** Rendered audio binaries (`.mp3`) and snapshot registries are persisted directly to Google Cloud Storage (`gs://${DATA_BUCKET}/{project}/`) via Cloud Run volume mounts (`/app/data`) and direct GCS bucket I/O.
+- **Weekly Ingestion Pipeline:** Google Drive PDF reports (Week 33, 32, 31...) and Google Sheets risk registers.
+- **Historical Persistence:** `snapshots.json`, `config.json`, `risks.json`, and `issues.json` stored in the project's GCS bucket prefix (`{project}/`).
+- **CLI Configuration Pull / Edit (`vi`) / Push Workflow:** Project configuration (`config.json`, including Stream 1 & Stream 2 Google Sheet URLs and Drive Folder ID) is managed via `scripts/pipeline.py`:
+  - `--pull-config [file_path]`: Downloads `gs://${DATA_BUCKET}/${project}/config.json` to a local file (default `data/<project>/config.json`) so operators can edit it in `vi`.
+  - `--push-config [file_path]` (alias `--upload-config`): Validates JSON schema and Workspace URL safety (`validate_google_sheet_url`, `validate_drive_folder_id`) and uploads the local file back to `gs://${DATA_BUCKET}/${project}/config.json`.
+  - `--set-primary-sheet <url>`, `--set-team-google-sheet <url>`, `--set-drive-folder <id>`: 1-command shortcuts to update specific source links directly in GCS.
 
 ## 3. Access Control & Governance (Multi-Tier Architecture)
 - **Identity-Aware Proxy (IAP) Web Access Layer (Primary User Interface):**

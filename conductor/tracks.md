@@ -57,4 +57,11 @@
 ---
 - [ ] **[FOUNDATION] Track: Migrate to Common Project Framework (`project_init`)**
   *Link: [./tracks/common_project_framework_migration_20260923/index.md](./tracks/common_project_framework_migration_20260923/index.md)*
+---
+- [~] **[ROBUSTNESS] Track: GCS-First Storage Architecture & Config Management Tooling (Bug #104)**
+  *Link: [./tracks/gcs_storage_and_config_sync_20260923/index.md](./tracks/gcs_storage_and_config_sync_20260923/index.md)*
+---
+- [ ] **[ROBUSTNESS] Track: Decouple Hardcoded Values & Magic Constants across Runtime & Infrastructure**
+  *Link: [./tracks/decouple_hardcoded_values_and_constants_20260923/index.md](./tracks/decouple_hardcoded_values_and_constants_20260923/index.md)*
+
 

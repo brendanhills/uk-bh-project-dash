@@ -1,0 +1,10 @@
+{
+  "track_id": "gcs_storage_and_config_sync_20260923",
+  "title": "GCS-First Storage Architecture & Config Management Tooling",
+  "type": "feature",
+  "focus": "robustness",
+  "status": "in_progress",
+  "bug_id": 104,
+  "created_at": "2026-09-23T16:01:00+10:00",
+  "updated_at": "2026-09-23T16:49:00+10:00"
+}

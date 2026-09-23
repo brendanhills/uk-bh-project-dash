@@ -20,8 +20,9 @@ The **Project Monaro Program Governance & Risk Intelligence Platform** (Monaro R
 3. **Cohesive, Unified Architecture**:
    - The codebase maintains a small, unified footprint with clear component responsibilities.
    - Backend operations are centralized into a single ingestion pipeline and a concise REST interface to keep the system simple to understand, audit, and maintain.
-4. **Zero-Trust Security & Data Isolation**:
+4. **Zero-Trust Security, Read-Only Web Tier & Data Isolation**:
    - Access is secured by Google SSO via Identity-Aware Proxy (IAP).
+   - **100% Read-Only Web Presentation Tier**: The web dashboard (`monaro-risk-dash-dev` / `prod`) mounts the GCS bucket strictly as read-only (`read_only = true`) and exposes zero web configuration write endpoints, eliminating web mutation/injection attack vectors. Configuration updates (`config.json` Sheet URLs and Drive Folder IDs) are performed via the validated CLI pull/edit/push workflow (`scripts/pipeline.py --pull-config` / `--push-config`) using GCP IAM.
    - Sensitive project datasets are decoupled from public showcase datasets (`?project=sample`), keeping confidential data protected while enabling safe demos.
 
 ## Key Features & Capabilities
