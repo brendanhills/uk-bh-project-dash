@@ -54,3 +54,7 @@
 ---
 - [x] **Track: Scheduled Ingestion Pipeline & Static Sync Architecture**
   *Link: [./tracks/scheduled_sync_architecture_20260901/index.md](./tracks/scheduled_sync_architecture_20260901/index.md)*
+---
+- [ ] **[FOUNDATION] Track: Migrate to Common Project Framework (`project_init`)**
+  *Link: [./tracks/common_project_framework_migration_20260923/index.md](./tracks/common_project_framework_migration_20260923/index.md)*
+
