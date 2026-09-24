@@ -1,0 +1,11 @@
+{
+  "track_id": "aurora_synthetic_data_sanitization_20260924",
+  "name": "Project Aurora Synthetic Assets & Healthcare Modernization Pivot",
+  "type": "feature",
+  "focus": "robustness",
+  "status": "new",
+  "created_at": "2026-09-24T17:33:17Z",
+  "updated_at": "2026-09-24T17:33:17Z",
+  "bug_id": null,
+  "related_backlog_ids": [16, 126]
+}
