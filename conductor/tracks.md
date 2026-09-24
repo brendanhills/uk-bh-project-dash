@@ -69,7 +69,7 @@
 - [x] **[ROBUSTNESS] Track: GCS In-Memory Cache Unification & Dev/Prod Parity**
   *Link: [./tracks/gcs_in_memory_cache_unification_20260923/index.md](./tracks/gcs_in_memory_cache_unification_20260923/index.md)*
 ---
-- [ ] **[ROBUSTNESS] Track: Project Aurora Synthetic Assets & Healthcare Modernization Pivot**
+- [~] **[ROBUSTNESS] Track: Project Aurora Synthetic Assets & Healthcare Modernization Pivot**
   *Link: [./tracks/aurora_synthetic_data_sanitization_20260924/index.md](./tracks/aurora_synthetic_data_sanitization_20260924/index.md)*
 
 
