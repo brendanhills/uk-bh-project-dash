@@ -186,7 +186,16 @@ def test_sync_drive_reports_generates_podcast_when_new_report_discovered(mock_pr
         {"speaker": "Jordan", "role": "Technical Director", "avatar": "🤖", "time": "0:15", "text": "Reviewing Week 31 milestones."}
     ]
 
+    mock_synthesis = {
+        "synthesis": {"executive": "Week 31 executive synthesis."},
+        "top3": [{"title": "Milestone 3 Delivery"}],
+        "sleeperOutlier": {"title": "Enclave Cutover"},
+        "generatedBy": "gemini-3.5-flash"
+    }
+
     with patch('scripts.sync_drive.query_drive_folder_live', return_value=mock_files), \
+         patch('scripts.gemini_generator.inspect_report_with_gemini', return_value=None), \
+         patch('scripts.gemini_generator.generate_executive_synthesis', return_value=mock_synthesis), \
          patch('scripts.gemini_generator.generate_multispeaker_podcast', return_value=mock_script) as mock_gen:
 
         summary = sync_drive_reports(
@@ -205,6 +214,7 @@ def test_sync_drive_reports_generates_podcast_when_new_report_discovered(mock_pr
         w31 = data["snapshots"]["w31"]
         assert w31["generatedBy"] == "gemini-3.5-flash"
         assert w31["podcastScript"][0]["text"] == "Week 31 new report briefing."
+
 
 
 # ==============================================================================
@@ -235,9 +245,10 @@ def test_sync_project_data_triggers_podcast_generation(mock_project_env):
 # ==============================================================================
 # Test 5: Server POST /api/sync Triggers Podcast Generation
 # ==============================================================================
-def test_server_handle_sync_triggers_podcast_generation(mock_project_env):
-    """Verify server.py handle_sync executes podcast generation and reports podcast_updated."""
+def test_server_handle_sync_triggers_podcast_generation(mock_project_env, monkeypatch):
+    """Verify server.py handle_sync executes podcast generation and reports podcast_updated when read-only is bypassed."""
     import server
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
 
     mock_script = [
         {"speaker": "Alex", "role": "Program Analyst", "avatar": "🎙️", "time": "0:00", "text": "Server sync briefing."},
@@ -261,6 +272,7 @@ def test_server_handle_sync_triggers_podcast_generation(mock_project_env):
         assert mock_gen.called
 
 
+
 # ==============================================================================
 # Test 6: Gemini 3.5 Flash Model & Region Default Invariant
 # ==============================================================================
@@ -275,17 +287,18 @@ def test_gemini_generator_defaults_to_gemini_35_flash_and_us(monkeypatch):
     assert model == "gemini-3.5-flash", "Model must default to gemini-3.5-flash"
 
     region = get_default_gemini_region()
-    assert region == "us", "Region must default to us for Vertex AI"
+    assert region == "australia-southeast1", "Region must default to australia-southeast1 for Australian sovereign deployment"
 
 
 # ==============================================================================
 # Test 7: Frontend Transcript Access Decoupled from Audio
 # ==============================================================================
 def test_frontend_transcript_button_not_disabled_when_podcast_script_exists(project_root: Path):
-    """Verify app.js does not disable the transcript button when podcast script exists."""
+    """Verify podcast_player.js / app.js does not disable the transcript button when podcast script exists."""
     app_js_path = project_root / "src" / "js" / "app.js"
-    assert app_js_path.exists()
-    content = app_js_path.read_text(encoding="utf-8")
+    podcast_js_path = project_root / "src" / "js" / "modules" / "podcast_player.js"
+    assert app_js_path.exists() and podcast_js_path.exists()
+    content = app_js_path.read_text(encoding="utf-8") + "\n" + podcast_js_path.read_text(encoding="utf-8")
 
     # In updatePodcastAudioForWeek, transcriptBtn should check if script exists
     # and must not disable transcriptBtn if script is present

@@ -54,7 +54,7 @@ variable "twosync_group" {
 variable "lead_users" {
   description = "Lead user accounts for IAP access and job execution"
   type        = list(string)
-  default     = ["brendanhills@google.com", "allins@google.com"]
+  default     = ["brendanhills@google.com", "allins@google.com", "dougturk@google.com"]
 }
 
 variable "gemini_model" {
@@ -66,5 +66,5 @@ variable "gemini_model" {
 variable "gemini_region" {
   description = "Vertex AI region for Gemini execution"
   type        = string
-  default     = "us-central1"
+  default     = "australia-southeast1"
 }

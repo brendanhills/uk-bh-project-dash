@@ -63,9 +63,13 @@
 ---
 - [~] **[ROBUSTNESS] Track: Decouple Hardcoded Values & Magic Constants across Runtime & Infrastructure**
   *Link: [./tracks/decouple_hardcoded_values_and_constants_20260923/index.md](./tracks/decouple_hardcoded_values_and_constants_20260923/index.md)*
----
-- [ ] **[FOUNDATION] Track: Refactor Monolithic `src/js/app.js` into Google-Standard ES6 Modules**
+- [~] **[FOUNDATION] Track: Refactor Monolithic `src/js/app.js` into Google-Standard ES6 Modules**
   *Link: [./tracks/refactor_app_js_es_modules_20260923/index.md](./tracks/refactor_app_js_es_modules_20260923/index.md)*
+---
+- [x] **[ROBUSTNESS] Track: GCS In-Memory Cache Unification & Dev/Prod Parity**
+  *Link: [./tracks/gcs_in_memory_cache_unification_20260923/index.md](./tracks/gcs_in_memory_cache_unification_20260923/index.md)*
+
+
 
 
 

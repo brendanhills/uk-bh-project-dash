@@ -3,7 +3,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-tests/
 assets/*.mp3
 assets/*.wav
 deploy/cleanup-policy.json
+.venv/
+node_modules/
+**/.terraform/
+*.tfstate*

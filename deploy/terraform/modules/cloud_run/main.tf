@@ -58,7 +58,7 @@ resource "google_cloud_run_v2_service" "web_service" {
       name = "data-volume"
       gcs {
         bucket    = var.data_bucket_name
-        read_only = false
+        read_only = true
       }
     }
   }

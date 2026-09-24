@@ -3,6 +3,12 @@ variable "project_id" {
   type        = string
 }
 
+variable "enable_trigger" {
+  description = "Whether to create the Cloud Build GitHub push trigger"
+  type        = bool
+  default     = true
+}
+
 variable "region" {
   description = "GCP Region for Cloud Build trigger"
   type        = string

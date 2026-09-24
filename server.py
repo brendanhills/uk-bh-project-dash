@@ -34,30 +34,25 @@ DIRECTORY = BASE_DIR
 DATA_BASE_DIR = os.path.join(DIRECTORY, "data")
 SNAPSHOTS_FILE = os.path.join(DIRECTORY, "data", "sample", "snapshots.json")
 
+# Strict Presentation Mode: server.py is permanently and unconditionally read-only.
+# Ingestion and data mutations are strictly decoupled and executed via scripts/sync_drive.py or Cloud Run Jobs.
+STRICT_READ_ONLY = True
+
+
+
+from scripts.gcs_store import get_project_data_store, resolve_configured_projects
+from scripts.security_utils import sanitize_slug, safe_join
+
 def get_default_project():
-    env_default = os.getenv('DEFAULT_PROJECTS') or os.getenv('DEFAULT_PROJECT')
-    if env_default:
-        first_proj = env_default.split(',')[0].strip()
-        if first_proj:
-            return first_proj
-    env_path = os.path.join(DIRECTORY, '.env')
-    if os.path.exists(env_path):
-        try:
-            with open(env_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('DEFAULT_PROJECTS=') or line.startswith('DEFAULT_PROJECT='):
-                        val = line.split('=', 1)[1].strip().strip('"\'')
-                        first_proj = val.split(',')[0].strip()
-                        if first_proj:
-                            return first_proj
-        except OSError:
-            pass
+    projects = resolve_configured_projects()
+    for p in projects:
+        if p != 'sample':
+            if os.path.exists(os.path.join(DIRECTORY, 'data', p)) or get_project_data_store().bucket_name:
+                return p
     if os.path.exists(os.path.join(DIRECTORY, 'data', 'monaro')):
         return 'monaro'
     return 'sample'
 
-from scripts.security_utils import sanitize_slug, safe_join
 
 def get_project_dir(project_slug=''):
     if not project_slug:
@@ -65,7 +60,13 @@ def get_project_dir(project_slug=''):
     try:
         clean_slug = sanitize_slug(project_slug, default=get_default_project())
         p_dir = safe_join(DATA_BASE_DIR, clean_slug)
-        if os.path.exists(p_dir):
+        store = get_project_data_store()
+        if (
+            os.path.exists(p_dir)
+            or clean_slug == 'monaro'
+            or clean_slug in store.get_status().get('loaded_projects', [])
+            or store.bucket_name
+        ):
             return p_dir
     except (ValueError, Exception):
         pass
@@ -117,12 +118,36 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Expires', '0')
         super().end_headers()
 
+    def _reject_if_read_only(self):
+        """Rejects mutation requests when strict presentation mode is enabled."""
+        if globals().get('STRICT_READ_ONLY', True):
+            self.send_json({
+                'error': 'Mutation endpoints are disabled on the web presentation tier. Data synchronization is managed exclusively via Cloud Run Jobs and scheduled ingestion pipelines.',
+                'status': 'forbidden'
+            }, 403)
+            return True
+        return False
+
+
+
     def do_OPTIONS(self):
         self.send_response(204)
-        self.send_header('Access-Control-Allow-Origin', '*')
+        headers = getattr(self, 'headers', None)
+        origin = headers.get('Origin', '') if headers and hasattr(headers, 'get') else ''
+        if origin and (
+            origin.endswith('.google.com')
+            or origin.endswith('.run.app')
+            or origin.startswith('http://localhost:')
+            or origin.startswith('http://127.0.0.1:')
+        ):
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+        else:
+            self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.end_headers()
+
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -133,8 +158,12 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         elif parsed.path in ('/api/status', '/api/projects/status'):
             self.handle_status(parsed.query)
         elif parsed.path in ('/api/sync', '/api/sync-all'):
+            if self._reject_if_read_only():
+                return
             self.handle_sync(parsed.query)
         elif parsed.path == '/api/sync-sheet':
+            if self._reject_if_read_only():
+                return
             self.handle_sync_sheet(parsed.query)
         elif parsed.path == '/api/check-drive-sync':
             self.handle_check_drive_sync(parsed.query)
@@ -143,13 +172,151 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         elif parsed.path == '/api/check-notebook-sync':
             self.handle_check_notebook_sync(parsed.query)
         elif parsed.path == '/api/sync-notebook':
+            if self._reject_if_read_only():
+                return
             self.handle_sync_notebook(parsed.query)
         elif parsed.path == '/api/ingest-report':
+            if self._reject_if_read_only():
+                return
             self.handle_ingest_report(parsed.query)
         elif parsed.path in ('/data/build_info.json', '/build_info.json', '/api/build-info'):
             self.handle_build_info(parsed.query)
         else:
+            data_match = re.match(r'^/data/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_.-]+\.json)$', parsed.path)
+            if data_match:
+                req_proj, req_file = data_match.group(1), data_match.group(2)
+                if '..' in req_file or req_file.startswith('/') or req_file.startswith('\\'):
+                    self.send_json({'error': 'Invalid file path', 'status': 'bad_request'}, 400)
+                    return
+                resolved_dir = get_project_dir(req_proj)
+                from scripts.security_utils import validate_safe_path
+                try:
+                    target_path = validate_safe_path(
+                        os.path.join(resolved_dir, req_file),
+                        allowed_parents=[resolved_dir, DATA_BASE_DIR]
+                    )
+                except (ValueError, PermissionError):
+                    self.send_json({'error': 'Access denied', 'status': 'forbidden'}, 403)
+                    return
+                store = get_project_data_store()
+                if getattr(self, 'wfile', None) is not None:
+                    raw_bytes = store.get_json_bytes(req_proj, req_file)
+                    if raw_bytes is None and req_proj != 'monaro':
+                        raw_bytes = store.get_json_bytes('sample', req_file)
+                    if raw_bytes is not None:
+                        self.send_json_bytes(raw_bytes)
+                        return
+                else:
+                    payload = store.get_json(req_proj, req_file)
+                    if payload is None and req_proj != 'monaro':
+                        payload = store.get_json('sample', req_file)
+                    if payload is not None:
+                        self.send_json(payload)
+                        return
+                self.send_json({'error': f'Dataset {req_proj}/{req_file} not found in GCS store', 'status': 'not_found'}, 404)
+                return
+            audio_match = re.match(r'^/(?:data/([a-zA-Z0-9_-]+)|assets)/(podcast_w\d+\.mp3)$', parsed.path)
+            if audio_match:
+                req_proj = audio_match.group(1) or get_default_project() or 'monaro'
+                req_audio = audio_match.group(2)
+                store = get_project_data_store()
+                audio_bytes = store.get_audio_bytes(req_proj, req_audio)
+                if audio_bytes is None and req_proj != 'sample':
+                    audio_bytes = store.get_audio_bytes('sample', req_audio)
+                if audio_bytes:
+                    self._send_audio_bytes(audio_bytes)
+                    return
+                self.send_json({'error': f'Audio {req_proj}/{req_audio} not found in GCS store', 'status': 'not_found'}, 404)
+                return
             super().do_GET()
+
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == '/favicon.ico':
+            self.send_response(204)
+            self.send_header('Content-Type', 'image/x-icon')
+            self.end_headers()
+            return
+        elif parsed.path in ('/api/status', '/api/projects/status', '/data/build_info.json', '/build_info.json', '/api/build-info'):
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            return
+
+        data_match = re.match(r'^/data/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_.-]+\.json)$', parsed.path)
+        if data_match:
+            req_proj, req_file = data_match.group(1), data_match.group(2)
+            store = get_project_data_store()
+            raw_bytes = store.get_json_bytes(req_proj, req_file)
+            if raw_bytes is None and req_proj != 'monaro':
+                raw_bytes = store.get_json_bytes('sample', req_file)
+            if raw_bytes is not None:
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(raw_bytes)))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                return
+            self.send_response(404)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            return
+
+        audio_match = re.match(r'^/(?:data/([a-zA-Z0-9_-]+)|assets)/(podcast_w\d+\.mp3)$', parsed.path)
+        if audio_match:
+            req_proj = audio_match.group(1) or get_default_project() or 'monaro'
+            req_audio = audio_match.group(2)
+            store = get_project_data_store()
+            audio_bytes = store.get_audio_bytes(req_proj, req_audio)
+            if audio_bytes is None and req_proj != 'sample':
+                audio_bytes = store.get_audio_bytes('sample', req_audio)
+            if audio_bytes is not None:
+                self.send_response(200)
+                self.send_header('Content-Type', 'audio/mpeg')
+                self.send_header('Accept-Ranges', 'bytes')
+                self.send_header('Content-Length', str(len(audio_bytes)))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                return
+            self.send_response(404)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            return
+
+        super().do_HEAD()
+
+    def _send_audio_bytes(self, audio_bytes: bytes):
+        """Streams cached MP3 bytes with Content-Type: audio/mpeg and HTTP Range support."""
+        total_len = len(audio_bytes)
+        headers = getattr(self, 'headers', None)
+        range_header = headers.get('Range', '') if headers and hasattr(headers, 'get') else ''
+        if range_header and range_header.startswith('bytes='):
+            try:
+                range_spec = range_header.split('=', 1)[1].split(',')[0].strip()
+                start_str, end_str = range_spec.split('-', 1)
+                start = int(start_str) if start_str else 0
+                end = int(end_str) if end_str else total_len - 1
+                end = min(end, total_len - 1)
+                if 0 <= start <= end < total_len:
+                    chunk = audio_bytes[start:end + 1]
+                    self.send_response(206)
+                    self.send_header('Content-Type', 'audio/mpeg')
+                    self.send_header('Accept-Ranges', 'bytes')
+                    self.send_header('Content-Range', f'bytes {start}-{end}/{total_len}')
+                    self.send_header('Content-Length', str(len(chunk)))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(chunk)
+                    return
+            except Exception:
+                pass
+        self.send_response(200)
+        self.send_header('Content-Type', 'audio/mpeg')
+        self.send_header('Accept-Ranges', 'bytes')
+        self.send_header('Content-Length', str(total_len))
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(audio_bytes)
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -164,14 +331,24 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     params[k] = v[0] if len(v) == 1 else v
 
         if parsed.path in ('/api/sync', '/api/sync-all'):
+            if self._reject_if_read_only():
+                return
             self.handle_sync(params)
         elif parsed.path in ('/api/ingest', '/api/ingest-report'):
+            if self._reject_if_read_only():
+                return
             self.handle_ingest(params)
         elif parsed.path in ('/api/briefing/generate', '/api/regenerate-briefing', '/api/generate-podcast'):
+            if self._reject_if_read_only():
+                return
             self.handle_briefing(params)
         elif parsed.path == '/api/ingest-data':
+            if self._reject_if_read_only():
+                return
             self.handle_ingest_data(params)
         elif parsed.path == '/api/sync-notebook':
+            if self._reject_if_read_only():
+                return
             self.handle_sync_notebook(params)
         else:
             super().do_POST()
@@ -179,11 +356,44 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def send_json(self, data, status_code=200):
         self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        headers = getattr(self, 'headers', None)
+        origin = headers.get('Origin', '') if headers and hasattr(headers, 'get') else ''
+        if origin and (
+            origin.endswith('.google.com')
+            or origin.endswith('.run.app')
+            or origin.startswith('http://localhost:')
+            or origin.startswith('http://127.0.0.1:')
+        ):
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
+        wfile = getattr(self, 'wfile', None)
+        if wfile and hasattr(wfile, 'write'):
+            wfile.write(json.dumps(data).encode('utf-8'))
+
+    def send_json_bytes(self, raw_bytes: bytes, status_code: int = 200):
+        self.send_response(status_code)
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Content-Length', str(len(raw_bytes)))
+        headers = getattr(self, 'headers', None)
+        origin = headers.get('Origin', '') if headers and hasattr(headers, 'get') else ''
+        if origin and (
+            origin.endswith('.google.com')
+            or origin.endswith('.run.app')
+            or origin.startswith('http://localhost:')
+            or origin.startswith('http://127.0.0.1:')
+        ):
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.end_headers()
+        wfile = getattr(self, 'wfile', None)
+        if wfile and hasattr(wfile, 'write'):
+            wfile.write(raw_bytes)
+
 
     def _parse_params(self, query_or_params):
         if isinstance(query_or_params, dict):
@@ -196,17 +406,45 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     # --- Consolidated REST Handlers ---
 
     def handle_status(self, query_or_params=''):
-        """GET /api/status?project=<slug>"""
+        """GET /api/status?project=<slug> - Safe read-only status query with GCS cache telemetry."""
         try:
             params = parse_request_params(query_or_params)
             proj = params.get('project') or get_default_project()
-            result = sync_project_data(project_name=proj)
-            self.send_json(result)
+            store = get_project_data_store()
+            cache_status = store.get_status()
+
+            snaps_data = store.get_json(proj, 'snapshots.json') or {}
+            risks_data = store.get_json(proj, 'risks.json') or []
+            issues_data = store.get_json(proj, 'issues.json') or []
+
+            snaps_map = snaps_data.get('snapshots', snaps_data) if isinstance(snaps_data, dict) else {}
+            last_synced = None
+            if snaps_map and isinstance(snaps_map, dict):
+                weeks = [k for k in snaps_map.keys() if k != 'current_week']
+                if weeks:
+                    last_week_obj = snaps_map.get(weeks[-1], {})
+                    if isinstance(last_week_obj, dict):
+                        last_synced = last_week_obj.get('date')
+
+            self.send_json({
+                'status': 'ok',
+                'project': proj,
+                'read_only': STRICT_READ_ONLY,
+                'last_synced': last_synced or datetime.now().strftime('%Y-%m-%d'),
+                'total_risks': len(risks_data) if isinstance(risks_data, list) else 0,
+                'total_issues': len(issues_data) if isinstance(issues_data, list) else 0,
+                'total_snapshots': len(snaps_map) if isinstance(snaps_map, dict) else 0,
+                'gcs_cache': cache_status,
+                'timestamp': datetime.now().isoformat()
+            })
         except Exception as e:
             self.send_json({'error': str(e)}, 500)
 
     def handle_sync(self, query_or_params=''):
         """POST /api/sync?project=<slug> or GET /api/sync"""
+        if self._reject_if_read_only():
+            return
+
         # Non-blocking lock to prevent multiple concurrent syncs
         if not _sync_lock.acquire(blocking=False):
             self.send_json({
@@ -282,6 +520,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_ingest(self, query_or_params=''):
         """POST /api/ingest?project=<slug>"""
+        if self._reject_if_read_only():
+            return
         try:
             params = parse_request_params(query_or_params)
             proj = params.get('project') or get_default_project()
@@ -310,17 +550,32 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_briefing(self, query_or_params=''):
         """POST /api/briefing/generate?project=<slug>"""
+        if self._reject_if_read_only():
+            return
         try:
             params = parse_request_params(query_or_params)
             proj = params.get('project') or get_default_project()
-            week = params.get('week', 'w27')
-            force_fb = bool(params.get('fallback', False))
             p_dir = get_project_dir(proj)
 
             snaps_file = os.path.join(p_dir, 'snapshots.json')
             snaps_data = load_json_file(snaps_file, {})
             snaps = snaps_data.get('snapshots', snaps_data) if isinstance(snaps_data, dict) else {}
-            snap = snaps.get(week, snaps.get('w27', snaps.get('Week 27', {})))
+
+            # Dynamic latest week discovery
+            discovered_latest_week = snaps_data.get('current_week') if isinstance(snaps_data, dict) else None
+            if not discovered_latest_week and snaps:
+                discovered_latest_week = list(snaps.keys())[-1]
+            default_week = discovered_latest_week or 'latest'
+
+            week = params.get('week') or default_week
+            force_fb = bool(params.get('fallback', False))
+
+            # Retrieve requested snapshot, or fallback dynamically to current_week / first available
+            snap = snaps.get(week)
+            if not snap and snaps:
+                snap = snaps.get(discovered_latest_week, next(iter(snaps.values()), {}))
+            elif not snap:
+                snap = {}
 
             cfg = load_json_file(os.path.join(p_dir, 'config.json'), {})
             metrics = {
@@ -431,17 +686,6 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             issues = load_json_file(os.path.join(p_dir, 'issues.json'), [])
             snaps = load_json_file(os.path.join(p_dir, 'snapshots.json'), {})
 
-            if not risks and not snaps:
-                legacy_data = os.path.join(DIRECTORY, 'src', 'data', 'live_synced_data.json')
-                if os.path.exists(legacy_data):
-                    ld = load_json_file(legacy_data, {})
-                    risks = ld.get('risks', [])
-                    issues = ld.get('issues', [])
-                legacy_snaps = os.path.join(DIRECTORY, 'src', 'data', 'weekly_snapshots.json')
-                if os.path.exists(legacy_snaps):
-                    ls = load_json_file(legacy_snaps, {})
-                    snaps = ls.get('snapshots', {})
-
             tg_risks = [r for r in risks if r.get('sourceRegister') == 'team_google' or str(r.get('id')).startswith('TG-') or str(r.get('id')).startswith('AUR-TG-')]
             joint_risks = [r for r in risks if r.get('sourceRegister') != 'team_google' and not str(r.get('id')).startswith('TG-') and not str(r.get('id')).startswith('AUR-TG-')]
 
@@ -469,11 +713,9 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             snapshots_data = load_json_file(os.path.join(p_dir, 'snapshots.json'), {})
             cfg = load_json_file(os.path.join(p_dir, 'config.json'), {})
 
-            # 1. Live Google Drive Folder Querying on demand
             folder_id = cfg.get('sources', {}).get('googleDrive', {}).get('folderId') or cfg.get('driveFolderId')
             live_reports = query_live_drive_folder(folder_id) if folder_id else []
 
-            # 2. Known configured reports fallback/default
             raw_known = cfg.get('sources', {}).get('googleDrive', {}).get('knownReports')
             if raw_known is not None:
                 configured_reports = list(raw_known)
@@ -482,18 +724,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 configured_reports = list(KNOWN_DRIVE_REPORTS)
 
-            seen_ids = set()
-            seen_names = set()
-            merged_reports = []
-
-            # Add live reports first (authoritative Google Drive metadata & real URLs)
-            for r in live_reports:
-                merged_reports.append(r)
-                if r.get('id'): seen_ids.add(str(r['id']))
-                if r.get('name'): seen_names.add(r['name'])
-
-            # Add configured / default reports not seen in live query
-            for r in configured_reports:
+            seen_ids, seen_names, merged_reports = set(), set(), []
+            for r in live_reports + configured_reports:
                 r_id = str(r.get('id')) if r.get('id') else ''
                 r_name = r.get('name', '')
                 if (not r_id or r_id not in seen_ids) and (not r_name or r_name not in seen_names):
@@ -501,31 +733,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     if r_id: seen_ids.add(r_id)
                     if r_name: seen_names.add(r_name)
 
-            # 3. Add local candidate reports on disk if not seen
-            for candidate_folder in ['drive_reports', 'drive_cache', 'reports', 'docs']:
-                cf_path = os.path.join(p_dir, candidate_folder)
-                if os.path.exists(cf_path) and os.path.isdir(cf_path):
-                    for fn in sorted(os.listdir(cf_path)):
-                        if fn.endswith(('.pdf', '.docx', '.doc', '.json', '.gdoc', '.pptx')) and fn not in seen_names:
-                            w_match = re.search(r'week[\s_-]*(\d+)', fn, re.IGNORECASE) or re.search(r'\bw(\d+)\b', fn, re.IGNORECASE)
-                            w_label = f"Week {w_match.group(1)}" if w_match else "New Report"
-                            merged_reports.append({
-                                "id": f"local_{fn}",
-                                "name": fn,
-                                "week": w_label,
-                                "date": "Recent",
-                                "url": f"file://{os.path.join(cf_path, fn)}"
-                            })
-                            seen_names.add(fn)
-
-            known_reports = merged_reports
-
-            # 4. Extract all indexed identifiers from snapshots
-            indexed_ids = set()
-            indexed_names = set()
-            indexed_weeks = set()
-            indexed_week_numbers = set()
-
+            indexed_ids, indexed_names, indexed_weeks, indexed_week_numbers = set(), set(), set(), set()
             snaps_dict = snapshots_data.get('snapshots', snapshots_data) if isinstance(snapshots_data, dict) else {}
             for snap_key, s in snaps_dict.items():
                 if isinstance(s, dict):
@@ -534,17 +742,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     if isinstance(s.get('driveFile'), dict):
                         if s['driveFile'].get('id'): indexed_ids.add(str(s['driveFile']['id']))
                         if s['driveFile'].get('name'): indexed_names.add(s['driveFile']['name'])
-                    if s.get('week'):
-                        indexed_weeks.add(str(s['week']).lower())
-                    if s.get('weekLabel'):
-                        indexed_weeks.add(str(s['weekLabel']).lower())
+                    if s.get('week'): indexed_weeks.add(str(s['week']).lower())
+                    if s.get('weekLabel'): indexed_weeks.add(str(s['weekLabel']).lower())
                     if s.get('weekNumber') is not None:
                         try:
                             indexed_week_numbers.add(int(s['weekNumber']))
                         except (ValueError, TypeError):
                             pass
-
-                # Check snap_key (e.g. 'w28', 'Week 28')
                 indexed_weeks.add(str(snap_key).lower())
                 k_match = re.search(r'(\d+)', str(snap_key))
                 if k_match:
@@ -553,30 +757,20 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     except (ValueError, TypeError):
                         pass
 
-            all_reports = []
-            uningested = []
-            for r in known_reports:
+            all_reports, uningested = [], []
+            for r in merged_reports:
                 r_id = str(r.get('id', ''))
                 r_name = r.get('name', '')
                 r_week = str(r.get('week', '')).lower()
-                r_week_num = None
                 w_match = re.search(r'(\d+)', r_name) or re.search(r'(\d+)', r_week)
-                if w_match:
-                    try:
-                        r_week_num = int(w_match.group(1))
-                    except (ValueError, TypeError):
-                        pass
+                r_week_num = int(w_match.group(1)) if w_match else None
 
-                is_ingested = False
-                if r_id and r_id in indexed_ids:
-                    is_ingested = True
-                elif r_name and r_name in indexed_names:
-                    is_ingested = True
-                elif r_week and r_week in indexed_weeks:
-                    is_ingested = True
-                elif r_week_num is not None and r_week_num in indexed_week_numbers:
-                    is_ingested = True
-
+                is_ingested = (
+                    (bool(r_id) and r_id in indexed_ids)
+                    or (bool(r_name) and r_name in indexed_names)
+                    or (bool(r_week) and r_week in indexed_weeks)
+                    or (r_week_num is not None and r_week_num in indexed_week_numbers)
+                )
                 report_item = {
                     'id': r.get('id', ''),
                     'name': r.get('name', ''),
@@ -593,7 +787,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 'status': 'ok',
                 'project': proj,
                 'lastSynced': snapshots_data.get('lastSynced') if isinstance(snapshots_data, dict) else None,
-                'totalInDrive': len(known_reports),
+                'totalInDrive': len(merged_reports),
                 'ingestedCount': len(all_reports) - len(uningested),
                 'uningestedCount': len(uningested),
                 'uningestedReports': uningested,
@@ -632,26 +826,9 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def handle_check_notebook_sync(self, query_str=''):
         try:
             params = parse_request_params(query_str)
-            has_proj_arg = 'project' in params
             proj = params.get('project') or get_default_project()
             p_dir = get_project_dir(proj)
             kb_data = load_json_file(os.path.join(p_dir, 'knowledge.json'), {})
-
-            cat_path = os.path.join(DIRECTORY, 'data', 'notebook', 'sources_catalog.json')
-            mapping_path = os.path.join(DIRECTORY, 'data', 'notebook', 'bundle_annex_mapping.json')
-            if not has_proj_arg and os.path.exists(cat_path):
-                cat_data = load_json_file(cat_path, {})
-                mapping_data = load_json_file(mapping_path, {})
-                self.send_json({
-                    'status': 'ok',
-                    'project': proj,
-                    'notebookTitle': cat_data.get('notebookTitle', 'Project Monaro Contract Notebook'),
-                    'notebookUrl': cat_data.get('notebookUrl', 'https://notebook.google.com'),
-                    'totalSources': len(cat_data.get('sources', [])),
-                    'sources': cat_data.get('sources', []),
-                    'bundleMapping': mapping_data
-                })
-                return
 
             total_sources = len(kb_data.get('sources', kb_data.get('blueprints', [])))
             self.send_json({
@@ -667,6 +844,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json({'error': str(e)}, 500)
 
     def handle_sync_notebook(self, query_or_params=''):
+        if self._reject_if_read_only():
+            return
         try:
             params = parse_request_params(query_or_params)
             proj = params.get('project') or get_default_project()
@@ -695,16 +874,18 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_build_info(self, query=None):
         info = {}
-        # 1. Base info from root build_info.json if present
-        root_build_info = os.path.join(DIRECTORY, "build_info.json")
-        if os.path.exists(root_build_info):
+        # 1. Base info from data/build_info.json (or root fallback) if present
+        build_info_path = os.path.join(DIRECTORY, "data", "build_info.json")
+        if not os.path.exists(build_info_path):
+            build_info_path = os.path.join(DIRECTORY, "build_info.json")
+        if os.path.exists(build_info_path):
             try:
-                with open(root_build_info, "r", encoding="utf-8") as f:
+                with open(build_info_path, "r", encoding="utf-8") as f:
                     file_info = json.load(f)
                     if isinstance(file_info, dict):
                         info.update(file_info)
             except Exception as e:
-                logger.warning(f"Failed to read root build_info.json: {e}")
+                logger.warning(f"Failed to read {build_info_path}: {e}")
 
         # 2. Dynamic environment variable overrides (highest precedence)
         env_commit = os.getenv("COMMIT_SHA")
@@ -768,11 +949,22 @@ def get_startup_banner(port=PORT):
     ]
     return '\n'.join(lines)
 
-if __name__ == '__main__':
+def initialize_gcs_store():
+    """Pre-warms the in-memory GCS ProjectDataStore on server startup."""
+    store = get_project_data_store()
+    return store.prewarm_projects()
+
+
+def run_server(port=PORT):
+    initialize_gcs_store()
     socketserver.TCPServer.allow_reuse_address = True
     try:
-        with socketserver.TCPServer(('', PORT), DashboardHandler) as httpd:
-            print(get_startup_banner(PORT))
+        with socketserver.TCPServer(('', port), DashboardHandler) as httpd:
+            print(get_startup_banner(port))
             httpd.serve_forever()
     except (KeyboardInterrupt, SystemExit):
         print('\n🛑 Project Dash server stopped gracefully.')
+
+
+if __name__ == '__main__':
+    run_server(PORT)

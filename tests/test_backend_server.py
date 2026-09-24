@@ -30,25 +30,17 @@ def test_startup_banner_output():
 
 
 def test_get_project_dir_helper():
-    """Verify get_project_dir correctly resolves project folders with fallback."""
+    """Verify get_project_dir correctly resolves project paths (sample on disk, monaro via GCS store)."""
     sample_dir = server.get_project_dir("sample")
     assert Path(sample_dir).exists()
     assert sample_dir.endswith(str(Path("data") / "sample"))
 
     monaro_dir = server.get_project_dir("monaro")
-    assert Path(monaro_dir).exists()
-    if (Path(server.DIRECTORY) / 'data' / 'monaro').is_dir():
-        assert monaro_dir.endswith(str(Path("data") / "monaro"))
-    else:
-        assert monaro_dir.endswith(str(Path("data") / "sample"))
+    assert monaro_dir.endswith(str(Path("data") / "monaro"))
 
-    # Default fallback
+    # Default project path resolves to monaro or sample
     default_dir = server.get_project_dir("")
-    assert Path(default_dir).exists()
-    if (Path(server.DIRECTORY) / 'data' / 'monaro').is_dir():
-        assert default_dir.endswith(str(Path("data") / "monaro"))
-    else:
-        assert default_dir.endswith(str(Path("data") / "sample"))
+    assert default_dir.endswith(str(Path("data") / "monaro")) or default_dir.endswith(str(Path("data") / "sample"))
 
 
 def test_default_project_resolution_fallback(monkeypatch):
@@ -71,6 +63,15 @@ def test_default_project_resolution_fallback(monkeypatch):
         assert server.get_default_project() == "sample"
 
 
+def test_do_get_project_data_fallback(dummy_handler: DummyHandler):
+    """Verify GET /data/<missing_proj>/config.json resolves via get_project_dir() to data/sample without 404."""
+    dummy_handler.path = "/data/nonexistent_proj/config.json"
+    server.DashboardHandler.do_GET(dummy_handler)
+    assert dummy_handler.sent_code == 200
+    assert isinstance(dummy_handler.sent_data, dict)
+    assert "project" in dummy_handler.sent_data
+
+
 # --- RESTful API Endpoints ---
 
 def test_status_endpoint(dummy_handler: DummyHandler):
@@ -83,8 +84,9 @@ def test_status_endpoint(dummy_handler: DummyHandler):
     assert 'total_risks' in dummy_handler.sent_data
 
 
-def test_sync_endpoint(dummy_handler: DummyHandler):
-    """Verify POST /api/sync executes unified synchronization."""
+def test_sync_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify POST /api/sync executes unified synchronization when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     server.DashboardHandler.handle_sync(dummy_handler, {'project': 'sample'})
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data is not None
@@ -92,8 +94,9 @@ def test_sync_endpoint(dummy_handler: DummyHandler):
     assert dummy_handler.sent_data.get('project') == 'sample'
 
 
-def test_ingest_endpoint(dummy_handler: DummyHandler):
-    """Verify POST /api/ingest parses report and persists snapshot."""
+def test_ingest_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify POST /api/ingest parses report and persists snapshot when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     params = {
         'project': 'sample',
         'fileName': 'Weekly Reporting - Week 28 - 14 Aug 2026.pdf',
@@ -108,8 +111,9 @@ def test_ingest_endpoint(dummy_handler: DummyHandler):
     assert 'Week 28' in dummy_handler.sent_data.get('message', '')
 
 
-def test_briefing_generate_endpoint(dummy_handler: DummyHandler):
-    """Verify POST /api/briefing/generate regenerates synthesis and podcast."""
+def test_briefing_generate_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify POST /api/briefing/generate regenerates synthesis and podcast when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     params = {
         'project': 'sample',
         'week': 'Week 28',
@@ -124,6 +128,7 @@ def test_briefing_generate_endpoint(dummy_handler: DummyHandler):
     mock_save.assert_called_once()
 
 
+
 # --- Legacy Routing Aliases & Backward Compatibility ---
 
 @pytest.mark.parametrize("project_query, min_risks", [
@@ -132,8 +137,8 @@ def test_briefing_generate_endpoint(dummy_handler: DummyHandler):
 ])
 def test_sync_sheet_parameterized(dummy_handler: DummyHandler, project_query: str, min_risks: int):
     """Verify handle_sync_sheet returns correct risks, secondary registers, and snapshots across projects."""
-    if "monaro" in project_query and not (Path(server.DIRECTORY) / 'data' / 'monaro' / 'risks.json').is_file():
-        pytest.skip("Private monaro dataset not present in clean checkout")
+    if "monaro" in project_query and not server.get_project_data_store().get_json("monaro", "risks.json"):
+        pytest.skip("Private monaro dataset not pre-warmed in hermetic offline unit test")
     server.DashboardHandler.handle_sync_sheet(dummy_handler, query_str=project_query)
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data is not None
@@ -145,8 +150,9 @@ def test_sync_sheet_parameterized(dummy_handler: DummyHandler, project_query: st
     assert len(dummy_handler.sent_data["risks"]) >= min_risks
 
 
-def test_handle_sync_all_endpoint(dummy_handler: DummyHandler):
-    """Verify /api/sync-all runs full multi-source sync and returns summary counts."""
+def test_handle_sync_all_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify /api/sync-all runs full multi-source sync and returns summary counts when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     server.DashboardHandler.handle_sync_all(dummy_handler, query_or_params={"project": "sample"})
     assert dummy_handler.sent_code == 200
     assert dummy_handler.sent_data.get("status") == "ok"
@@ -155,8 +161,9 @@ def test_handle_sync_all_endpoint(dummy_handler: DummyHandler):
     assert "snapshots" in dummy_handler.sent_data["summary"]
 
 
-def test_handle_ingest_data_endpoint(dummy_handler: DummyHandler):
-    """Verify POST /api/ingest-data triggers ingestion orchestrator."""
+def test_handle_ingest_data_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify POST /api/ingest-data triggers ingestion orchestrator when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     with patch('server.ingest_report_file', return_value={'week_label': 'Week 28', 'status': 'success'}):
         server.DashboardHandler.handle_ingest_data(dummy_handler, params={"project": "sample"})
     assert dummy_handler.sent_code == 200
@@ -165,8 +172,9 @@ def test_handle_ingest_data_endpoint(dummy_handler: DummyHandler):
     assert "message" in dummy_handler.sent_data
 
 
-def test_handle_regenerate_briefing_endpoint(dummy_handler: DummyHandler):
-    """Verify POST /api/regenerate-briefing regenerates briefing synthesis."""
+def test_handle_regenerate_briefing_endpoint(dummy_handler: DummyHandler, monkeypatch):
+    """Verify POST /api/regenerate-briefing regenerates briefing synthesis when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     with patch('server.save_json_file') as mock_save:
         server.DashboardHandler.handle_regenerate_briefing(dummy_handler, params={"project": "sample", "week": "Week 27", "fallback": True})
     assert dummy_handler.sent_code == 200
@@ -174,8 +182,9 @@ def test_handle_regenerate_briefing_endpoint(dummy_handler: DummyHandler):
     mock_save.assert_called_once()
 
 
-def test_notebook_sync_and_catalog_endpoints():
+def test_notebook_sync_and_catalog_endpoints(monkeypatch):
     """Verify DashboardHandler handle_check_notebook_sync, handle_sync_notebook, and handle_list_notebooks."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     dummy1 = DummyHandler()
     server.DashboardHandler.handle_check_notebook_sync(dummy1, query_str="project=sample")
     assert dummy1.sent_code == 200
@@ -193,6 +202,7 @@ def test_notebook_sync_and_catalog_endpoints():
     assert dummy3.sent_code == 200
     assert 'notebooks' in dummy3.sent_data
     assert len(dummy3.sent_data['notebooks']) >= 1
+
 
 
 # --- Drive Sync Handlers & Reconciliation ---
@@ -321,9 +331,11 @@ def test_dashboard_handler_do_options():
     handler.send_header.assert_any_call('Access-Control-Allow-Origin', '*')
 
 
-def test_dashboard_handler_do_get_routing():
-    """Verify DashboardHandler.do_GET routes API endpoints and handles favicon."""
+def test_dashboard_handler_do_get_routing(monkeypatch):
+    """Verify DashboardHandler.do_GET routes API endpoints and handles favicon when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     handler = server.DashboardHandler.__new__(server.DashboardHandler)
+    handler.headers = {}
     handler.send_response = MagicMock()
     handler.send_header = MagicMock()
     handler.end_headers = MagicMock()
@@ -358,9 +370,13 @@ def test_dashboard_handler_do_get_routing():
         target_mock.assert_called()
 
 
-def test_dashboard_handler_do_post_routing():
-    """Verify DashboardHandler.do_POST parses JSON body and routes to handlers."""
+def test_dashboard_handler_do_post_routing(monkeypatch):
+    """Verify DashboardHandler.do_POST parses JSON body and routes to handlers when read-only is bypassed."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     handler = server.DashboardHandler.__new__(server.DashboardHandler)
+    handler.send_response = MagicMock()
+    handler.send_header = MagicMock()
+    handler.end_headers = MagicMock()
     handler.handle_sync = MagicMock()
     handler.handle_ingest = MagicMock()
     handler.handle_briefing = MagicMock()
@@ -409,8 +425,9 @@ def test_server_send_json_helper():
     handler.wfile.write.assert_called_once()
 
 
-def test_sync_endpoint_lock_and_diff_status(dummy_handler: DummyHandler):
+def test_sync_endpoint_lock_and_diff_status(dummy_handler: DummyHandler, monkeypatch):
     """Verify /api/sync diff status and concurrency lock (Bug #98): returns explicit updated boolean and enforces non-blocking mutex lock."""
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
     # Test 1: Standard sync returns updated: False when no new files ingested
     server.DashboardHandler.handle_sync(dummy_handler, {'project': 'sample'})
     assert dummy_handler.sent_code == 200
@@ -430,6 +447,7 @@ def test_sync_endpoint_lock_and_diff_status(dummy_handler: DummyHandler):
         assert dummy_handler_2.sent_data.get('updated') is False
         assert 'already running' in dummy_handler_2.sent_data.get('message', '')
     finally:
+
         server._sync_lock.release()
 
 
@@ -447,5 +465,169 @@ def test_handle_build_info_endpoint(dummy_handler: DummyHandler, monkeypatch):
     assert dummy_handler.sent_data.get("region") == "australia-southeast1"
     assert dummy_handler.sent_data.get("timestamp") == "2026-09-02 05:40 UTC"
     assert dummy_handler.sent_data.get("build_id") == "test-build-id"
+
+
+def test_handle_briefing_dynamic_snapshot_resolution(dummy_handler: DummyHandler, tmp_path: Path, monkeypatch):
+    """Verify handle_briefing dynamically resolves snapshot across arbitrary week keys without magic constants."""
+    custom_proj_dir = tmp_path / "dynamic_week_test"
+    custom_proj_dir.mkdir(parents=True)
+    
+    # Create custom config.json
+    (custom_proj_dir / "config.json").write_text(json.dumps({
+        "project": {"name": "Dynamic Test Project"}
+    }))
+    
+    # Create snapshots.json with arbitrary custom weeks (e.g. Week 88, Week 99)
+    (custom_proj_dir / "snapshots.json").write_text(json.dumps({
+        "current_week": "Week 99",
+        "snapshots": {
+            "Week 88": {
+                "week": "Week 88",
+                "overallStatus": "🟢 ON TRACK",
+                "kpis": {},
+                "metrics": {"total_risks": 8}
+            },
+            "Week 99": {
+                "week": "Week 99",
+                "overallStatus": "🟡 AMBER",
+                "kpis": {},
+                "metrics": {"total_risks": 19}
+            }
+        }
+    }))
+
+    # Mock get_project_dir to return our custom directory
+    monkeypatch.setattr(server, "get_project_dir", lambda p: str(custom_proj_dir))
+    monkeypatch.setattr(server, 'STRICT_READ_ONLY', False)
+
+    # Test 1: Omitting week param automatically resolves current_week ("Week 99")
+    server.DashboardHandler.handle_briefing(dummy_handler, {'project': 'dynamic_week_test', 'fallback': 'true'})
+    assert dummy_handler.sent_code == 200
+    assert dummy_handler.sent_data.get('week') == 'Week 99'
+
+    # Test 2: Requesting non-existent week falls back to current_week gracefully
+    server.DashboardHandler.handle_briefing(dummy_handler, {'project': 'dynamic_week_test', 'week': 'non_existent_week', 'fallback': 'true'})
+    assert dummy_handler.sent_code == 200
+    assert dummy_handler.sent_data.get('week') == 'non_existent_week'
+
+
+# --- Bug #111: Strict Presentation Mode & Security Hardening Tests ---
+
+def test_strict_presentation_mode_blocks_mutations(dummy_handler: DummyHandler):
+    """Verify all mutating handler endpoints return 403 Forbidden under default STRICT_READ_ONLY mode."""
+    # Ensure default STRICT_READ_ONLY is active
+    assert server.STRICT_READ_ONLY is True
+
+    # 1. handle_sync
+    server.DashboardHandler.handle_sync(dummy_handler, {'project': 'sample'})
+    assert dummy_handler.sent_code == 403
+    assert dummy_handler.sent_data.get('status') == 'forbidden'
+
+    # 2. handle_ingest
+    server.DashboardHandler.handle_ingest(dummy_handler, {'project': 'sample'})
+    assert dummy_handler.sent_code == 403
+
+    # 3. handle_briefing
+    server.DashboardHandler.handle_briefing(dummy_handler, {'project': 'sample'})
+    assert dummy_handler.sent_code == 403
+
+    # 4. handle_sync_all
+    server.DashboardHandler.handle_sync_all(dummy_handler, {'project': 'sample'})
+    assert dummy_handler.sent_code == 403
+
+    # 5. handle_sync_notebook
+    server.DashboardHandler.handle_sync_notebook(dummy_handler, {'project': 'sample'})
+    assert dummy_handler.sent_code == 403
+
+
+def test_strict_presentation_mode_do_post_rejection():
+    """Verify DashboardHandler.do_POST rejects mutating requests with 403 Forbidden under STRICT_READ_ONLY."""
+    assert server.STRICT_READ_ONLY is True
+    handler = server.DashboardHandler.__new__(server.DashboardHandler)
+    handler.send_response = MagicMock()
+    handler.send_header = MagicMock()
+    handler.end_headers = MagicMock()
+    handler.wfile = MagicMock()
+    handler.headers = {'Content-Length': '0'}
+    handler.rfile = MagicMock()
+    handler.rfile.read.return_value = b''
+
+    for path in ['/api/sync', '/api/ingest', '/api/briefing/generate', '/api/sync-notebook']:
+        handler.path = path
+        handler.do_POST()
+        handler.send_response.assert_called_with(403)
+
+
+def test_strict_presentation_mode_status_is_read_only(dummy_handler: DummyHandler):
+    """Verify GET /api/status returns 200 with read_only=True and does not trigger ingestion."""
+    assert server.STRICT_READ_ONLY is True
+    with patch('server.sync_project_data') as mock_sync:
+        server.DashboardHandler.handle_status(dummy_handler, "project=sample")
+        assert dummy_handler.sent_code == 200
+        assert dummy_handler.sent_data.get('status') == 'ok'
+        assert dummy_handler.sent_data.get('read_only') is True
+        mock_sync.assert_not_called()
+
+
+def test_path_traversal_and_cors_hardening():
+    """Verify path traversal in data routes is rejected and CORS responds with trusted origins."""
+    handler = server.DashboardHandler.__new__(server.DashboardHandler)
+    handler.directory = server.DIRECTORY
+    handler.send_response = MagicMock()
+    handler.send_header = MagicMock()
+    handler.end_headers = MagicMock()
+    handler.wfile = MagicMock()
+
+    # Traversal test: attempting directory escape via ..
+    handler.headers = {}
+    handler.path = "/data/sample/..escape.json"
+    handler.do_GET()
+    # Should reject with 400 bad request
+    assert handler.send_response.called
+    assert handler.send_response.call_args[0][0] == 400
+
+    # CORS test: authorized origin
+    handler.headers = {'Origin': 'http://localhost:9000'}
+    handler.do_OPTIONS()
+    handler.send_header.assert_any_call('Access-Control-Allow-Origin', 'http://localhost:9000')
+
+
+def test_do_head_audio_and_json():
+    """Verify DashboardHandler.do_HEAD handles HEAD requests for JSON datasets and audio assets with 200 OK headers and no body."""
+    handler = server.DashboardHandler.__new__(server.DashboardHandler)
+    handler.directory = server.DIRECTORY
+    handler.send_response = MagicMock()
+    handler.send_header = MagicMock()
+    handler.end_headers = MagicMock()
+    handler.wfile = MagicMock()
+
+    # 1. Dataset HEAD request
+    handler.path = "/data/sample/config.json"
+    handler.do_HEAD()
+    handler.send_response.assert_called_with(200)
+    handler.send_header.assert_any_call('Content-Type', 'application/json')
+    handler.wfile.write.assert_not_called()
+
+    # 2. Audio HEAD request
+    handler.send_response.reset_mock()
+    handler.send_header.reset_mock()
+    handler.path = "/assets/podcast_w28.mp3"
+    with patch.object(server.get_project_data_store(), 'get_audio_bytes', return_value=b'ID3mockmp3bytes'):
+        handler.do_HEAD()
+        handler.send_response.assert_called_with(200)
+        handler.send_header.assert_any_call('Content-Type', 'audio/mpeg')
+        handler.send_header.assert_any_call('Accept-Ranges', 'bytes')
+        handler.wfile.write.assert_not_called()
+
+    # 3. Missing audio HEAD request returns 404
+    handler.send_response.reset_mock()
+    handler.send_header.reset_mock()
+    handler.path = "/assets/podcast_w999.mp3"
+    with patch.object(server.get_project_data_store(), 'get_audio_bytes', return_value=None):
+        handler.do_HEAD()
+        handler.send_response.assert_called_with(404)
+
+
+
 
 

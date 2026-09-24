@@ -5,7 +5,17 @@ description = "Project Monaro Risk Governance & Intelligence Platform"
 authors = [
     { name = "Brendan Hills", email = "brendanhills@google.com" }
 ]
-dependencies = []
+dependencies = [
+    "google-genai>=1.63.0",
+    "google-api-python-client>=2.190.0",
+    "google-auth>=2.35.0",
+    "google-auth-httplib2>=0.2.0",
+    "pydantic>=2.12.0",
+    "requests>=2.32.0",
+    "mutagen>=1.47.0",
+    "pytest>=8.0.0",
+    "google-cloud-storage>=3.14.1",
+]
 requires-python = ">=3.12"
 
 [tool.pytest.ini_options]
@@ -14,5 +24,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 filterwarnings = ["ignore::DeprecationWarning"]
-addopts = "-v --tb=short"
+markers = [
+    "live: marks tests that make live network calls to Vertex AI, Cloud TTS, or GCS (deselected by default; run with -m live)",
+    "slow: marks optional heavy integration tests",
+]
+addopts = "-v --tb=short -m 'not live'"
+
 

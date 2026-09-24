@@ -71,6 +71,7 @@ jobs:
           gcloud builds submit \
             --config=deploy/cloudbuild.yaml \
             --project=monaro-risk-dev \
+            --region=australia-southeast1 \
             --substitutions="_SERVICE_NAME=monaro-risk-dash-dev,_REGION=australia-southeast1,_IMAGE_NAME=monaro-risk-dash-dev"
 
       - name: 🔄 Trigger Ingestion Sync Job

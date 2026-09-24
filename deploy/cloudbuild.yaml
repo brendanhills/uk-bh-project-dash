@@ -19,10 +19,14 @@ steps:
           BUILD_TAG="dev"
         fi
         BUILD_TIME=$(date -u +'%Y-%m-%d %H:%M UTC')
+        ACTUAL_COMMIT="${_COMMIT_SHA}"
+        if [ "$$ACTUAL_COMMIT" = "manual" ] && [ -n "$COMMIT_SHA" ]; then
+          ACTUAL_COMMIT="$COMMIT_SHA"
+        fi
         cat << BUILD_JSON > build_info.json
         {
           "tag": "$$BUILD_TAG",
-          "commit": "$COMMIT_SHA",
+          "commit": "$$ACTUAL_COMMIT",
           "region": "${_REGION}",
           "timestamp": "$$BUILD_TIME",
           "service": "${_SERVICE_NAME}",
@@ -57,10 +61,14 @@ steps:
         if [ -d "project_dash" ]; then
           TARGET_DIR="project_dash"
         fi
+        TAG_COMMIT="${_COMMIT_SHA}"
+        if [ "$$TAG_COMMIT" = "manual" ] && [ -n "$COMMIT_SHA" ]; then
+          TAG_COMMIT="$COMMIT_SHA"
+        fi
         docker build \
           --cache-from "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest" \
           -f "$$TARGET_DIR/deploy/Dockerfile" \
-          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA" \
+          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$$TAG_COMMIT" \
           -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest" \
           "$$TARGET_DIR"
 
@@ -71,7 +79,7 @@ steps:
     args:
       - 'run'
       - '--rm'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:${_COMMIT_SHA}'
       - 'pytest'
 
   # 5. Push container image to Artifact Registry (runs only after unit tests pass)
@@ -92,7 +100,7 @@ steps:
       - 'deploy'
       - '${_SERVICE_NAME}'
       - '--image'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:${_COMMIT_SHA}'
       - '--region'
       - '${_REGION}'
       - '--platform'
@@ -107,10 +115,13 @@ steps:
       - 'name=data-volume,type=cloud-storage,bucket=$PROJECT_ID-data'
       - '--add-volume-mount'
       - 'volume=data-volume,mount-path=/app/data'
+      - '--service-account'
+      - 'github-deployer@$PROJECT_ID.iam.gserviceaccount.com'
       - '--update-labels'
-      - 'commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID'
+      - 'commit-sha=${_COMMIT_SHA},gcb-build-id=$BUILD_ID'
       - '--set-env-vars'
-      - 'COMMIT_SHA=$COMMIT_SHA,BUILD_ID=$BUILD_ID,REGION=${_REGION},DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL},GEMINI_REGION=${_GEMINI_REGION}'
+      - 'COMMIT_SHA=${_COMMIT_SHA},BUILD_ID=$BUILD_ID,REGION=${_REGION},DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL},GEMINI_REGION=${_GEMINI_REGION},STRICT_READ_ONLY=true'
+
 
   # 7. Update Ingestion Sync Job in Cloud Run (runs concurrently with deploy-web!)
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -122,7 +133,7 @@ steps:
       - 'update'
       - 'monaro-risk-sync-job'
       - '--image'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:${_COMMIT_SHA}'
       - '--command=python,scripts/sync_drive.py'
       - '--args=--project=monaro'
       - '--region'
@@ -137,13 +148,13 @@ steps:
       - 'DEFAULT_PROJECTS=monaro,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL},GEMINI_REGION=${_GEMINI_REGION}'
 
 images:
-  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:$COMMIT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:${_COMMIT_SHA}'
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:latest'
 
 substitutions:
+  _COMMIT_SHA: 'manual'
   _SERVICE_NAME: 'monaro-risk-dash-dev'
   _IMAGE_NAME: 'monaro-risk-dash-dev'
-  _ACCESS_GROUP: 'monaro-risk-dev@google.com'
   _REGION: 'australia-southeast1'
   _GEMINI_MODEL: 'gemini-3.5-flash'
   _GEMINI_REGION: 'us'

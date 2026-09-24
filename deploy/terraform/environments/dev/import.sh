@@ -46,10 +46,10 @@ safe_import() {
 
 echo "=== 1. Importing GCP Storage Buckets ==="
 safe_import "module.storage.google_storage_bucket.data_bucket" "${DATA_BUCKET}"
-safe_import "module.storage.google_storage_bucket.terraform_state" "${STATE_BUCKET}"
+safe_import "module.storage.google_storage_bucket.state_bucket" "${STATE_BUCKET}"
 
 echo "=== 2. Importing Artifact Registry ==="
-safe_import "module.artifact_registry.google_artifact_registry_repository.source_repo" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${GAR_REPO}"
+safe_import "module.artifact_registry.google_artifact_registry_repository.docker_repo" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${GAR_REPO}"
 
 echo "=== 3. Importing Service Account & IAM ==="
 safe_import "module.iam.google_service_account.deployer" "projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL}"

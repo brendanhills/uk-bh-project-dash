@@ -14,32 +14,6 @@
       "tracker": "https://example.com/aurora/jira"
     }
   },
-  "kpiPillars": [
-    {
-      "id": "commercial",
-      "label": "Commercial & Budget",
-      "value": "\ud83d\udfe2 ON TRACK",
-      "subtext": "Milestone payments aligned to baseline schedule"
-    },
-    {
-      "id": "milestone",
-      "label": "Milestone Gate 2 (IBR)",
-      "value": "\ud83d\udfe1 IN PROGRESS (88%)",
-      "subtext": "System requirements review on critical path"
-    },
-    {
-      "id": "security",
-      "label": "ATO & Cyber Security",
-      "value": "\ud83d\udfe2 ACCREDITED",
-      "subtext": "Sovereign enclave security controls validated"
-    },
-    {
-      "id": "escalations",
-      "label": "Critical Escalations",
-      "value": "\ud83d\udd34 4 ITEMS",
-      "subtext": "3 technical blockers under active mitigation"
-    }
-  ],
   "sources": {
     "googleSheets": {
       "enabled": false,
@@ -97,6 +71,18 @@
     },
     "audioBriefing": {
       "enabled": true
+    }
+  },
+  "governance": {
+    "ragThresholds": {
+      "portfolioRedResidualAvg": 18.0,
+      "portfolioAmberResidualAvg": 12.0,
+      "escalationsRedCount": 3,
+      "escalationsAmberCount": 1,
+      "commercialRedScore": 20.0,
+      "commercialAmberScore": 15.0,
+      "securityRedScore": 20.0,
+      "securityAmberScore": 15.0
     }
   }
 }

@@ -83,7 +83,8 @@ def test_gemini_region_and_multi_region_rep_endpoint(monkeypatch):
     monkeypatch.delenv("GEMINI_REGION", raising=False)
     monkeypatch.delenv("GCP_REGION", raising=False)
     monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
-    assert get_default_gemini_region() == "us"
+    assert get_default_gemini_region() == "australia-southeast1"
+    assert get_default_gemini_region("us") == "us"
     assert get_default_gemini_region("australia-southeast1") == "australia-southeast1"
 
     monkeypatch.setenv("GCP_PROJECT_ID", "monaro-risk-dev")
@@ -208,6 +209,63 @@ def test_compute_risk_metrics_and_fallbacks():
     assert podcast[1]['speaker'] == 'Jordan'
 
 
+def test_compute_live_kpis_defaults_and_configurable_thresholds():
+    """Verify compute_live_kpis evaluates ISO 31000 defaults and respects custom governance.ragThresholds."""
+    from scripts.pipeline import compute_live_kpis
+
+    # 1. Clean baseline: 0 escalations, residual avg 10.0, no high commercial/security
+    risks = [
+        {"category": "Commercial", "residualRiskScore": 8, "status": "Active"},
+        {"category": "Security", "residualRiskScore": 7, "status": "Active"}
+    ]
+    metrics = {"eventuated_issues_count": 0, "residual_avg_score": 10.0}
+    status, kpis = compute_live_kpis(risks, [], metrics)
+    assert status == "🟢 ON TRACK"
+    assert kpis["commercial"] == "🟢 ON TRACK"
+    assert kpis["ato"] == "🟢 GREEN"
+    assert kpis["escalations"] == "🟢 0 ITEMS"
+
+    # 2. Commercial high risk (score 16) -> Amber, Residual avg 14.0 -> Amber
+    risks_amber = [
+        {"category": "Commercial Claims", "residualRiskScore": 16, "status": "Active"},
+        {"category": "Security / ATO", "residualRiskScore": 16, "status": "Active"}
+    ]
+    metrics_amber = {"eventuated_issues_count": 1, "residual_avg_score": 14.0}
+    status_amber, kpis_amber = compute_live_kpis(risks_amber, [], metrics_amber)
+    assert status_amber == "🟡 AMBER (Stable)"
+    assert "🟡 1 HIGH RISKS" in kpis_amber["commercial"]
+    assert kpis_amber["ato"] == "🟡 AMBER"
+    assert kpis_amber["escalations"] == "🟡 1 ITEMS"
+
+    # 3. Critical threshold (score >= 20) -> Red
+    risks_red = [
+        {"category": "Commercial Dispute", "residualRiskScore": 22, "status": "Active"},
+        {"category": "ATO Security Enclave", "residualRiskScore": 20, "status": "Active"}
+    ]
+    metrics_red = {"eventuated_issues_count": 3, "residual_avg_score": 19.5}
+    status_red, kpis_red = compute_live_kpis(risks_red, [], metrics_red)
+    assert "🔴 RED" in status_red
+    assert "🔴 1 CRITICAL RISKS" in kpis_red["commercial"]
+    assert "🔴 1 CRITICAL RISKS" in kpis_red["ato"]
+    assert kpis_red["escalations"] == "🔴 3 ITEMS"
+
+    # 4. Custom ragThresholds from config.json
+    custom_thresholds = {
+        "commercialAmberScore": 10.0,
+        "commercialRedScore": 15.0,
+        "portfolioAmberResidualAvg": 8.0,
+        "portfolioRedResidualAvg": 14.0,
+        "escalationsRedCount": 2,
+        "escalationsAmberCount": 1
+    }
+    # Score 12 would be green under standard defaults (15), but triggers Amber under custom threshold (10)
+    risks_custom = [{"category": "Commercial", "residualRiskScore": 12, "status": "Active"}]
+    metrics_custom = {"eventuated_issues_count": 0, "residual_avg_score": 9.0}
+    status_c, kpis_c = compute_live_kpis(risks_custom, [], metrics_custom, rag_thresholds=custom_thresholds)
+    assert "🟡 1 HIGH RISKS" in kpis_c["commercial"]
+    assert status_c == "🟡 AMBER (Stable)"
+
+
 # --- Project Resolution & Orchestration ---
 
 def test_resolve_target_projects_and_pipeline_defaults(monkeypatch):
@@ -220,9 +278,9 @@ def test_resolve_target_projects_and_pipeline_defaults(monkeypatch):
     monkeypatch.delenv('DEFAULT_PROJECTS', raising=False)
     assert resolve_target_projects(cli_arg=None) == ['sample']
 
-    # Bug #94: get_pipeline_project_dir defaults to monaro if present
+    # get_pipeline_project_dir resolves logical project path without requiring local data/monaro on disk
     default_dir = get_pipeline_project_dir()
-    assert Path(default_dir).exists()
+    assert default_dir.endswith(str(Path("data") / "monaro"))
 
 
 def test_ingest_report_file_and_single_project(tmp_path: Path):
@@ -306,21 +364,23 @@ def test_filter_uningested_reports_and_incremental_sync(tmp_path: Path):
     }), encoding="utf-8")
 
     # Ingest an out-of-order backfill report (Week 10)
-    with patch('scripts.sync_drive.query_drive_folder_live', return_value=[{'id': 'f10', 'name': 'Backfill_W10.pdf', 'week_number': 10}]):
-        with patch('scripts.sync_drive.ingest_report_file') as mock_ingest:
-            mock_ingest.return_value = {'week': 10, 'status': 'success'}
-            summary = sync_drive_reports(
-                folder_id='test-folder',
-                project_name='monaro',
-                data_root=str(tmp_path),
-                model='gemini-3.5-flash',
-                location='us'
-            )
-            assert summary['status'] == 'success'
-            mock_ingest.assert_called_once()
-            assert mock_ingest.call_args.kwargs['location'] == 'us'
-            # latest_week must reflect the true max week (Week 30), NOT the backfill loop item (10)
-            assert summary['latest_week'] == 'Week 30'
+    with patch('scripts.sync_drive.query_drive_folder_live', return_value=[{'id': 'f10', 'name': 'Backfill_W10.pdf', 'week_number': 10}]), \
+         patch('scripts.sync_drive.ensure_latest_podcast_generated', return_value=False), \
+         patch('scripts.sync_drive.ingest_report_file') as mock_ingest:
+        mock_ingest.return_value = {'week': 10, 'status': 'success'}
+        summary = sync_drive_reports(
+            folder_id='test-folder',
+            project_name='monaro',
+            data_root=str(tmp_path),
+            model='gemini-3.5-flash',
+            location='us'
+        )
+        assert summary['status'] == 'success'
+        mock_ingest.assert_called_once()
+        assert mock_ingest.call_args.kwargs['location'] == 'us'
+        # latest_week must reflect the true max week (Week 30), NOT the backfill loop item (10)
+        assert summary['latest_week'] == 'Week 30'
+
 
 
 def test_run_preflight_diagnostics_success_and_failure(tmp_path: Path):
@@ -463,10 +523,11 @@ def test_get_drive_service_credentials_resolution(monkeypatch):
     """Verify get_drive_service credential resolution order (service account file vs ADC vs failure)."""
     from scripts.sync_drive import get_drive_service
 
-    # 1. Non-existent explicit SA file raises
+    # 1. Non-existent explicit SA file + no ADC raises
     monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/non_existent_key_xyz.json")
-    with pytest.raises(Exception):
-        get_drive_service()
+    with patch('google.auth.default', side_effect=RuntimeError("No ADC credentials available")):
+        with pytest.raises(Exception):
+            get_drive_service()
 
     # 2. Mock ADC success
     monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
@@ -474,6 +535,7 @@ def test_get_drive_service_credentials_resolution(monkeypatch):
         with patch('googleapiclient.discovery.build') as mock_build:
             get_drive_service()
             mock_build.assert_called_once()
+
 
 
 def test_sync_drive_reports_dry_run_and_download_resilience(tmp_path: Path):
@@ -521,6 +583,108 @@ def test_sync_drive_cli_arguments_parser(project_root: Path):
     assert "--folder-id" in proc.stdout
     assert "--dry-run" in proc.stdout
     assert "--project" in proc.stdout
+
+
+def test_check_build_status_cloud_logging_and_status_detail(capsys):
+    """Verify check_build_status.py handles pre-step statusDetail failures and CLOUD_LOGGING_ONLY builds."""
+    from scripts import check_build_status
+
+    # 1. Pre-step webhook compare failure (no steps, statusDetail populated)
+    pre_step_build = {
+        "id": "010ad5a2-1deb-4918-bccd-f336ab36faa3",
+        "status": "FAILURE",
+        "buildTriggerId": "1c3887e6-7319-4848-92f8-edc750453ae2",
+        "createTime": "2026-09-22T01:14:00.124120Z",
+        "statusDetail": "404 No common ancestor between 5dc1f22 and 137f6e6",
+        "steps": [],
+    }
+    logs = check_build_status.get_build_logs(
+        "010ad5a2-1deb-4918-bccd-f336ab36faa3",
+        project="monaro-risk-dev",
+        region="australia-southeast1",
+        tail_lines=30,
+        build=pre_step_build,
+    )
+    assert "No container steps were executed" in logs
+    assert "404 No common ancestor" in logs
+
+    check_build_status.inspect_build(pre_step_build, "monaro-risk-dev", "australia-southeast1")
+    captured = capsys.readouterr().out
+    assert "1c3887e6-7319-4848-92f8-edc750453ae2" in captured
+    assert "Status Detail:" in captured
+    assert "404 No common ancestor" in captured
+
+    # 2. CLOUD_LOGGING_ONLY build with steps uses gcloud logging read instead of gcloud builds log
+    cloud_logging_build = {
+        "id": "ddee9f0e-cd84-4082-9b4b-6066905bb4b4",
+        "status": "FAILURE",
+        "options": {"logging": "CLOUD_LOGGING_ONLY"},
+        "steps": [{"name": "gcr.io/cloud-builders/docker", "status": "FAILURE"}],
+    }
+    with patch("scripts.check_build_status.run_gcloud_cmd") as mock_cmd:
+        mock_cmd.return_value = ("line3\nline2\nline1\n", 0, "")
+        cl_logs = check_build_status.get_build_logs(
+            "ddee9f0e-cd84-4082-9b4b-6066905bb4b4",
+            project="monaro-risk-dev",
+            region="australia-southeast1",
+            tail_lines=10,
+            build=cloud_logging_build,
+        )
+        called_args = mock_cmd.call_args[0][0]
+        assert called_args[:3] == ["gcloud", "logging", "read"]
+        assert cl_logs == "line1\nline2\nline3"
+
+
+def test_resolve_default_project_dynamic(monkeypatch: pytest.MonkeyPatch):
+    """Verify resolve_default_project dynamically respects env vars, gcloud config, and env target."""
+    from scripts.security_utils import resolve_default_project, resolve_default_region
+
+    # 1. Direct env var
+    monkeypatch.setenv("GCP_PROJECT_ID", "custom-proj-dev")
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
+    monkeypatch.delenv("CLOUDSDK_CORE_PROJECT", raising=False)
+    assert resolve_default_project() == "custom-proj-dev"
+    assert resolve_default_project(env="prod") == "custom-proj-prod"
+
+    # 2. Unset env vars with gcloud config fallback
+    monkeypatch.delenv("GCP_PROJECT_ID", raising=False)
+    with patch("subprocess.run") as mock_sub:
+        mock_sub.return_value = MagicMock(returncode=0, stdout="gcloud-active-proj-dev\n")
+        assert resolve_default_project() == "gcloud-active-proj-dev"
+        assert resolve_default_project(env="prod") == "gcloud-active-proj-prod"
+
+    # 3. Dynamic region resolution
+    monkeypatch.setenv("GCP_REGION", "australia-southeast2")
+    assert resolve_default_region() == "australia-southeast2"
+    monkeypatch.delenv("GCP_REGION", raising=False)
+    assert resolve_default_region() == "australia-southeast1"
+
+
+def test_sync_drive_discovers_folder_id_from_config(tmp_path: Path):
+    """Verify sync_drive main CLI discovers folderId from active project config.json."""
+    from scripts.sync_drive import main as sync_drive_main
+
+    custom_proj_dir = tmp_path / "custom_test"
+    custom_proj_dir.mkdir(parents=True)
+    cfg_file = custom_proj_dir / "config.json"
+    cfg_file.write_text(json.dumps({
+        "sources": {
+            "googleDrive": {
+                "folderId": "1DiscoveredFolderId12345678"
+            }
+        }
+    }))
+
+    with patch("sys.argv", ["sync_drive.py", "--project=custom_test", f"--data-root={tmp_path}", "--dry-run"]):
+        with patch("scripts.sync_drive.sync_drive_reports") as mock_sync:
+            mock_sync.return_value = {"status": "success"}
+            with pytest.raises(SystemExit) as excinfo:
+                sync_drive_main()
+            assert excinfo.value.code == 0
+            mock_sync.assert_called_once()
+            called_kwargs = mock_sync.call_args[1]
+            assert called_kwargs["folder_id"] == "1DiscoveredFolderId12345678"
+            assert called_kwargs["project_name"] == "custom_test"
 
 
 

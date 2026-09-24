@@ -1,4 +1,5 @@
 resource "google_cloudbuild_trigger" "trigger" {
+  count       = var.enable_trigger ? 1 : 0
   project     = var.project_id
   location    = var.region
   name        = var.trigger_name

@@ -27,7 +27,7 @@ Project Dash solves this by unifying:
      - **Live Sync**: Syncs live Google Sheets registers and NotebookLM knowledge sources via the **Workspace Sync Modal** (`POST /api/sync`).
      - **Report Ingestion**: Scans the shared Drive folder for newly uploaded PDF reports and ingests them into the time-travel registry with 1 click (`POST /api/ingest`).
      - **Executive Briefing Synthesis**: Synthesizes Gemini 3.5 Flash exception-first executive summaries and Top 3 Attention items upon ingestion or manual regeneration (`POST /api/briefing/generate`).
-     - **Neural Podcast Generation**: Generates Australian multi-speaker (`Puck` & `Aoede`) podcast audio dialogue synchronously in the backend using Google Cloud Text-to-Speech **Chirp 3 HD** (`en-AU-Chirp3-HD-Puck` & `en-AU-Chirp3-HD-Aoede`), dynamically synchronizing timestamps and persisting audio to GCS (`gs://${PROJECT_ID}-data/{project}/`).
+     - **Neural Podcast Generation**: Generates Australian multi-speaker (`Puck` & `Aoede`) podcast audio dialogue synchronously in the backend using Google Cloud Text-to-Speech **Chirp 3 HD** (`en-AU-Chirp3-HD-Puck` & `en-AU-Chirp3-HD-Aoede`), dynamically synchronizing timestamps and persisting audio to GCS (`gs://${DATA_BUCKET}/{project}/`).
    - **Self-Service Access**: User provisioning is handled through Google Groups (`monaro-risk-dev@google.com` / `monaro-risk-prod@google.com`), automatically synchronizing IAP permissions without touching GCP IAM.
    - **Automated CI/CD**: Cloud Build automatically builds, tests, and deploys verified changes upon git push, eliminating manual container or server management.
 2. **Defensive Processing & Resilient Ingestion**:
@@ -45,15 +45,20 @@ Project Dash solves this by unifying:
 ## 2. System Architecture & Technical Invariants
 
 ### 2.1 Technology Stack & Architectural Decisions
-* **Frontend Architecture**: Zero-build, pure vanilla ES6 JavaScript modules located under `src/js/` (`app.js`, `state.js`, `api.js`, `charts.js`, `analytics.js`, and `modules/*.js`) rendered directly in `index.html`.
-  - **No Node.js / Webpack / Vite build step required at runtime**.
+* **Frontend Architecture**: Zero-build, decoupled ES6+ JavaScript architecture located under `src/js/` rendered directly in `index.html`.
+  - **No Runtime Bundler**: Pure browser-native ES module imports without Node.js, Webpack, or Vite bundling steps required at runtime.
+  - **Tiered Module Responsibilities**:
+    1. *Application Orchestration* (`app.js`): Coordinates view routing, DOM events, and cross-module interactions.
+    2. *State Management* (`state.js`): Manages reactive in-memory dashboard state, filter predicates, and dataset caching.
+    3. *API Client* (`api.js`): Dispatches typed HTTP requests with defensive fallbacks and error handling.
+    4. *Domain Feature Modules* (`modules/*.js`): Self-contained UI components (e.g. Executive Briefing, Risk Matrix Heatmap, Risk Explorer, Issue Register, Time Machine, Podcast Player, Driver Tree, and Blueprint Knowledge).
   - Uses Tailwind CSS CDN for styling, Chart.js for data visualizations, and Google Fonts (Space Grotesk & Inter).
 * **Backend Architecture**: Lightweight standard library Python 3.12+ HTTP server (`server.py`).
   - Implements a rationalized REST API (`/api/status`, `/api/sync`, `/api/ingest`, `/api/briefing/generate`) with backward-compatible aliases.
-  - Serves static assets, raw JSON data files, and dispatches to `scripts/pipeline.py` and `scripts/gemini_generator.py`.
+  - Serves static assets, raw JSON data files, and dispatches to `scripts/pipeline.py`, `scripts/gemini_generator.py`, and `scripts/gcs_store.py`.
   - Executes data extraction, normalization, and Gemini AI synthesis.
-* **Dynamic Client-Side Computation**: All matrix coordinates, risk distributions, burndown velocity curves, and filter predicates are computed dynamically in the browser client on dataset load. **No precomputed analytics cache files** are generated or stored on disk.
-* **Multi-Project Parameterized Routing**: The application reads `?project=<project-slug>` (defaulting to `sample`) and dynamically fetches isolated project datasets from `data/<project-slug>/`.
+* **Dynamic Client-Side Computation Invariant**: All matrix coordinates, risk distributions, burndown velocity curves, and filter predicates are computed dynamically in the browser client on dataset load. **No precomputed analytics cache files** are generated or stored on disk.
+* **Multi-Project Parameterized Routing**: The application reads `?project=<project-slug>` (defaulting to `sample`) and dynamically fetches isolated project datasets from `data/<project-slug>/` or Google Cloud Storage.
 
 ### 2.2 Server Runtime & CLI Tooling
 * **Python Runtime**: Requires **Python 3.12+** with **Google Cloud ADC** (`gcloud auth application-default login`) or **`GEMINI_API_KEY`** (mandatory for Vertex AI / Gemini decision synthesis and Cloud TTS audio).
@@ -86,48 +91,41 @@ Project Dash solves this by unifying:
 
 ## 3. Data Architecture & Multi-Project Isolation
 
-All project data is strictly isolated within `data/<project-slug>/`:
+The platform codebase is structured into discrete architectural tiers ensuring clear separation of concerns:
 
 ```
 project_dash/
-├── index.html                   # Core presentation frontend
-├── server.py                    # Parameterized REST API & static server
-├── setup.sh                     # Canonical root developer cockpit & health audit CLI
-├── deploy/                      # Infrastructure as Code & CI/CD
-│   ├── cloudbuild.yaml          # Streamlined automated CI/CD pipeline (~45s)
-│   ├── Dockerfile               # Unified container specification (python:3.13-slim)
-│   ├── cleanup-policy.json      # Artifact Registry Docker retention policy
-│   └── terraform/               # Declarative Terraform IaC Modules & Environments
-│       ├── modules/             # Reusable GCP modules (apis, storage, artifact_registry, iam, cloud_run, ingestion_pipeline, cloud_build, monitoring)
-│       └── environments/        # Environment configurations (dev, prod) and import runbooks
-├── docs/                        # Project manuals & guides
-│   ├── HANDOVER_GUIDE.md        # Turnkey operator & handover manual
-│   ├── TEAM_PRESENTATION_GUIDE.md # 5-minute showcase narrative
-│   └── DEPLOYMENT_GUIDE.md      # Consolidated deployment & production guide
-├── prompts/
-│   ├── exec_summary_prompt.md   # Gemini structured JSON executive summary prompt
-│   └── podcast_prompt.md        # Gemini dual-speaker podcast script prompt
-├── scripts/
-│   ├── pipeline.py              # Consolidated master ingestion, report parsing & sync engine
-│   ├── gemini_generator.py      # Gemini synthesis & TTS audio generator
-│   └── check_build_status.py    # Cloud Build CI/CD status query tool
-├── src/
-│   └── js/                      # Modular ES6 frontend architecture (api.js, state.js, analytics.js, app.js)
-│       └── modules/             # UI domain modules (exec_briefing, risk_explorer, issue_register, etc.)
-├── data/
-│   ├── sample/                  # Public showcase dataset (Project Aurora)
-│   │   ├── config.json          # Project metadata, branding & URLs
-│   │   ├── risks.json           # 5x5 Inherent & Residual risk registry
-│   │   ├── issues.json          # Operational issue register
-│   │   ├── snapshots.json       # Longitudinal weekly snapshots (W22-W27)
-│   │   ├── knowledge.json       # Blueprint & contract knowledge sources
-│   │   └── driver_tree.json     # Contractual milestones & capability drops
-│   └── monaro/                  # Monaro Production Dataset (Git-ignored)
-├── archive/                     # Preserved prototypes & legacy scripts with full git history
-└── tests/                       # Automated test suite (181 pytest unit tests)
+├── index.html                   # Core presentation single-page application (SPA)
+├── server.py                    # Parameterized REST API, static asset & GCS streaming server
+├── setup.sh                     # Canonical developer cockpit, health auditor & deployment CLI
+├── deploy/                      # Infrastructure as Code (Terraform) & CI/CD (Cloud Build, Docker)
+├── docs/                        # Persona-aligned operational runbooks (Admin/Dev) and user manuals (PM)
+├── prompts/                     # Structured RASCEF XML prompt templates for Gemini decision models
+├── scripts/                     # Consolidated data pipelines, GCS storage, and AI generation engines
+├── src/js/                      # Decoupled ES6+ frontend architecture (core orchestration & domain modules)
+├── data/                        # Local mock & showcase fixtures (data/sample/) and build metadata
+├── archive/                     # Preserved legacy prototypes & historical documentation (git-ignored)
+└── tests/                       # Automated quality gates (Python backend tests & headless Vitest UX tests)
 ```
 
-### 3.1 Data Contracts & File Schemas
+### 3.1 Structural Tiers & Responsibilities
+
+1. **Client Presentation Tier (`src/js/`)**:
+   - Organized into core application orchestration (`app.js`), reactive state management (`state.js`), REST API communications (`api.js`), and pluggable domain feature modules under `src/js/modules/`.
+2. **Data & Storage Tier (`data/` & Cloud Storage)**:
+   - **GCS-First Persistence Contract**: Production project data (`config.json`, `risks.json`, `issues.json`, `snapshots.json`) and Chirp 3 HD audio binaries (`podcast_w*.mp3`) are persisted authoritatively in Google Cloud Storage (`gs://${DATA_BUCKET}/{project}/`).
+   - **Showcase & Development Fixtures (`data/sample/`)**: Sanitized, public sample datasets (Project Aurora) providing self-contained offline demonstrations with zero cloud credentials.
+   - **Build & Health Metadata (`data/build_info.json`)**: Injected by Cloud Build during container compilation to expose release tag, commit SHA, and build timestamp.
+3. **Operational Documentation Tier (`docs/`)**:
+   - **Administration & Developer Guide (`docs/ADMIN_DEV_GUIDE.md`)**: Full operational runbook covering deployment, Terraform IaC, Cloud Build CI/CD, IAP access, and local setup.
+   - **User & Handover Guide (`docs/PM_USER_GUIDE.md`)**: Walkthrough for governance leads and program managers on dashboard usage and data sync workflows.
+   - **Showcase & Briefing Materials**: Targeted narratives for stakeholder demonstrations.
+4. **Verification & Quality Gate Tier (`tests/`)**:
+   - **Backend Unit & Contract Suite**: Automated Python tests (`uv run pytest`) verifying data schemas, REST API contracts, GCS storage caching, prompt variable resolution, and security allowlists.
+   - **Headless UX & Controller Suite**: Headless DOM unit tests (`vitest` with `happy-dom`) validating tab navigation, risk matrix cell filtering, modal lifecycles, and audio playback error handling.
+   - **Pre-Flight Syntax Gates**: Native Node.js AST checks (`node --check src/js/*.js src/js/modules/*.js`) and ESLint 9 Flat Config integrated into `run_server.sh` and CI.
+
+### 3.2 Data Contracts & File Schemas
 
 #### 1. `config.json`
 Defines branding, color themes, KPI pillars, and feature toggles:

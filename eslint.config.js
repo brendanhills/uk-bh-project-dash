@@ -13,13 +13,8 @@ export default [
         ...globals.es2021,
         Chart: "readonly",
         tailwind: "readonly",
-        // Additional globals used across modular scripts and app.js
-        audioSrc: "writable",
-        renderSingleRiskCard: "readonly",
-        renderExplorerTableMarkup: "readonly",
-        CURRENT_WEEK: "readonly",
-        highlightTeamGoogleHeatmapCell: "readonly",
       },
+
     },
     rules: {
       // Catch undeclared variables and typos immediately
@@ -35,15 +30,6 @@ export default [
       // Allow empty catch/finally blocks
       "no-empty": "off",
       // Allow function re-declarations in legacy scripts
-      "no-redeclare": "off",
-    },
-  },
-  {
-    files: ["src/js/app.js"],
-    languageOptions: {
-      sourceType: "script",
-    },
-    rules: {
       "no-redeclare": "off",
     },
   },

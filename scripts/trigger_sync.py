@@ -14,11 +14,16 @@ import subprocess
 import argparse
 import logging
 
+# Ensure project root is in sys.path when executed directly as a script
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PARENT_DIR not in sys.path:
+    sys.path.insert(0, PARENT_DIR)
+
+from scripts.security_utils import resolve_default_project, resolve_default_region
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger('trigger_sync')
 
-DEFAULT_PROJECT = "monaro-risk-dev"
-DEFAULT_REGION = "australia-southeast1"
 DEFAULT_JOB_NAME = "monaro-risk-sync-job"
 
 
@@ -50,14 +55,16 @@ def main():
     parser = argparse.ArgumentParser(description="Trigger Monaro Risk Dashboard Data Ingestion")
     parser.add_argument("--mode", choices=["cloud", "local"], default="local", help="Execution target (cloud or local)")
     parser.add_argument("--job", default=DEFAULT_JOB_NAME, help="Cloud Run Job name")
-    parser.add_argument("--project", default=DEFAULT_PROJECT, help="GCP Project ID")
-    parser.add_argument("--region", default=DEFAULT_REGION, help="GCP Region")
+    parser.add_argument("--project", default=None, help="GCP Project ID (defaults to dynamic resolution)")
+    parser.add_argument("--region", default=None, help="GCP Region (defaults to dynamic resolution)")
     parser.add_argument("--dry-run", action="store_true", help="Run local sync in dry-run discovery mode")
 
     args = parser.parse_args()
+    project = args.project or resolve_default_project()
+    region = args.region or resolve_default_region()
 
     if args.mode == "cloud":
-        code = trigger_cloud_run_job(args.job, args.project, args.region)
+        code = trigger_cloud_run_job(args.job, project, region)
     else:
         code = trigger_local_sync(dry_run=args.dry_run)
 

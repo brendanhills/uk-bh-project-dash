@@ -29,6 +29,7 @@ Currently:
   - `-m` / `--missing` (missing/unhealthy cloud resource filter)
   - `--state-only` (exact `terraform state list` address format)
   - `--stop` / `--shutdown` / `--pause` (emergency 0%-traffic routing on Cloud Run)
+  - `--build` / `build [--env dev|prod]` (direct manual Cloud Build submission via `gcloud builds submit --config=deploy/cloudbuild.yaml`, bypassing GitHub webhook comparison API quirks)
   - Automatic detection and execution of declarative Terraform under `deploy/terraform/environments/${ENV_TARGET}` (`main.tf`) with remote state bucket (`gs://${PROJECT_ID}-terraform-state`).
 - Include the `project_init` standard header signature (`./deploy.sh -l, --status`) and fallback guard (`No Cloud Infrastructure Target Configured` if `deploy/terraform` is absent) so `project_init plan` validates `[Harness (deploy)]` as `[ALIGNED]`.
 

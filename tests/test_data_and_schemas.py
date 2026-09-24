@@ -33,13 +33,12 @@ def test_project_data_files_exist_and_parse(project_root: Path, project: str):
 # --- Sample Dataset Schema & Math Integrity ---
 
 def test_sample_config_schema(sample_config: dict):
-    """Verify data/sample/config.json schema, features, and 4 KPI pillars."""
+    """Verify data/sample/config.json schema, features, and absence of static kpiPillars."""
     assert sample_config.get("project", {}).get("slug") == "sample"
     assert "name" in sample_config.get("project", {})
     assert "title" in sample_config.get("project", {})
     assert "features" in sample_config
-    assert "kpiPillars" in sample_config
-    assert len(sample_config["kpiPillars"]) == 4
+    assert "kpiPillars" not in sample_config
 
 
 def test_sample_risks_and_5x5_math(sample_risks: list):
@@ -180,3 +179,7 @@ def test_sample_data_confidentiality_isolation(project_root: Path):
     html = (project_root / "index.html").read_text(encoding="utf-8")
     for cid in confidential_ids:
         assert cid not in html, f"Confidential ID {cid} leaked in static index.html"
+
+    for js_file in (project_root / "src" / "js").rglob("*.js"):
+        js_content = js_file.read_text(encoding="utf-8")
+        assert "monaro" not in js_content.lower(), f"Hardcoded 'monaro' reference found in {js_file}"

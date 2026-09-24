@@ -27,6 +27,8 @@ LIST_MODE=false
 STATE_ONLY=false
 MISSING_ONLY=false
 ADMIN_EMAIL=""
+ADMIN_USERS_STR="${ADMIN_USERS:-brendanhills@google.com,allins@google.com}"
+IFS=',' read -r -a ADMIN_USERS <<< "${ADMIN_USERS_STR}"
 DRIVE_FOLDER_ID="${DRIVE_FOLDER_ID:-1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C}"
 GAR_REPO="cloud-run-source-deploy"
 GDRIVE_BIN="$(command -v gdrive 2>/dev/null || echo "/google/bin/releases/gemini-agents-gdrive/gdrive")"
@@ -129,6 +131,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --admin-email|--admin-group)
       ADMIN_EMAIL="$2"
+      shift 2
+      ;;
+    --admins|--admin-users)
+      ADMIN_USERS_STR="$2"
+      IFS=',' read -r -a ADMIN_USERS <<< "${ADMIN_USERS_STR}"
       shift 2
       ;;
     --help|-h)
@@ -374,7 +381,7 @@ list_environment_state() {
     fi
   done
 
-  for usr in "brendanhills@google.com" "allins@google.com"; do
+  for usr in "${ADMIN_USERS[@]}"; do
     if jq -e --arg mem "user:${usr}" '.bindings[] | select(.role == "roles/run.invoker") | select(.members[]? == $mem)' "${tmp_dir}/run_iam.json" >/dev/null 2>&1; then
       emit_state "cloud_run_iam.user:${usr}.roles/run.invoker" "BOUND" "Lead User"
     else
@@ -391,7 +398,7 @@ list_environment_state() {
     fi
   done
 
-  for usr in "brendanhills@google.com" "allins@google.com"; do
+  for usr in "${ADMIN_USERS[@]}"; do
     if jq -e --arg mem "user:${usr}" '.bindings[] | select(.role == "roles/iap.httpsResourceAccessor") | select(.members[]? == $mem)' "${tmp_dir}/iap_iam.json" >/dev/null 2>&1; then
       emit_state "iap_iam.user:${usr}.roles/iap.httpsResourceAccessor" "BOUND" "Lead User"
     else
@@ -928,7 +935,7 @@ for GRP in "${ACCESS_GROUP}" "${TWOSYNC_GROUP}"; do
   echo "  ✓ Granted iap.httpsResourceAccessor to group:${GRP}"
 done
 
-for USR in "brendanhills@google.com" "allins@google.com"; do
+for USR in "${ADMIN_USERS[@]}"; do
   gcloud beta iap web add-iam-policy-binding \
     --project="${PROJECT_ID}" \
     --resource-type="cloud-run" \
@@ -989,7 +996,7 @@ else
 fi
 
 # Grant Admin and Deployer permission to execute Cloud Run Job
-for USR in "brendanhills@google.com" "allins@google.com"; do
+for USR in "${ADMIN_USERS[@]}"; do
   gcloud run jobs add-iam-policy-binding "${SYNC_JOB_NAME}" \
     --project="${PROJECT_ID}" \
     --region="${REGION}" \

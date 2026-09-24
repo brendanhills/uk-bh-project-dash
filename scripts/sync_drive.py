@@ -21,13 +21,22 @@ if PARENT_DIR not in sys.path:
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
-from scripts.security_utils import sanitize_slug, validate_safe_path, safe_join
+from scripts.security_utils import (
+    sanitize_slug,
+    validate_safe_path,
+    safe_join,
+    resolve_default_project
+)
 from scripts.pipeline import (
     load_json_file,
     save_json_file,
     get_project_dir,
     parse_report_metadata,
     ingest_report_file,
+    pull_project_config,
+    push_project_config,
+    update_project_config,
+    resolve_data_bucket,
     DATA_BASE_DIR
 )
 
@@ -40,15 +49,17 @@ logger = logging.getLogger('sync_drive')
 DEFAULT_DRIVE_FOLDER_ID = '1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C'
 
 
-def get_drive_service():
+def get_drive_service(service_account: Optional[str] = None):
     """Initializes Google Drive v3 API client using Application Default Credentials,
     with automatic service account impersonation fallback for local workstation environments."""
     from googleapiclient.discovery import build
     from google.auth import default
+    import google.auth.transport.requests
     drive_scopes = ['https://www.googleapis.com/auth/drive.readonly']
     credentials, _ = default(scopes=drive_scopes)
 
-    target_sa = os.getenv("DRIVE_SERVICE_ACCOUNT", "github-deployer@monaro-risk-dev.iam.gserviceaccount.com")
+    default_sa = f"github-deployer@{resolve_default_project()}.iam.gserviceaccount.com"
+    target_sa = service_account or os.getenv("DRIVE_SERVICE_ACCOUNT") or default_sa
     try:
         from google.auth import impersonated_credentials
         if hasattr(credentials, 'refresh') and not hasattr(credentials, 'service_account_email'):
@@ -57,9 +68,10 @@ def get_drive_service():
                 target_principal=target_sa,
                 target_scopes=drive_scopes
             )
+            impersonated.refresh(google.auth.transport.requests.Request())
             return build('drive', 'v3', credentials=impersonated)
     except Exception as e:
-        logger.debug(f"Impersonation setup skipped: {e}")
+        logger.debug(f"Impersonation setup skipped (falling back to local ADC): {e}")
 
     return build('drive', 'v3', credentials=credentials)
 
@@ -268,7 +280,8 @@ def ensure_latest_podcast_generated(
         get_default_gemini_model,
         get_default_gemini_region,
         generate_multispeaker_podcast,
-        upload_bytes_to_gcs
+        upload_bytes_to_gcs,
+        check_gcs_blob_metadata
     )
     active_model = get_default_gemini_model(model)
     active_region = get_default_gemini_region(location)
@@ -282,17 +295,14 @@ def ensure_latest_podcast_generated(
         clean_week = 0
     safe_audio_name = os.path.basename(f"podcast_w{clean_week}.mp3")
 
-    if clean_project == 'monaro':
-        raw_audio_asset = os.path.join(assets_dir, safe_audio_name)
-        audio_asset_path = validate_safe_path(raw_audio_asset, [assets_dir])
-    else:
-        raw_audio_asset = os.path.join(proj_dir_real, safe_audio_name)
-        audio_asset_path = validate_safe_path(raw_audio_asset, [proj_dir_real])
-
     raw_proj_audio = os.path.join(proj_dir_real, safe_audio_name)
     proj_audio_path = validate_safe_path(raw_proj_audio, [proj_dir_real])
+    audio_asset_path = proj_audio_path
 
-    has_audio_file = os.path.isfile(audio_asset_path) or os.path.isfile(proj_audio_path)
+    target_bucket = resolve_data_bucket() if clean_project != 'sample' else None
+    gcs_exists, gcs_size = check_gcs_blob_metadata(target_bucket, f"{clean_project}/{safe_audio_name}") if target_bucket else (False, None)
+
+    has_audio_file = os.path.isfile(proj_audio_path) or bool(gcs_exists)
 
     needs_generation = (
         force or
@@ -334,15 +344,11 @@ def ensure_latest_podcast_generated(
         return False
 
     if new_script:
-        # Also copy audio to project directory for local multi-project isolation
-        if os.path.isfile(audio_asset_path):
-            try:
-                import shutil
-                shutil.copy2(audio_asset_path, proj_audio_path)
-            except Exception:
-                pass
-
         audio_size = os.path.getsize(audio_asset_path) if os.path.isfile(audio_asset_path) else None
+        if not audio_size and target_bucket:
+            exists_after, size_after = check_gcs_blob_metadata(target_bucket, f"{clean_project}/{safe_audio_name}")
+            if exists_after and size_after:
+                audio_size = size_after
         audio_dur = None
         if os.path.isfile(audio_asset_path):
             try:
@@ -359,7 +365,7 @@ def ensure_latest_podcast_generated(
         latest_snap['generatedBy'] = active_model
         latest_snap['podcastGeneratedBy'] = active_model
         latest_snap['podcastGeneratedAt'] = gen_timestamp
-        resolved_audio_file = f"assets/podcast_w{clean_week}.mp3" if clean_project == 'monaro' else f"data/{clean_project}/podcast_w{clean_week}.mp3"
+        resolved_audio_file = f"data/{clean_project}/podcast_w{clean_week}.mp3"
         latest_snap['hasAudio'] = bool(audio_size)
         latest_snap['audioFile'] = resolved_audio_file
         if audio_dur:
@@ -385,16 +391,6 @@ def ensure_latest_podcast_generated(
         snapshots_data['lastSynced'] = datetime.now(timezone.utc).isoformat()
         save_json_file(snapshots_path, snapshots_data)
         logger.info(f"Successfully saved Gemini 3.5 Flash podcast for '{latest_key}' to {snapshots_path}")
-
-        # Upload updated snapshots.json to GCS bucket if available
-        quota_project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or "monaro-risk-dev"
-        target_bucket = os.getenv("DATA_BUCKET") or f"{quota_project}-data"
-        try:
-            with open(snapshots_path, 'rb') as f:
-                snap_bytes = f.read()
-            upload_bytes_to_gcs(snap_bytes, target_bucket, f"{clean_project}/snapshots.json", content_type="application/json")
-        except Exception as e:
-            logger.debug(f"GCS snapshot sync: {e}")
 
         return True
 
@@ -494,7 +490,7 @@ def sync_drive_reports(
     if all_week_nums:
         latest_week = f"Week {max(all_week_nums)}"
     else:
-        latest_week = snapshots_data.get('current_week') or 'Week 30'
+        latest_week = snapshots_data.get('current_week') or (next(iter(snapshots_map.keys())) if snapshots_map else 'Latest')
 
     timestamp_iso = datetime.now(timezone.utc).isoformat()
 
@@ -614,7 +610,7 @@ def run_preflight_diagnostics(
 
 def main():
     parser = argparse.ArgumentParser(description="Standalone Google Drive Scheduled Ingestion Engine")
-    parser.add_argument('--folder-id', default=DEFAULT_DRIVE_FOLDER_ID, help="Google Drive folder ID")
+    parser.add_argument('--folder-id', default=None, help="Google Drive folder ID (defaults to config.json)")
     parser.add_argument('--project', default='monaro', help="Project slug")
     parser.add_argument('--data-root', default=None, help="Root directory for project data files")
     parser.add_argument('--dry-run', action='store_true', help="Discover files without executing ingestion")
@@ -622,6 +618,12 @@ def main():
     parser.add_argument('--model', default=None, help="Gemini model override (defaults to GEMINI_MODEL env var or system default)")
     parser.add_argument('--gemini-region', default=None, help="Gemini Vertex AI region override (defaults to GEMINI_REGION env var or 'us')")
     parser.add_argument('--doctor', action='store_true', help="Run comprehensive pre-flight health checks across Drive, Vertex AI, GCS Storage, and Schema")
+    parser.add_argument('--show-config', action='store_true', help="Print current config.json from GCS / project storage")
+    parser.add_argument('--pull-config', action='store_true', help="Pull config.json from GCS to local data/<project>/config.json for editing in vi")
+    parser.add_argument('--push-config', '--upload-config', nargs='?', const=True, default=None, help="Validate and push local data/<project>/config.json (or specified path) to GCS")
+    parser.add_argument('--set-primary-sheet', default=None, help="Update Stream 1 Joint Risks Sheet URL or ID in config.json and upload to GCS")
+    parser.add_argument('--set-team-google-sheet', default=None, help="Update Stream 2 Team Google Sheet URL or ID in config.json and upload to GCS")
+    parser.add_argument('--set-drive-folder', default=None, help="Update Google Drive Folder URL or ID in config.json and upload to GCS")
 
     args = parser.parse_args()
 
@@ -630,7 +632,52 @@ def main():
         parser.error(f"Invalid project name '{args.project}': only alphanumeric, hyphen, and underscore characters are allowed.")
     args.project = clean_project
 
+    # Resolve folder_id from active project config.json if not passed via CLI
+    if not args.folder_id:
+        proj_dir = get_project_dir(args.project, args.data_root)
+        cfg = load_json_file(os.path.join(proj_dir, 'config.json'), {})
+        discovered_id = (
+            cfg.get('sources', {}).get('googleDrive', {}).get('folderId')
+            or cfg.get('project', {}).get('links', {}).get('driveFolder')
+        )
+        if discovered_id:
+            try:
+                from scripts.security_utils import validate_drive_folder_id
+                args.folder_id = validate_drive_folder_id(discovered_id)
+            except Exception:
+                args.folder_id = discovered_id
+        else:
+            args.folder_id = DEFAULT_DRIVE_FOLDER_ID
+
     try:
+        if args.show_config:
+            proj_dir = get_project_dir(args.project, args.data_root)
+            cfg = load_json_file(os.path.join(proj_dir, 'config.json'), {})
+            print(json.dumps(cfg, indent=2))
+            sys.exit(0)
+
+        if args.pull_config:
+            res = pull_project_config(args.project, data_root=args.data_root)
+            print(json.dumps(res, indent=2))
+            sys.exit(0)
+
+        if args.push_config is not None:
+            source_file = args.push_config if isinstance(args.push_config, str) else None
+            res = push_project_config(args.project, source_path=source_file, data_root=args.data_root)
+            print(json.dumps(res, indent=2))
+            sys.exit(0)
+
+        if args.set_primary_sheet or args.set_team_google_sheet or args.set_drive_folder:
+            updated_cfg = update_project_config(
+                project_name=args.project,
+                primary_sheet=args.set_primary_sheet,
+                team_google_sheet=args.set_team_google_sheet,
+                drive_folder=args.set_drive_folder,
+                data_root=args.data_root
+            )
+            print(json.dumps(updated_cfg, indent=2))
+            sys.exit(0)
+
         if args.doctor:
             diag = run_preflight_diagnostics(
                 folder_id=args.folder_id,

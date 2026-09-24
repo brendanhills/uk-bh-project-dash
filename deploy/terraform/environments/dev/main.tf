@@ -94,6 +94,7 @@ module "cloud_build" {
   repo_name             = var.github_repo_name
   branch_pattern        = "^main$"
   tag_pattern           = ""
+  enable_trigger        = var.enable_cloud_build
 
   depends_on = [
     module.apis,

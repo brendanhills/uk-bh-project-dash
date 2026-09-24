@@ -44,11 +44,11 @@
 - **Declarative Infrastructure as Code (Terraform):** Canonical GCP infrastructure codification via reusable Terraform modules (`deploy/terraform/modules/`) covering APIs, Storage, Artifact Registry, IAM, Cloud Run, Ingestion Pipeline, Cloud Build, and Monitoring. Managed through environment roots (`deploy/terraform/environments/dev` and `prod`).
 - **Root Developer Cockpit (`setup.sh`):** Unified developer interface providing pre-flight bootstrap, declarative Terraform provisioning, and sub-5s parallel cloud health auditing (`--status`, `-l`, `-m`, `--state-only`) with transparent manual checkpoints validation.
 - **Automated Testing Suite:** Idiomatic `pytest` test runner (`tests/`) with root discovery via `pyproject.toml` and shared session/function fixtures in `tests/conftest.py`. Executed via `pytest` or `uv run pytest`.
-- **Operator Runbook:** `docs/DEPLOYMENT_GUIDE.md` and `docs/HANDOVER_GUIDE.md` for self-service maintenance by team members (`allins@`, `sdeacon@`, `waynedavis@`).
+- **Operational Runbooks:** Persona-aligned documentation (`docs/ADMIN_DEV_GUIDE.md` for administrators/developers and `docs/PM_USER_GUIDE.md` for governance leads/program managers) for self-service maintenance and deployment by team members (`allins@`, `sdeacon@`, `waynedavis@`).
 - **Server Lifecycle:** Managed via Cloud Run in Sydney (`australia-southeast1`) and local `run_server.sh`.
 
 ## 6. Frontend Static Analysis & UI Testing Layer
-- **Node.js Pre-Flight Syntax Gates:** Native AST verification (`node --check src/js/app.js src/js/app_extensions.js`) integrated into `run_server.sh` and `tests/test_frontend_integrity.py` ensuring invalid JavaScript is flagged before runtime execution.
+- **Node.js Pre-Flight Syntax Gates:** Native AST verification (`node --check src/js/*.js src/js/modules/*.js`) integrated into `run_server.sh` and `tests/test_frontend_integrity.py` ensuring invalid JavaScript is flagged before runtime execution.
 - **ESLint 9 Flat Config (`eslint.config.js`):** Modern flat configuration enforcing ES2022 standards, browser globals, no unused expressions, and strict scoping rules across all client script assets.
 - **Vitest & Happy-DOM Headless Harness (`vitest.config.js`):** Fast, headless DOM test runner (`tests/frontend/dashboard_ux.test.js`) executing against realistic dashboard fixture states (`tests/frontend/fixtures/dashboard_mock_data.js`).
   - Tests 5×5 risk matrix filtering and cell click isolation.

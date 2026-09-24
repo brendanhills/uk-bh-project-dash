@@ -7,6 +7,7 @@
   - [ ] Add `test_setup_and_run_preflight_flags()` verifying `./setup.sh --help`, `./run.sh --help`, `./deploy.sh --help`, `./setup.sh -l`, and `./run.sh -l`.
 - [ ] Task: Promote Monaro GCP Provisioning & State Engine into `deploy.sh`
   - [ ] Migrate the 1,078-line Monaro GCP & Drive provisioning engine (`list_environment_state`, `--env dev|prod`, `-l`, `-m`, `--state-only`, `--stop`/`--pause` 0%-traffic shutdown, `deploy/terraform/environments/{dev,prod}` runner, and `gdrive` permission checks) from `setup.sh` into `./deploy.sh`.
+  - [ ] Add direct manual Cloud Build submission option (`./deploy.sh --build` / `./deploy.sh build [--env dev|prod]`) invoking `gcloud builds submit --config=deploy/cloudbuild.yaml` to allow immediate zero-webhook manual deployments when GitHub compare API returns 404 (non-fast-forward/rebased history).
   - [ ] Add the `project_init` standard usage signature (`./deploy.sh -l, --status`) and missing-target fallback guard (`No Cloud Infrastructure Target Configured` when `deploy/terraform` is absent) so `project_init plan` marks `[Harness (deploy)]` as `[ALIGNED]`.
   - [ ] Mark `./deploy.sh` executable (`chmod +x`).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

@@ -795,7 +795,7 @@
       "podcastGeneratedBy": "gemini-3.5-flash",
       "podcastGeneratedAt": "2026-09-02T07:41:12.549468+00:00",
       "hasAudio": true,
-      "audioFile": "assets/podcast_w28.mp3",
+      "audioFile": "data/sample/podcast_w28.mp3",
       "audioDurationSeconds": 131.4,
       "audioSizeBytes": 525696
     }

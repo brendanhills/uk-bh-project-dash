@@ -12,9 +12,17 @@ Usage:
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime
+
+# Ensure project root is in sys.path when executed directly as a script
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PARENT_DIR not in sys.path:
+    sys.path.insert(0, PARENT_DIR)
+
+from scripts.security_utils import resolve_default_project, resolve_default_region
 
 
 # ANSI color codes
@@ -42,8 +50,47 @@ def run_gcloud_cmd(cmd_list):
         sys.exit(1)
 
 
-def get_recent_builds(project="monaro-risk-dev", region="australia-southeast1", limit=1):
+def resolve_default_project(env=None):
+    """Resolve target GCP project ID dynamically from env vars, gcloud config, or environment suffix."""
+    env_proj = (
+        os.environ.get("GCP_PROJECT_ID")
+        or os.environ.get("GOOGLE_CLOUD_PROJECT")
+        or os.environ.get("CLOUDSDK_CORE_PROJECT")
+    )
+    if env_proj and not env:
+        return env_proj
+
+    if not env_proj:
+        stdout, code, _ = run_gcloud_cmd(["gcloud", "config", "get-value", "project", "--quiet"])
+        if code == 0 and stdout.strip() and stdout.strip() != "(unset)":
+            env_proj = stdout.strip()
+
+    target_env = env or os.environ.get("ENV_TARGET", "dev")
+    if env_proj:
+        if env_proj.endswith("-dev") or env_proj.endswith("-prod"):
+            base_prefix = env_proj.rsplit("-", 1)[0]
+            return f"{base_prefix}-{target_env}"
+        if not env:
+            return env_proj
+
+    base_prefix = os.environ.get("GCP_PROJECT_PREFIX", "monaro-risk")
+    return f"{base_prefix}-{target_env}"
+
+
+def resolve_default_region():
+    """Resolve target GCP region dynamically from environment variables or default."""
+    return (
+        os.environ.get("GCP_REGION")
+        or os.environ.get("GOOGLE_CLOUD_REGION")
+        or os.environ.get("CLOUDSDK_COMPUTE_REGION")
+        or "australia-southeast1"
+    )
+
+
+def get_recent_builds(project=None, region=None, limit=1):
     """Fetch the most recent Cloud Build metadata."""
+    project = project or resolve_default_project()
+    region = region or resolve_default_region()
     cmd = [
         "gcloud", "builds", "list",
         f"--project={project}",
@@ -64,8 +111,10 @@ def get_recent_builds(project="monaro-risk-dev", region="australia-southeast1", 
         sys.exit(1)
 
 
-def get_build_details(build_id, project="monaro-risk-dev", region="australia-southeast1"):
+def get_build_details(build_id, project=None, region=None):
     """Fetch full details of a specific build."""
+    project = project or resolve_default_project()
+    region = region or resolve_default_region()
     cmd = [
         "gcloud", "builds", "describe", build_id,
         f"--project={project}",
@@ -82,8 +131,42 @@ def get_build_details(build_id, project="monaro-risk-dev", region="australia-sou
         return None
 
 
-def get_build_logs(build_id, project="monaro-risk-dev", region="australia-southeast1", tail_lines=40):
-    """Fetch build logs for a build."""
+def get_build_logs(build_id, project=None, region=None, tail_lines=40, build=None):
+    """Fetch build logs for a build, supporting both CLOUD_LOGGING_ONLY and GCS logsBucket."""
+    project = project or (build.get("projectId") if isinstance(build, dict) else None) or resolve_default_project()
+    region = region or resolve_default_region()
+    if isinstance(build, dict):
+        steps = build.get("steps", [])
+        status_detail = build.get("statusDetail", "")
+        if not steps and status_detail:
+            return (
+                "No container steps were executed (build aborted during pre-step trigger evaluation).\n"
+                f"Reason: {status_detail}"
+            )
+
+    logging_mode = (build or {}).get("options", {}).get("logging", "") if isinstance(build, dict) else ""
+    logs_bucket = (build or {}).get("logsBucket", "") if isinstance(build, dict) else ""
+
+    # Use Cloud Logging when CLOUD_LOGGING_ONLY is set or logsBucket is absent
+    if logging_mode == "CLOUD_LOGGING_ONLY" or (isinstance(build, dict) and not logs_bucket):
+        log_cmd = [
+            "gcloud", "logging", "read",
+            f'resource.type="build" AND resource.labels.build_id="{build_id}"',
+            f"--project={project}",
+            f"--billing-project={project}",
+            "--freshness=30d",
+            f"--limit={tail_lines}",
+            "--order=desc",
+            "--format=value(textPayload)"
+        ]
+        stdout, code, stderr = run_gcloud_cmd(log_cmd)
+        if code == 0 and stdout.strip():
+            # Reverse desc-ordered lines so tail reads in chronological order
+            lines = [line for line in reversed(stdout.strip().splitlines()) if line.strip()]
+            return "\n".join(lines[-tail_lines:])
+        if isinstance(build, dict) and build.get("statusDetail"):
+            return f"No container log entries in Cloud Logging.\nStatus Detail: {build.get('statusDetail')}"
+
     cmd = [
         "gcloud", "builds", "log", build_id,
         f"--project={project}",
@@ -92,6 +175,25 @@ def get_build_logs(build_id, project="monaro-risk-dev", region="australia-southe
     ]
     stdout, _, stderr = run_gcloud_cmd(cmd)
     output = stdout or stderr or ""
+    if "Build does not specify logsBucket" in output:
+        log_cmd = [
+            "gcloud", "logging", "read",
+            f'resource.type="build" AND resource.labels.build_id="{build_id}"',
+            f"--project={project}",
+            f"--billing-project={project}",
+            "--freshness=30d",
+            f"--limit={tail_lines}",
+            "--order=desc",
+            "--format=value(textPayload)"
+        ]
+        cl_stdout, cl_code, _ = run_gcloud_cmd(log_cmd)
+        if cl_code == 0 and cl_stdout.strip():
+            lines = [line for line in reversed(cl_stdout.strip().splitlines()) if line.strip()]
+            return "\n".join(lines[-tail_lines:])
+        if isinstance(build, dict) and build.get("statusDetail"):
+            return f"Build failed prior to container log creation.\nStatus Detail: {build.get('statusDetail')}"
+        return "No Cloud Logging entries found for this build ID."
+
     lines = output.strip().splitlines()
     if len(lines) > tail_lines:
         return "\n".join(lines[-tail_lines:])
@@ -122,7 +224,7 @@ def inspect_build(build, project, region):
     tag_name = subs.get("TAG_NAME", "")
     branch = subs.get("BRANCH_NAME", subs.get("REF_NAME", "dev"))
     ref_desc = f"tag '{tag_name}'" if tag_name else f"branch '{branch}'"
-    trigger_name = subs.get("TRIGGER_NAME", "N/A")
+    trigger_name = subs.get("TRIGGER_NAME") or build.get("buildTriggerId") or "N/A"
     log_url = build.get("logUrl", "")
 
     status_icon = "🟢" if status == "SUCCESS" else ("🔴" if status in ("FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED") else "⏳")
@@ -166,6 +268,10 @@ def inspect_build(build, project, region):
     # If build failed, print detailed failure diagnostics and logs
     if status in ("FAILURE", "TIMEOUT", "INTERNAL_ERROR"):
         print(f"\n{RED}{BOLD}🚨 BUILD FAILURE DIAGNOSTICS:{RESET}")
+        status_detail = build.get("statusDetail", "")
+        if status_detail:
+            print(f"  {BOLD}Status Detail:{RESET}  {status_detail}")
+
         failure_info = build.get("failureInfo", {})
         if failure_info:
             print(f"  {BOLD}Failure Type:{RESET}   {failure_info.get('type', 'N/A')}")
@@ -182,7 +288,7 @@ def inspect_build(build, project, region):
 
         print(f"\n{BOLD}📋 Tail Build Logs (Last 30 lines):{RESET}")
         print(f"{RED}──────────────────────────────────────────────────────────────────────{RESET}")
-        logs = get_build_logs(build_id, project, region, tail_lines=30)
+        logs = get_build_logs(build_id, project, region, tail_lines=30, build=build)
         print(logs)
         print(f"{RED}──────────────────────────────────────────────────────────────────────{RESET}")
     else:
@@ -191,42 +297,37 @@ def inspect_build(build, project, region):
 
 def main():
     parser = argparse.ArgumentParser(description="Check Google Cloud Build status and extract diagnostics.")
-    parser.add_argument("--env", choices=["dev", "prod"], default="dev", help="Target environment ('dev' or 'prod')")
-    parser.add_argument("--project", default=None, help="GCP project ID (overrides --env)")
-    parser.add_argument("--region", default="australia-southeast1", help="GCP region (default: australia-southeast1)")
+    parser.add_argument("--env", choices=["dev", "prod"], default=None, help="Target environment ('dev' or 'prod')")
+    parser.add_argument("--project", default=None, help="GCP project ID (overrides --env and environment variables)")
+    parser.add_argument("--region", default=None, help="GCP region (defaults to GCP_REGION or australia-southeast1)")
     parser.add_argument("--build-id", default=None, help="Specific build ID to inspect")
     parser.add_argument("--limit", type=int, default=1, help="Number of recent builds to list/inspect (default: 1)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
 
     args = parser.parse_args()
 
-    # Determine project ID
-    project = args.project
-    if not project:
-        project = "monaro-risk-prod" if args.env == "prod" else "monaro-risk-dev"
+    project = args.project or resolve_default_project(args.env)
+    region = args.region or resolve_default_region()
 
     if args.build_id:
-        build = get_build_details(args.build_id, project, args.region)
+        build = get_build_details(args.build_id, project, region)
         if not build:
-            # Fallback to us-central1 if looking up older builds
-            build = get_build_details(args.build_id, project, "us-central1")
-            if not build:
-                print(f"{RED}Build {args.build_id} not found in project {project}.{RESET}")
-                sys.exit(1)
+            print(f"{RED}Build {args.build_id} not found in project {project} ({region}).{RESET}")
+            sys.exit(1)
         builds = [build]
     else:
-        builds = get_recent_builds(project, args.region, args.limit)
+        builds = get_recent_builds(project, region, args.limit)
 
     if args.json:
         print(json.dumps(builds, indent=2))
         return
 
     if not builds:
-        print(f"{YELLOW}No builds found for project {project} in region {args.region}.{RESET}")
+        print(f"{YELLOW}No builds found for project {project} in region {region}.{RESET}")
         return
 
     for build in builds:
-        inspect_build(build, project, args.region)
+        inspect_build(build, project, region)
 
 
 if __name__ == "__main__":

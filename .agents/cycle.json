@@ -1,0 +1,13 @@
+{
+  "preset": "build-polish-harden",
+  "sequence": [
+    "feature",
+    "quality",
+    "robustness",
+    "foundation"
+  ],
+  "current_index": 2,
+  "active_focus": "robustness",
+  "source": "cycle.json",
+  "updated_at": "2026-09-24 10:13"
+}

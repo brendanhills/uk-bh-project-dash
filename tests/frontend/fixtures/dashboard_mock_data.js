@@ -175,7 +175,11 @@ export const mockSnapshots = {
           detail: "Schedule buffer compressed."
         }
       ],
-      top3: [],
+      top3: [
+        { num: 1, type: "decision", tag: "🚨 Immediate Executive Action", ref: "1.13 IBR", title: "Contractual Milestone Gate 2 Alignment", action: "Authorize integrated schedule baseline and close residual action items." },
+        { num: 2, type: "schedule", tag: "⚡ Critical Schedule Alignment", ref: "1.10b Test/Dev", title: "Sovereign Enclave Hardware Interconnect Latency", action: "Complete redundant optical interconnect verification and dark fiber testing." },
+        { num: 3, type: "win", tag: "🚀 Primary Delivery Win", ref: "1.7a DevSecOps", title: "CI/CD Pipeline Security Baseline Accreditation", action: "Maintain automated compliance gates and proceed to next milestone phase." }
+      ],
       sleeperOutlier: { title: "Interconnect lead time", warning: "Cross-connect backlog" },
       synthesis: { executive: "Summary W27" },
       podcastDialogue: [
@@ -193,7 +197,11 @@ export const mockSnapshots = {
       isLatest: true,
       audioUrl: null,
       plans: [],
-      top3: [],
+      top3: [
+        { num: 1, type: "decision", tag: "🚨 Immediate Executive Action", ref: "1.13 IBR", title: "Contractual Milestone Gate 2 Alignment", action: "Authorize integrated schedule baseline and close residual action items." },
+        { num: 2, type: "schedule", tag: "⚡ Critical Schedule Alignment", ref: "1.10b Test/Dev", title: "Sovereign Enclave Hardware Interconnect Latency", action: "Complete redundant optical interconnect verification and dark fiber testing." },
+        { num: 3, type: "win", tag: "🚀 Primary Delivery Win", ref: "1.7a DevSecOps", title: "CI/CD Pipeline Security Baseline Accreditation", action: "Maintain automated compliance gates and proceed to next milestone phase." }
+      ],
       sleeperOutlier: { title: "Model quantization", warning: "Latency spikes under load" },
       synthesis: { executive: "Summary W30" },
       podcastDialogue: [

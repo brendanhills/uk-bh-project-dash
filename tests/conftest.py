@@ -127,9 +127,52 @@ class DummyHandler:
         self.sent_data = data
         self.sent_code = status_code
 
+    def send_response(self, code, message=None):
+        self.sent_code = code
+
+    def send_header(self, keyword, value):
+        pass
+
+    def end_headers(self):
+        pass
+
+    def _reject_if_read_only(self):
+        import server
+        if getattr(server, 'STRICT_READ_ONLY', False):
+            self.send_json({
+                'error': 'Mutation endpoints are disabled on the web presentation tier.',
+                'status': 'forbidden'
+            }, status_code=403)
+            return True
+        return False
+
+
 
 @pytest.fixture
 def dummy_handler() -> DummyHandler:
     """Returns a fresh DummyHandler instance for testing DashboardHandler methods."""
     return DummyHandler()
+
+
+@pytest.fixture(autouse=True)
+def prevent_live_cloud_mutations(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch):
+    """Prevents unit tests (without @pytest.mark.live) from making accidental live calls to GCS or Cloud TTS."""
+    if request.node.get_closest_marker("live"):
+        return
+
+    import scripts.gemini_generator as gg
+
+    monkeypatch.setattr(gg, "upload_bytes_to_gcs", lambda *a, **kw: True)
+    monkeypatch.setattr(gg, "check_gcs_blob_metadata", lambda *a, **kw: (False, None))
+
+    def _fast_mock_synthesize_audio(podcast_script, output_audio_path=None, language_code="en-AU", gcs_bucket=None, gcs_blob_name=None):
+        mock_mp3 = b"ID3_MOCK_FAST_UNIT_TEST_MP3_BYTES"
+        if output_audio_path:
+            os.makedirs(os.path.dirname(os.path.abspath(output_audio_path)), exist_ok=True)
+            with open(output_audio_path, "wb") as f:
+                f.write(mock_mp3)
+        return podcast_script, mock_mp3, 45.0
+
+    monkeypatch.setattr(gg, "synthesize_podcast_audio", _fast_mock_synthesize_audio)
+
 

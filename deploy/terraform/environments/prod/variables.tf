@@ -28,6 +28,12 @@ variable "github_repo_name" {
   default     = "uk-bh-project-dash"
 }
 
+variable "enable_cloud_build" {
+  type        = bool
+  description = "Enable Cloud Build GitHub push trigger (requires connected GitHub repository in Cloud Build)"
+  default     = false
+}
+
 variable "access_group" {
   type        = string
   description = "Viewer group for IAP and Cloud Run Invoker access"
@@ -49,7 +55,7 @@ variable "notification_emails" {
 variable "lead_users" {
   type        = list(string)
   description = "Lead users granted Cloud Run Invoker and IAP access"
-  default     = ["brendanhills@google.com", "allins@google.com"]
+  default     = ["brendanhills@google.com", "allins@google.com", "dougturk@google.com"]
 }
 
 variable "cloud_run_image" {

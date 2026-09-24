@@ -17,7 +17,11 @@ set -e
 SESSION_NAME="project-dash"
 PORT=9000
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMAND="python3 server.py"
+if command -v uv >/dev/null 2>&1; then
+    COMMAND="uv run python server.py"
+else
+    COMMAND="python3 server.py"
+fi
 
 # Function to check if tmux session exists
 session_exists() {
@@ -171,7 +175,7 @@ case "$ACTION" in
     restart)
         do_run true "$NO_ATTACH"
         ;;
-    start|default|"")
+    start|default|--no-attach|"")
         do_run true "$NO_ATTACH"
         ;;
     help|-h|--help)

@@ -11,10 +11,11 @@ notification_emails = [
 ]
 lead_users = [
   "brendanhills@google.com",
-  "allins@google.com"
+  "allins@google.com",
+  "dougturk@google.com"
 ]
 cloud_run_image = "australia-southeast1-docker.pkg.dev/monaro-risk-dev/cloud-run-source-deploy/monaro-risk-dash-dev:latest"
 sync_image      = "australia-southeast1-docker.pkg.dev/monaro-risk-dev/cloud-run-source-deploy/monaro-risk-dash-dev:latest"
 drive_folder_id = "1JIsbi35mXn4W-NxjbLTWo22FQMv_zv-C"
 gemini_model    = "gemini-3.5-flash"
-gemini_region   = "us"
+gemini_region   = "australia-southeast1"

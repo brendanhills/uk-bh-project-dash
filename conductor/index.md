@@ -2,7 +2,7 @@
 
 - [Product Definition](./product.md)
 - [Master Specification](./spec.md)
-- [Spec vs. Code Discrepancy Matrix](./spec_discrepancies.md)
+- [Spec vs. Code Discrepancy Matrix (Archived)](../archive/legacy_docs/spec_discrepancies_20260901.md)
 - [Tech Stack](./tech-stack.md)
 - [Workflow](./workflow.md)
 

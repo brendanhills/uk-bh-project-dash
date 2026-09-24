@@ -16,6 +16,8 @@ from google.genai import types
 
 from pydantic import BaseModel, Field
 
+from scripts.security_utils import resolve_default_project
+
 logger = logging.getLogger('gemini_generator')
 
 class ToneSynthesis(BaseModel):
@@ -53,11 +55,15 @@ class PodcastScriptResponse(BaseModel):
     dialogue: List[PodcastDialogueTurn] = Field(description="Sequential list of 5 podcast dialogue turns.")
 
 class ReportMetadataInspection(BaseModel):
-    week_number: int = Field(description="The program or project reporting week number integer (e.g. 28, 29, 30).")
-    week_label: str = Field(description="Standardized week label (e.g. 'Week 28').")
-    report_date: str = Field(description="The formal reporting date in 'DD Mon YYYY' format (e.g. '14 Aug 2026').")
+    week_number: int = Field(description="The program or project reporting week number integer (e.g. 28, 29, 30, 33).")
+    week_label: str = Field(description="Standardized week label (e.g. 'Week 33').")
+    report_date: str = Field(description="The formal reporting date in 'DD Mon YYYY' format (e.g. '18 Sep 2026').")
     title: str = Field(description="Report title or document headline found on the title slide or document header.")
     summary: str = Field(description="Brief 1-sentence summary of the report pack scope or period.")
+    overall_status: Optional[str] = Field(default=None, description="Overall RAG status badge from the report (e.g. '🟡 AMBER (Stable)' or '🟢 ON TRACK').")
+    commercial_kpi: Optional[str] = Field(default=None, description="Commercial & Budget KPI status from the report (e.g. '🟢 ON TRACK').")
+    ibr_kpi: Optional[str] = Field(default=None, description="Milestone / IBR / SRR gate KPI status from the report (e.g. '🟢 BASELINED (100%)' or '🟡 IN PROGRESS (95%)').")
+    ato_kpi: Optional[str] = Field(default=None, description="ATO-C / Security accreditation KPI status from the report (e.g. '🟢 GREEN' or '🟡 IN PROGRESS').")
 
 def get_default_gemini_region(override: Optional[str] = None) -> str:
     """
@@ -67,7 +73,7 @@ def get_default_gemini_region(override: Optional[str] = None) -> str:
       3. GCP_REGION / GOOGLE_CLOUD_LOCATION environment variable
       4. System default fallback ('us' where gemini-3.5-flash multi-region endpoint is hosted)
     """
-    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "us"
+    return override or os.getenv("GEMINI_REGION") or os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "australia-southeast1"
 
 def get_default_gemini_model(override: Optional[str] = None) -> str:
     """
@@ -329,25 +335,70 @@ def generate_executive_synthesis(
         logger.error(f"Failed to parse JSON output from Gemini: {e}\nRaw response: {response.text}")
         raise ValueError(f"Invalid JSON output received from {active_model}: {e}")
 
+_CACHED_GCLOUD_TOKEN: Optional[str] = None
+
+
+def _get_gcs_auth_headers(content_type: Optional[str] = None, force_gcloud: bool = False) -> Dict[str, str]:
+    """Resolves GCS REST API headers using ADC first, with automatic gcloud CLI fallback when ADC lacks bucket IAM."""
+    global _CACHED_GCLOUD_TOKEN
+    quota_project = resolve_default_project()
+    token = None
+
+    if not force_gcloud and not _CACHED_GCLOUD_TOKEN:
+        try:
+            creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+            auth_req = google.auth.transport.requests.Request()
+            creds.refresh(auth_req)
+            token = creds.token
+        except Exception:
+            token = None
+
+    if (force_gcloud or not token) or _CACHED_GCLOUD_TOKEN:
+        if not _CACHED_GCLOUD_TOKEN or force_gcloud:
+            try:
+                import subprocess
+                res = subprocess.run(
+                    ["gcloud", "auth", "print-access-token"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=True
+                )
+                if res.stdout.strip():
+                    _CACHED_GCLOUD_TOKEN = res.stdout.strip()
+            except Exception:
+                pass
+        if _CACHED_GCLOUD_TOKEN:
+            token = _CACHED_GCLOUD_TOKEN
+
+    if not token:
+        raise RuntimeError("Unable to obtain Google Cloud access token via ADC or gcloud.")
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "X-Goog-User-Project": quota_project
+    }
+    if content_type:
+        headers["Content-Type"] = content_type
+    return headers
+
+
 def upload_bytes_to_gcs(
     data_bytes: bytes,
     bucket_name: str,
     blob_name: str,
     content_type: str = "audio/mpeg"
 ) -> bool:
-    """Uploads binary data directly to Google Cloud Storage via REST API using ADC credentials."""
+    """Uploads binary data directly to Google Cloud Storage via REST API using ADC or gcloud credentials."""
     try:
-        creds, _ = google.auth.default()
-        auth_req = google.auth.transport.requests.Request()
-        creds.refresh(auth_req)
-        quota_project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or "monaro-risk-dev"
-        headers = {
-            "Authorization": f"Bearer {creds.token}",
-            "Content-Type": content_type,
-            "X-Goog-User-Project": quota_project
-        }
-        url = f"https://storage.googleapis.com/upload/storage/v1/b/{bucket_name}/o?uploadType=media&name={blob_name}"
+        import urllib.parse
+        encoded_blob = urllib.parse.quote(blob_name, safe='')
+        url = f"https://storage.googleapis.com/upload/storage/v1/b/{bucket_name}/o?uploadType=media&name={encoded_blob}"
+        headers = _get_gcs_auth_headers(content_type=content_type)
         r = requests.post(url, headers=headers, data=data_bytes, timeout=30)
+        if r.status_code in [401, 403]:
+            headers = _get_gcs_auth_headers(content_type=content_type, force_gcloud=True)
+            r = requests.post(url, headers=headers, data=data_bytes, timeout=30)
         if r.status_code in [200, 201]:
             logger.info(f"Successfully uploaded {len(data_bytes)} bytes to gs://{bucket_name}/{blob_name}")
             return True
@@ -356,6 +407,47 @@ def upload_bytes_to_gcs(
     except Exception as e:
         logger.warning(f"GCS upload encountered error for {blob_name}: {e}")
         return False
+
+
+def download_bytes_from_gcs(bucket_name: str, blob_name: str) -> Optional[bytes]:
+    """Downloads raw bytes from Google Cloud Storage via REST API using ADC or gcloud credentials."""
+    try:
+        import urllib.parse
+        encoded_blob = urllib.parse.quote(blob_name, safe='')
+        url = f"https://storage.googleapis.com/storage/v1/b/{bucket_name}/o/{encoded_blob}?alt=media"
+        headers = _get_gcs_auth_headers()
+        r = requests.get(url, headers=headers, timeout=20)
+        if r.status_code in [401, 403]:
+            headers = _get_gcs_auth_headers(force_gcloud=True)
+            r = requests.get(url, headers=headers, timeout=20)
+        if r.status_code == 200:
+            return r.content
+        return None
+    except Exception as e:
+        logger.debug(f"GCS download skipped/failed for gs://{bucket_name}/{blob_name}: {e}")
+        return None
+
+
+def check_gcs_blob_metadata(bucket_name: str, blob_name: str) -> Tuple[bool, Optional[int]]:
+    """Checks if an object exists in GCS and returns (exists, size_bytes)."""
+    try:
+        import urllib.parse
+        encoded_blob = urllib.parse.quote(blob_name, safe='')
+        url = f"https://storage.googleapis.com/storage/v1/b/{bucket_name}/o/{encoded_blob}"
+        headers = _get_gcs_auth_headers()
+        r = requests.get(url, headers=headers, timeout=15)
+        if r.status_code in [401, 403]:
+            headers = _get_gcs_auth_headers(force_gcloud=True)
+            r = requests.get(url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            meta = r.json()
+            size_val = int(meta.get("size", 0)) if meta.get("size") is not None else None
+            return True, size_val
+        return False, None
+    except Exception as e:
+        logger.debug(f"GCS metadata check skipped for gs://{bucket_name}/{blob_name}: {e}")
+        return False, None
+
 
 
 def get_turn_audio_duration(audio_bytes: bytes) -> float:
@@ -404,7 +496,7 @@ def synthesize_podcast_audio(
         logger.warning(f"Could not initialize Google Cloud auth for audio synthesis: {e}")
         return podcast_script, None, 0.0
 
-    quota_project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or "monaro-risk-dev"
+    quota_project = resolve_default_project()
     headers = {
         "Authorization": f"Bearer {creds.token}",
         "Content-Type": "application/json; charset=utf-8",
@@ -509,10 +601,10 @@ def synthesize_podcast_audio(
     if not target_blob and output_audio_path:
         base_name = os.path.basename(output_audio_path)
         proj_match = os.path.basename(os.path.dirname(os.path.abspath(output_audio_path)))
-        if proj_match in ["monaro", "sample"]:
+        if proj_match and proj_match != "assets":
             target_blob = f"{proj_match}/{base_name}"
         else:
-            target_blob = f"assets/{base_name}"
+            target_blob = f"monaro/{base_name}"
 
     if target_bucket and target_blob:
         upload_bytes_to_gcs(combined_mp3, target_bucket, target_blob, content_type="audio/mpeg")
@@ -618,8 +710,9 @@ def inspect_report_with_gemini(
         prompt_text = (
             f"Inspect the provided report document (filename: '{file_name}'). "
             "Extract the exact program/project reporting week number (as an integer), "
-            "the formal reporting date (formatted as 'DD Mon YYYY', e.g. '14 Aug 2026'), "
-            "the document title, and a brief 1-sentence summary of the reporting period. "
+            "the formal reporting date (formatted as 'DD Mon YYYY', e.g. '18 Sep 2026'), "
+            "the document title, a brief 1-sentence summary of the reporting period, "
+            "and the live RAG KPI statuses reported in the pack (overall_status, commercial_kpi, ibr_kpi, ato_kpi). "
             "If the week number is not explicitly stated in text, infer it from the date or context."
         )
 

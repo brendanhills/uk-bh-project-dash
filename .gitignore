@@ -25,6 +25,10 @@ data/private/
 data/*/*.mp3
 data/*/*.wav
 !data/sample/podcast_sample.mp3
+!data/sample/podcast_w28.mp3
+
+# Legacy archives
+archive/
 
 # Temporary data & scratch
 *.tmp

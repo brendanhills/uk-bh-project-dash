@@ -119,6 +119,17 @@ def resolve_audio_asset(project_name: str, max_week: int, proj_dir: str) -> Tupl
             break
 
     if not audio_asset_path:
+        try:
+            from scripts.pipeline import resolve_data_bucket
+            from scripts.gemini_generator import check_gcs_blob_metadata
+            bucket = resolve_data_bucket() if project_name != 'sample' else None
+            if bucket:
+                for blob_cand in (f"{project_name}/podcast_w{max_week}.mp3", f"assets/podcast_w{max_week}.mp3"):
+                    exists, size_val = check_gcs_blob_metadata(bucket, blob_cand)
+                    if exists and size_val:
+                        return True, f"gs://{bucket}/{blob_cand}", int(size_val), None
+        except Exception:
+            pass
         return False, None, None, None
 
     audio_size_bytes = os.path.getsize(audio_asset_path)
