@@ -1,7 +1,92 @@
 {
-  "lastSynced": "2026-09-02T07:41:12.549535+00:00",
-  "driveFolderId": "sample-drive-folder-aurora",
+  "lastSynced": "2026-08-14T10:00:00.000000+00:00",
+  "driveFolderId": "1Se0tVV2TRYIagQYbkD4M4q2G6F1MHBg-",
   "snapshots": {
+    "w21": {
+      "weekNumber": 21,
+      "weekLabel": "Week 21",
+      "week": "Week 21",
+      "date": "26 Jun 2026",
+      "isLatest": false,
+      "isCurrent": false,
+      "driveFileId": "sample-drive-doc-aurora-w21",
+      "driveFileName": "Weekly Reporting - Week 21 - 26 Jun 2026.pdf",
+      "overallStatus": "\ud83d\udd34 CRITICAL ATTENTION",
+      "kpis": {
+        "clinicalGoLive": "\ud83d\udd34 DELAY RISK",
+        "fhirInteroperability": "\ud83d\udfe1 65% PASS",
+        "hipaaCompliance": "\ud83d\udfe1 AUDIT PREP",
+        "escalations": "\ud83d\udd34 7 ITEMS"
+      },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 16.8,
+        "residual_avg_score": 13.4,
+        "delta_compression": "-3.4",
+        "eventuated_issues_count": 4,
+        "total_issues": 11,
+        "report_week": "Week 21",
+        "report_date": "26 Jun 2026"
+      },
+      "synthesis": {
+        "executive": "Program posture for Week 21 reflects critical path pressure during Phase 1 hospital environment bring-up. Seven acute escalations require steering committee intervention, primarily regarding hospital ward optical fiber lead times and clinical telemetry VLAN isolation.",
+        "technical": "HL7 v2 legacy feeds from pathology systems are exhibiting 18% parsing failure rates against the central FHIR R4 converter. Acute ICU telemetry buffers drop packets under simulated surge load.",
+        "governance": "Clinical Data Governance Board has convened an emergency technical working group to accelerate Annex B.1 clinical compliance artefacts and formalize hospital data custodian delegations."
+      },
+      "top3": [
+        {
+          "num": 1,
+          "type": "decision",
+          "tag": "\ud83d\udea8 Immediate Executive Action",
+          "ref": "1.6 Hospital LAN",
+          "title": "Hospital Optical Interconnect & Core Switch Upgrades",
+          "action": "Authorize capital expenditure for redundant fiber runs into acute surgical and ICU wards."
+        },
+        {
+          "num": 2,
+          "type": "schedule",
+          "tag": "\u26a1 Clinical Schedule Risk",
+          "ref": "1.2b EHR Gateway",
+          "title": "Pathology Legacy Feed Schema Translation",
+          "action": "Deploy dedicated interface engineering squad to map non-standard HL7 v2 segments to FHIR R4 Observation profiles."
+        },
+        {
+          "num": 3,
+          "type": "win",
+          "tag": "\ud83d\ude80 Delivery Win",
+          "ref": "1.10b Cloud Fabric",
+          "title": "Regional Cloud HSM & Key Vault Commissioned",
+          "action": "Dedicated Cloud HSM cluster operational with CMEK encryption keys initialized for EHR patient tables."
+        }
+      ],
+      "sleeperOutlier": {
+        "ref": "1.14 PACS",
+        "title": "Diagnostic PACS Imaging Cloud Ingestion Throughput",
+        "warning": "Spike in radiological CT/MRI volumetric scans may exceed regional internet bandwidth if dedicated interconnect is delayed."
+      },
+      "plans": [
+        {
+          "num": 1,
+          "status": "RED",
+          "ref": "1.6 Hospital LAN",
+          "title": "Hospital Core Network Modernization",
+          "plan": "Complete redundant optical fiber cabling and VLAN testing across 4 metropolitan hospital sites.",
+          "owner": "Network Engineering Lead",
+          "target": "Jul 2026"
+        },
+        {
+          "num": 2,
+          "status": "RED",
+          "ref": "1.2b EHR Gateway",
+          "title": "FHIR Gateway Transformation Engine",
+          "plan": "Patch translation engine to support non-standard pathology lab test code mappings.",
+          "owner": "Integration Lead",
+          "target": "Jul 2026"
+        }
+      ],
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
+    },
     "w22": {
       "weekNumber": 22,
       "weekLabel": "Week 22",
@@ -10,127 +95,73 @@
       "isLatest": false,
       "isCurrent": false,
       "driveFileId": "sample-drive-doc-aurora-w22",
-      "driveFileName": "Weekly Reporting - Week 22 - 03 Jul 2026 (Google Doc)",
-      "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
+      "driveFileName": "Weekly Reporting - Week 22 - 03 Jul 2026.pdf",
+      "overallStatus": "\ud83d\udfe1 AMBER (Mitigating)",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe1 DUE AUG 2026 (90%)",
-        "ato": "\ud83d\udfe2 GREEN",
+        "clinicalGoLive": "\ud83d\udfe1 14-DAY DRIFT",
+        "fhirInteroperability": "\ud83d\udfe1 72% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 PASSING",
         "escalations": "\ud83d\udd34 5 ITEMS"
       },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 16.4,
+        "residual_avg_score": 11.8,
+        "delta_compression": "-4.6",
+        "eventuated_issues_count": 3,
+        "total_issues": 11,
+        "report_week": "Week 22",
+        "report_date": "03 Jul 2026"
+      },
       "synthesis": {
-        "executive": "Program posture for Week 22 maintains a stable AMBER status with active mitigation across 28 registered risks. Net risk compression reduced exposure from 14.6 to 4.8.",
-        "technical": "Technical velocity confirms key milestones on track with ongoing security accreditation and environment validation.",
-        "governance": "Governance alignment continues across key deliverable gates with 11 active blockers under remediation."
+        "executive": "Week 22 marks an improving trajectory with acute escalations reduced from 7 to 5. The primary delivery focus has transitioned to locking down interface agreements with medical imaging and laboratory providers.",
+        "technical": "Hospital LAN optical fiber terminations completed at the primary facility. Initial FHIR R4 transformation error rate dropped below 8% following deployment of the custom vocabulary translator.",
+        "governance": "Clinical Informatics liaison team initiated clinician workflow dry-runs in simulated outpatient clinics, receiving favorable ergonomic and usability feedback."
       },
       "top3": [
         {
           "num": 1,
           "type": "decision",
-          "tag": "\ud83d\udea8 Immediate Action",
-          "ref": "1.2b",
-          "title": "Milestone Sign-Off",
-          "action": "Expedite acceptance review."
+          "tag": "\ud83d\udea8 Immediate Executive Action",
+          "ref": "1.2b EHR Gateway",
+          "title": "Laboratory Information System (LIS) Interface Contract",
+          "action": "Sign off interoperability SLA and data sharing memorandum of understanding with regional pathology provider."
         },
         {
           "num": 2,
           "type": "schedule",
-          "tag": "\u26a1 Schedule Alignment",
-          "ref": "1.14",
-          "title": "SRR Glide Path",
-          "action": "Align September requirements baseline."
+          "tag": "\u26a1 Clinical Schedule Alignment",
+          "ref": "1.10b Test/Dev",
+          "title": "Clinical Workstation Image Deployment",
+          "action": "Roll out standardized dual-screen clinical workstation images with integrated biometric reader support."
         },
         {
           "num": 3,
           "type": "win",
           "tag": "\ud83d\ude80 Delivery Win",
-          "ref": "1.10b",
-          "title": "Platform Ready",
-          "action": "Early test/dev onboarding operational."
+          "ref": "1.6 Hospital LAN",
+          "title": "Hospital Core Network Cutover Complete (Site A)",
+          "action": "Surgical and ICU wards successfully migrated to 10Gbps redundant fiber with zero clinical outage."
         }
       ],
       "sleeperOutlier": {
-        "ref": "1.14",
-        "title": "Cross-Domain Enclave Model Quantization",
-        "risk": "Inference latency spikes under peak token load in air-gapped sovereign environments.",
-        "trigger": "TPU/GPU cluster provisioning delays or kernel compilation timeout under strict audit mode."
+        "ref": "1.14 PACS",
+        "title": "High-Resolution DICOM Cache Eviction Policy",
+        "warning": "Unoptimized local cache retention on local ward gateways could lead to disk exhaustion during peak diagnostic hours."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Project Aurora Executive Briefing for Week 22, ending 03 Jul 2026. I am Alex here with Jordan to review delivery progress and critical risks."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:18",
-          "text": "Thanks Alex. Key milestones remain actively tracked this cycle with deliverable validations progressing across the capability drop workstreams."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:42",
-          "text": "Looking at our executive attention items, Commonwealth artefact acceptance and system requirement reviews remain on critical path."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "1:05",
-          "text": "Security accreditation assessors remain embedded across active enclaves, with defined gap close plans actively compressing residual risk."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:28",
-          "text": "Net risk exposure improved significantly across all logged registers, maintaining a strong trajectory towards baseline objectives."
-        }
-      ],
       "plans": [
         {
           "num": 1,
-          "status": "RED",
-          "ref": "1.2b",
-          "title": "Milestone 1 Deliverables Acceptance",
-          "plan": "Work with customer for sign-off.",
-          "owner": "Delivery Lead",
-          "target": "Aug 2026"
-        },
-        {
-          "num": 2,
-          "status": "RED",
-          "ref": "1.6 GFF",
-          "title": "Facilities & Connectivity",
-          "plan": "Mitigate lead time.",
-          "owner": "Infrastructure Lead",
-          "target": "Aug 2026"
-        },
-        {
-          "num": 3,
-          "status": "BLUE",
-          "ref": "1.10b",
-          "title": "Platform E.01 Ready",
-          "plan": "Operational for test/dev.",
-          "owner": "Engineering Lead",
-          "target": "Delivered"
-        },
-        {
-          "num": 4,
-          "status": "RED",
-          "ref": "1.14",
-          "title": "Systems Requirements Review (SRR)",
-          "plan": "Iterative requirements alignment.",
-          "owner": "Technical Lead",
-          "target": "Sep 2026"
+          "status": "AMBER",
+          "ref": "1.2b EHR Gateway",
+          "title": "Laboratory Information System Integration",
+          "plan": "Complete end-to-end integration testing for automated blood panel result routing into EHR.",
+          "owner": "Integration Lead",
+          "target": "Jul 2026"
         }
       ],
-      "generatedBy": "rule-based-baseline"
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
     },
     "w23": {
       "weekNumber": 23,
@@ -141,99 +172,72 @@
       "isCurrent": false,
       "driveFileId": "sample-drive-doc-aurora-w23",
       "driveFileName": "Weekly Reporting - Week 23 - 10 Jul 2026.pdf",
-      "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
+      "overallStatus": "\ud83d\udfe1 AMBER (Mitigating)",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe1 DUE AUG 2026 (90%)",
-        "ato": "\ud83d\udfe2 GREEN",
-        "escalations": "\ud83d\udd34 5 ITEMS"
+        "clinicalGoLive": "\ud83d\udfe1 10-DAY DRIFT",
+        "fhirInteroperability": "\ud83d\udfe1 80% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 PASSING",
+        "escalations": "\ud83d\udd34 4 ITEMS"
+      },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 15.9,
+        "residual_avg_score": 10.2,
+        "delta_compression": "-5.7",
+        "eventuated_issues_count": 2,
+        "total_issues": 11,
+        "report_week": "Week 23",
+        "report_date": "10 Jul 2026"
       },
       "synthesis": {
-        "executive": "Program posture for Week 23 maintains a stable AMBER status with active mitigation across 28 registered risks. Net risk compression reduced exposure from 14.6 to 4.8.",
-        "technical": "Technical velocity confirms key milestones on track with ongoing security accreditation and environment validation.",
-        "governance": "Governance alignment continues across key deliverable gates with 11 active blockers under remediation."
+        "executive": "Week 23 demonstrates steady risk compression with net residual exposure falling to 10.2. Medical board leadership confirmed schedule baseline alignment for the September hospital go-live.",
+        "technical": "PACS cloud storage gateway deployed to pilot ward. Large 500MB volumetric MRI studies now upload in under 4.2 seconds, well within clinical operational targets.",
+        "governance": "Health record privacy audit confirmed zero unencrypted PHI columns across all Postgres databases and Cloud Storage buckets."
       },
       "top3": [
         {
           "num": 1,
           "type": "decision",
-          "tag": "\ud83d\udea8 Immediate Action",
-          "ref": "1.2b",
-          "title": "Milestone Sign-Off",
-          "action": "Expedite acceptance review."
+          "tag": "\ud83d\udea8 Immediate Executive Action",
+          "ref": "1.14 PACS",
+          "title": "Diagnostic Radiology Bandwidth Reservation",
+          "action": "Approve QoS priority tags for DICOM transmission across hospital wide-area network."
         },
         {
           "num": 2,
           "type": "schedule",
-          "tag": "\u26a1 Schedule Alignment",
-          "ref": "1.14",
-          "title": "SRR Glide Path",
-          "action": "Align September requirements baseline."
+          "tag": "\u26a1 Clinical Schedule Alignment",
+          "ref": "C.2 Workforce",
+          "title": "Clinical Informatics Super-User Training",
+          "action": "Schedule 40 hours of protected training time for 30 nurse unit managers ahead of system dry-run."
         },
         {
           "num": 3,
           "type": "win",
           "tag": "\ud83d\ude80 Delivery Win",
-          "ref": "1.10b",
-          "title": "Platform Ready",
-          "action": "Early test/dev onboarding operational."
+          "ref": "B.1 Security",
+          "title": "Continuous HIPAA/Privacy Audit Prober Deployed",
+          "action": "Automated security prober scans 100% of cloud resources every 6 hours, streaming compliance logs to BigQuery."
         }
       ],
       "sleeperOutlier": {
-        "ref": "1.14",
-        "title": "Cross-Domain Enclave Model Quantization",
-        "risk": "Inference latency spikes under peak token load in air-gapped sovereign environments.",
-        "trigger": "TPU/GPU cluster provisioning delays or kernel compilation timeout under strict audit mode."
+        "ref": "1.14 Interop",
+        "title": "Emergency Department Triage Hand-off Protocol",
+        "warning": "Paper-to-digital transition during ambulance arrivals requires streamlined barcode scanning to avoid triage bottlenecks."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Project Aurora Executive Briefing for Week 23, ending 10 Jul 2026. I am Alex here with Jordan to review delivery progress and critical risks."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:18",
-          "text": "Thanks Alex. Key milestones remain actively tracked this cycle with deliverable validations progressing across the capability drop workstreams."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:42",
-          "text": "Looking at our executive attention items, Commonwealth artefact acceptance and system requirement reviews remain on critical path."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "1:05",
-          "text": "Security accreditation assessors remain embedded across active enclaves, with defined gap close plans actively compressing residual risk."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:28",
-          "text": "Net risk exposure improved significantly across all logged registers, maintaining a strong trajectory towards baseline objectives."
-        }
-      ],
       "plans": [
         {
           "num": 1,
-          "status": "RED",
-          "ref": "1.2b",
-          "title": "Charter Sign-Off",
-          "plan": "Finalize governance terms with executive steering committee.",
-          "owner": "David Vance",
-          "target": "Jul 2026"
+          "status": "AMBER",
+          "ref": "C.2 Workforce",
+          "title": "Nurse Informatics Super-User Program",
+          "plan": "Complete train-the-trainer modules across emergency and intensive care departments.",
+          "owner": "Clinical Workforce Lead",
+          "target": "Aug 2026"
         }
       ],
-      "generatedBy": "rule-based-baseline"
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
     },
     "w24": {
       "weekNumber": 24,
@@ -246,97 +250,70 @@
       "driveFileName": "Weekly Reporting - Week 24 - 17 Jul 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe1 DUE AUG 2026 (90%)",
-        "ato": "\ud83d\udfe2 GREEN",
-        "escalations": "\ud83d\udd34 5 ITEMS"
+        "clinicalGoLive": "\ud83d\udfe1 7-DAY DRIFT",
+        "fhirInteroperability": "\ud83d\udfe2 88% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 PASSING",
+        "escalations": "\ud83d\udfe1 3 ITEMS"
+      },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 15.6,
+        "residual_avg_score": 8.9,
+        "delta_compression": "-6.7",
+        "eventuated_issues_count": 2,
+        "total_issues": 11,
+        "report_week": "Week 24",
+        "report_date": "17 Jul 2026"
       },
       "synthesis": {
-        "executive": "Program posture for Week 24 maintains a stable AMBER status with active mitigation across 28 registered risks. Net risk compression reduced exposure from 14.6 to 4.8.",
-        "technical": "Technical velocity confirms key milestones on track with ongoing security accreditation and environment validation.",
-        "governance": "Governance alignment continues across key deliverable gates with 11 active blockers under remediation."
+        "executive": "Delivery velocity accelerated in Week 24 as FHIR R4 interoperability reached 88% automated test pass rates. Hospital administration authorized the dry-run simulation date for early August.",
+        "technical": "SMART-on-FHIR clinical single sign-on (SSO) with biometric badge tap completed integration testing, achieving median authentication latencies of 1.1 seconds.",
+        "governance": "Joint Clinical Steering Committee reviewed Annex D.1 SLA terms with regional hospital network, resolving all outstanding liability and data custodianship clauses."
       },
       "top3": [
         {
           "num": 1,
           "type": "decision",
-          "tag": "\ud83d\udea8 Immediate Action",
-          "ref": "1.2b",
-          "title": "Milestone Sign-Off",
-          "action": "Expedite acceptance review."
+          "tag": "\ud83d\udea8 Immediate Executive Action",
+          "ref": "1.13 IBR",
+          "title": "Integrated Clinical Rollout Schedule (ICRS) Baseline Sign-Off",
+          "action": "Formally baselines the 4-phase hospital cutover schedule for August-October 2026."
         },
         {
           "num": 2,
           "type": "schedule",
-          "tag": "\u26a1 Schedule Alignment",
-          "ref": "1.14",
-          "title": "SRR Glide Path",
-          "action": "Align September requirements baseline."
+          "tag": "\u26a1 Clinical Schedule Alignment",
+          "ref": "1.2b EHR Gateway",
+          "title": "Outpatient Pharmacy Script Integration Verification",
+          "action": "Complete electronic prescribing and digital script routing tests with central pharmacy systems."
         },
         {
           "num": 3,
           "type": "win",
           "tag": "\ud83d\ude80 Delivery Win",
-          "ref": "1.10b",
-          "title": "Platform Ready",
-          "action": "Early test/dev onboarding operational."
+          "ref": "1.2b EHR Gateway",
+          "title": "SMART-on-FHIR Biometric Badge Tap Verified",
+          "action": "Demonstrated seamless 1.1s clinician sign-on across mobile tablets and bedside workstations."
         }
       ],
       "sleeperOutlier": {
-        "ref": "1.14",
-        "title": "Cross-Domain Enclave Model Quantization",
-        "risk": "Inference latency spikes under peak token load in air-gapped sovereign environments.",
-        "trigger": "TPU/GPU cluster provisioning delays or kernel compilation timeout under strict audit mode."
+        "ref": "1.10b Storage",
+        "title": "Bedside Telemetry Historical Database Retention",
+        "warning": "High-frequency vital sign time-series require partitioning strategy to avoid query slowdowns in historical charts."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Project Aurora Executive Briefing for Week 24, ending 17 Jul 2026. I am Alex here with Jordan to review delivery progress and critical risks."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:18",
-          "text": "Thanks Alex. Key milestones remain actively tracked this cycle with deliverable validations progressing across the capability drop workstreams."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:42",
-          "text": "Looking at our executive attention items, Commonwealth artefact acceptance and system requirement reviews remain on critical path."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "1:05",
-          "text": "Security accreditation assessors remain embedded across active enclaves, with defined gap close plans actively compressing residual risk."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:28",
-          "text": "Net risk exposure improved significantly across all logged registers, maintaining a strong trajectory towards baseline objectives."
-        }
-      ],
       "plans": [
         {
           "num": 1,
-          "status": "RED",
-          "ref": "1.2b",
-          "title": "Milestone 1 V&V Matrix",
-          "plan": "Align verification criteria with technical teams.",
-          "owner": "David Vance",
-          "target": "Jul 2026"
+          "status": "AMBER",
+          "ref": "1.13 IBR",
+          "title": "Milestone Gate 1 Final Acceptance",
+          "plan": "Complete joint review of 42 deliverable artifacts with hospital clinical board.",
+          "owner": "Program Director",
+          "target": "Aug 2026"
         }
       ],
-      "generatedBy": "rule-based-baseline"
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
     },
     "w25": {
       "weekNumber": 25,
@@ -349,97 +326,70 @@
       "driveFileName": "Weekly Reporting - Week 25 - 24 Jul 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe1 DUE AUG 2026 (90%)",
-        "ato": "\ud83d\udfe2 GREEN",
-        "escalations": "\ud83d\udd34 5 ITEMS"
+        "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+        "fhirInteroperability": "\ud83d\udfe2 91% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 PASSING",
+        "escalations": "\ud83d\udfe1 2 ITEMS"
+      },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 15.2,
+        "residual_avg_score": 7.6,
+        "delta_compression": "-7.6",
+        "eventuated_issues_count": 1,
+        "total_issues": 11,
+        "report_week": "Week 25",
+        "report_date": "24 Jul 2026"
       },
       "synthesis": {
-        "executive": "Program posture for Week 25 maintains a stable AMBER status with active mitigation across 28 registered risks. Net risk compression reduced exposure from 14.6 to 4.8.",
-        "technical": "Technical velocity confirms key milestones on track with ongoing security accreditation and environment validation.",
-        "governance": "Governance alignment continues across key deliverable gates with 11 active blockers under remediation."
+        "executive": "Week 25 marks the transition of clinical go-live milestones back onto schedule. High-consequence clinical risks have been reduced to 2 active items, with strong mitigations locked in place.",
+        "technical": "High-throughput bedside telemetry ingestion tested successfully under 200% simulated patient load. Time-series partitioning eliminated query lag on historical ECG and oxygen saturation charts.",
+        "governance": "Chief Medical Officer completed formal walkthrough of emergency department clinical workflow, issuing formal endorsement for dry-run trials."
       },
       "top3": [
         {
           "num": 1,
           "type": "decision",
-          "tag": "\ud83d\udea8 Immediate Action",
-          "ref": "1.2b",
-          "title": "Milestone Sign-Off",
-          "action": "Expedite acceptance review."
+          "tag": "\ud83d\udea8 Immediate Executive Action",
+          "ref": "1.13 IBR",
+          "title": "Hospital Dry-Run Simulation Protocol Approval",
+          "action": "Authorize 24-hour parallel hospital run in acute care ward scheduled for 10 August."
         },
         {
           "num": 2,
           "type": "schedule",
-          "tag": "\u26a1 Schedule Alignment",
-          "ref": "1.14",
-          "title": "SRR Glide Path",
-          "action": "Align September requirements baseline."
+          "tag": "\u26a1 Clinical Schedule Alignment",
+          "ref": "1.7a DevSecOps",
+          "title": "Emergency Rollback Automation Scripting",
+          "action": "Complete automated 1-click fallback to secondary hospital data center in the event of primary link loss."
         },
         {
           "num": 3,
           "type": "win",
           "tag": "\ud83d\ude80 Delivery Win",
-          "ref": "1.10b",
-          "title": "Platform Ready",
-          "action": "Early test/dev onboarding operational."
+          "ref": "1.10b Storage",
+          "title": "High-Volume Bedside Telemetry Benchmark Passed",
+          "action": "Processed 2.4 million telemetry events per minute with P99 database write latency < 45ms."
         }
       ],
       "sleeperOutlier": {
-        "ref": "1.14",
-        "title": "Cross-Domain Enclave Model Quantization",
-        "risk": "Inference latency spikes under peak token load in air-gapped sovereign environments.",
-        "trigger": "TPU/GPU cluster provisioning delays or kernel compilation timeout under strict audit mode."
+        "ref": "C.2 Workforce",
+        "title": "Night Shift Clinical Informaticist Coverage",
+        "warning": "Ensure adequate on-site super-user staffing during overnight hours of initial go-live weekend."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Project Aurora Executive Briefing for Week 25, ending 24 Jul 2026. I am Alex here with Jordan to review delivery progress and critical risks."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:18",
-          "text": "Thanks Alex. Key milestones remain actively tracked this cycle with deliverable validations progressing across the capability drop workstreams."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:42",
-          "text": "Looking at our executive attention items, Commonwealth artefact acceptance and system requirement reviews remain on critical path."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "1:05",
-          "text": "Security accreditation assessors remain embedded across active enclaves, with defined gap close plans actively compressing residual risk."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:28",
-          "text": "Net risk exposure improved significantly across all logged registers, maintaining a strong trajectory towards baseline objectives."
-        }
-      ],
       "plans": [
         {
           "num": 1,
           "status": "AMBER",
-          "ref": "1.2b",
-          "title": "Milestone 1 Deliverables Review",
-          "plan": "Weekly delta sessions with lead assessors.",
-          "owner": "David Vance",
+          "ref": "1.13 IBR",
+          "title": "Hospital Dry-Run Readiness Verification",
+          "plan": "Run simulation pre-checks across all acute care ward endpoints.",
+          "owner": "Clinical Operations Lead",
           "target": "Aug 2026"
         }
       ],
-      "generatedBy": "rule-based-baseline"
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
     },
     "w26": {
       "weekNumber": 26,
@@ -450,99 +400,72 @@
       "isCurrent": false,
       "driveFileId": "sample-drive-doc-aurora-w26",
       "driveFileName": "Weekly Reporting - Week 26 - 31 Jul 2026.pdf",
-      "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
+      "overallStatus": "\ud83d\udfe1 AMBER (Approaching Green)",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe1 DUE AUG 2026 (90%)",
-        "ato": "\ud83d\udfe2 GREEN",
-        "escalations": "\ud83d\udd34 5 ITEMS"
+        "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+        "fhirInteroperability": "\ud83d\udfe2 94% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 PASSING",
+        "escalations": "\ud83d\udfe2 1 ITEM"
+      },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 15.0,
+        "residual_avg_score": 6.8,
+        "delta_compression": "-8.2",
+        "eventuated_issues_count": 1,
+        "total_issues": 11,
+        "report_week": "Week 26",
+        "report_date": "31 Jul 2026"
       },
       "synthesis": {
-        "executive": "Program posture for Week 26 maintains a stable AMBER status with active mitigation across 28 registered risks. Net risk compression reduced exposure from 14.6 to 4.8.",
-        "technical": "Technical velocity confirms key milestones on track with ongoing security accreditation and environment validation.",
-        "governance": "Governance alignment continues across key deliverable gates with 11 active blockers under remediation."
+        "executive": "Week 26 closes out July with significant momentum. Residual risk compression reached -8.2, and only a single operational escalation remains open regarding overnight technical support rotas.",
+        "technical": "PACS radiological image retrieval latency benchmarked at 280ms P90 across regional WAN, exceeding the contractual Annex D.1 SLA requirement of 450ms.",
+        "governance": "Final draft of the Clinical Data Protection and HIPAA compliance dossier (Annex B.1) submitted to independent healthcare assessors for formal accreditation."
       },
       "top3": [
         {
           "num": 1,
           "type": "decision",
-          "tag": "\ud83d\udea8 Immediate Action",
-          "ref": "1.2b",
-          "title": "Milestone Sign-Off",
-          "action": "Expedite acceptance review."
+          "tag": "\ud83d\udea8 Immediate Executive Action",
+          "ref": "1.13 IBR",
+          "title": "Sign-Off on Gate 2 Milestone Deliverables",
+          "action": "Executive authorization of milestone payment gate following completion of technical verification trials."
         },
         {
           "num": 2,
           "type": "schedule",
-          "tag": "\u26a1 Schedule Alignment",
-          "ref": "1.14",
-          "title": "SRR Glide Path",
-          "action": "Align September requirements baseline."
+          "tag": "\u26a1 Clinical Schedule Alignment",
+          "ref": "C.2 Workforce",
+          "title": "24/7 Clinical Support Command Center Rota",
+          "action": "Finalize 3-shift roster for 24/7 technical and clinical support desk for go-live week."
         },
         {
           "num": 3,
           "type": "win",
           "tag": "\ud83d\ude80 Delivery Win",
-          "ref": "1.10b",
-          "title": "Platform Ready",
-          "action": "Early test/dev onboarding operational."
+          "ref": "1.14 PACS",
+          "title": "Radiological DICOM Latency Beats SLA Target",
+          "action": "Median retrieval latency achieved 280ms, delivering instant scan availability to trauma surgeons."
         }
       ],
       "sleeperOutlier": {
-        "ref": "1.14",
-        "title": "Cross-Domain Enclave Model Quantization",
-        "risk": "Inference latency spikes under peak token load in air-gapped sovereign environments.",
-        "trigger": "TPU/GPU cluster provisioning delays or kernel compilation timeout under strict audit mode."
+        "ref": "1.2b EHR Gateway",
+        "title": "External Specialist Clinic Referral Ingestion",
+        "warning": "Validate that non-hospital specialist clinics using legacy desktop software can successfully transmit referrals."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Project Aurora Executive Briefing for Week 26, ending 31 Jul 2026. I am Alex here with Jordan to review delivery progress and critical risks."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:18",
-          "text": "Thanks Alex. Key milestones remain actively tracked this cycle with deliverable validations progressing across the capability drop workstreams."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:42",
-          "text": "Looking at our executive attention items, Commonwealth artefact acceptance and system requirement reviews remain on critical path."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "1:05",
-          "text": "Security accreditation assessors remain embedded across active enclaves, with defined gap close plans actively compressing residual risk."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:28",
-          "text": "Net risk exposure improved significantly across all logged registers, maintaining a strong trajectory towards baseline objectives."
-        }
-      ],
       "plans": [
         {
           "num": 1,
-          "status": "RED",
-          "ref": "1.2b",
-          "title": "Formal Acceptance Sign-Off",
-          "plan": "Executive alignment meeting scheduled.",
-          "owner": "David Vance",
+          "status": "GREEN",
+          "ref": "1.13 IBR",
+          "title": "Milestone Gate 2 Deliverables Sign-off",
+          "plan": "Present formal verification evidence to Health Transformation Board.",
+          "owner": "Delivery Lead",
           "target": "Aug 2026"
         }
       ],
-      "generatedBy": "rule-based-baseline"
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
     },
     "w27": {
       "weekNumber": 27,
@@ -555,15 +478,25 @@
       "driveFileName": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
       "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe1 DUE AUG 2026 (90%)",
-        "ato": "\ud83d\udfe2 GREEN",
-        "escalations": "\ud83d\udd34 5 ITEMS"
+        "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+        "fhirInteroperability": "\ud83d\udfe2 95% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 PASSING",
+        "escalations": "\ud83d\udfe2 1 ITEM"
+      },
+      "metrics": {
+        "total_risks": 28,
+        "inherent_avg_score": 14.8,
+        "residual_avg_score": 5.8,
+        "delta_compression": "-9.0",
+        "eventuated_issues_count": 1,
+        "total_issues": 11,
+        "report_week": "Week 27",
+        "report_date": "07 Aug 2026"
       },
       "synthesis": {
-        "executive": "Delivery velocity remains active for Week 27 ending 07 Aug 2026. Risk portfolio tracks 14 active items with residual exposure compressing from 15.4 to 6.2 (delta -9.2). Management focus remains locked on contractual milestones.",
-        "technical": "Engineering baseline across sovereign enclaves and network interconnects is stable. Critical path activities for IBR and SRR milestone gates are progressing with 1 eventuated issues under active mitigation.",
-        "governance": "Joint Steering Committee governance controls are validated. ATO accreditation and security audit artifacts remain aligned to target baseline dates with no catastrophic commercial blockers."
+        "executive": "Delivery velocity remains active for Week 27 ending 07 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.8 to 5.8 (delta -9.0). Management focus remains locked on contractual clinical milestones.",
+        "technical": "Engineering baseline across hospital cloud infrastructure and network interconnects is stable. Critical path activities for clinical dry-run and FHIR interoperability gates are progressing with 1 eventuated issue under active mitigation.",
+        "governance": "Joint Clinical Governance Board controls are validated. HIPAA and digital health privacy accreditation artifacts remain aligned to target baseline dates with no commercial blockers."
       },
       "top3": [
         {
@@ -572,16 +505,14 @@
           "tag": "\ud83d\udea8 Immediate Executive Action",
           "ref": "1.13 IBR",
           "title": "Contractual Milestone Gate 2 Alignment",
-          "impact": "Critical path baseline verification for Commonwealth stakeholder review.",
-          "action": "Authorize integrated schedule baseline and close residual action items."
+          "action": "Authorize integrated clinical schedule baseline and close residual action items."
         },
         {
           "num": 2,
           "type": "schedule",
           "tag": "\u26a1 Critical Schedule Alignment",
           "ref": "1.10b Test/Dev",
-          "title": "Sovereign Enclave Hardware Interconnect Latency",
-          "impact": "Network validation window lead time compression prior to Phase 1 cutover.",
+          "title": "Hospital Cluster Hardware Interconnect Latency",
           "action": "Complete redundant optical interconnect verification and dark fiber testing."
         },
         {
@@ -589,105 +520,43 @@
           "type": "win",
           "tag": "\ud83d\ude80 Primary Delivery Win",
           "ref": "1.7a DevSecOps",
-          "title": "CI/CD Pipeline Security Baseline Accreditation",
-          "impact": "Automated deployment pipelines and zero-trust IAP gates fully accredited.",
-          "action": "Maintain automated compliance gates and proceed to next milestone phase."
+          "title": "CI/CD Pipeline Clinical Security Baseline Accreditation",
+          "action": "Automated deployment pipelines and zero-trust IAP gates fully accredited."
         }
       ],
       "sleeperOutlier": {
         "ref": "1.14 SRR",
         "title": "System Requirements Review Verification Window",
-        "warning": "Inter-team dependency handoffs may compress review window if pre-work packages are delayed."
+        "warning": "Inter-team clinical validation handoffs may compress review window if pre-work packages are delayed."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Executive Decision Briefing for Week 27, ending 07 Aug 2026. I'm Alex, and with me is Jordan, our Technical Director."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:15",
-          "text": "Thanks Alex. This week our primary focus is locked onto contractual delivery milestones and risk mitigation velocity."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:32",
-          "text": "Looking at our Top Attention items, Contractual Milestone Gate 2 Alignment is currently on the critical path for leadership review."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:48",
-          "text": "Exactly. On the engineering side, Sovereign Enclave Hardware Interconnect Latency is being actively managed to ensure full network validation ahead of cutover."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:05",
-          "text": "Overall risk posture remains stable with clear treatment ownership across all key pillars. Back to you for executive decisions."
-        }
-      ],
       "plans": [
         {
           "num": 1,
-          "status": "RED",
-          "ref": "1.2b",
-          "title": "Milestone 1 Deliverables Acceptance",
-          "plan": "Work with customer for sign-off.",
+          "status": "GREEN",
+          "ref": "1.13 IBR",
+          "title": "Milestone 2 Deliverables Acceptance",
+          "plan": "Complete sign-off with Hospital Board executive.",
           "owner": "Delivery Lead",
           "target": "Aug 2026"
-        },
-        {
-          "num": 2,
-          "status": "RED",
-          "ref": "1.6 GFF",
-          "title": "Facilities & Connectivity",
-          "plan": "Mitigate lead time.",
-          "owner": "Infrastructure Lead",
-          "target": "Aug 2026"
-        },
-        {
-          "num": 3,
-          "status": "BLUE",
-          "ref": "1.10b",
-          "title": "Platform E.01 Ready",
-          "plan": "Operational for test/dev.",
-          "owner": "Engineering Lead",
-          "target": "Delivered"
-        },
-        {
-          "num": 4,
-          "status": "RED",
-          "ref": "1.14",
-          "title": "Systems Requirements Review (SRR)",
-          "plan": "Iterative requirements alignment.",
-          "owner": "Technical Lead",
-          "target": "Sep 2026"
         }
       ],
-      "generatedBy": "gemini-3.5-flash"
+      "generatedBy": "gemini-3.5-flash",
+      "hasAudio": false
     },
     "w28": {
-      "date": "14 Aug 2026",
-      "week": "Week 28",
-      "weekLabel": "Week 28",
       "weekNumber": 28,
+      "weekLabel": "Week 28",
+      "week": "Week 28",
+      "date": "14 Aug 2026",
       "isLatest": true,
       "isCurrent": true,
+      "driveFileId": "sample-drive-doc-aurora-w28",
+      "driveFileName": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
       "overallStatus": "\ud83d\udfe2 ON TRACK",
       "kpis": {
-        "commercial": "\ud83d\udfe2 ON TRACK",
-        "ibr": "\ud83d\udfe2 DUE AUG 2026 (95%)",
-        "ato": "\ud83d\udfe2 GREEN",
+        "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+        "fhirInteroperability": "\ud83d\udfe2 98% PASS",
+        "hipaaCompliance": "\ud83d\udfe2 ACCREDITED",
         "escalations": "\ud83d\udfe2 0 ITEMS"
       },
       "metrics": {
@@ -704,14 +573,9 @@
         "baseline_date": "14 Aug 2026"
       },
       "synthesis": {
-        "executive": "Delivery velocity remains active for Week 28 ending 14 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.6 to 4.8 (delta -9.8). Management focus remains locked on contractual milestones.",
-        "technical": "Engineering baseline across sovereign enclaves and network interconnects is stable. Critical path activities for IBR and SRR milestone gates are progressing with 0 eventuated issues under active mitigation.",
-        "governance": "Joint Steering Committee governance controls are validated. ATO accreditation and security audit artifacts remain aligned to target baseline dates with no catastrophic commercial blockers."
-      },
-      "executiveSummary": {
-        "executive": "Delivery velocity remains active for Week 28 ending 14 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.6 to 4.8 (delta -9.8). Management focus remains locked on contractual milestones.",
-        "technical": "Engineering baseline across sovereign enclaves and network interconnects is stable. Critical path activities for IBR and SRR milestone gates are progressing with 0 eventuated issues under active mitigation.",
-        "governance": "Joint Steering Committee governance controls are validated. ATO accreditation and security audit artifacts remain aligned to target baseline dates with no catastrophic commercial blockers."
+        "executive": "Delivery velocity is fully green for Week 28 ending 14 Aug 2026. Residual risk compressed to a low 4.8 across all 28 items, with zero active escalations blocking deployment. Acute care ward dry-run passed with 100% telemetry fidelity.",
+        "technical": "All FHIR R4 clinical APIs, SMART-on-FHIR single sign-on, and PACS imaging pipelines have passed pre-flight accreditation. Automated end-to-end failover tests completed with sub-second recovery.",
+        "governance": "Health Transformation Board granted unconditional approval for Phase 1 acute go-live. Independent HIPAA and Australian Privacy Act accreditation certificates formally issued."
       },
       "top3": [
         {
@@ -719,92 +583,595 @@
           "type": "decision",
           "tag": "\ud83d\udea8 Immediate Executive Action",
           "ref": "1.13 IBR",
-          "title": "Contractual Milestone Gate 2 Alignment",
-          "impact": "Critical path baseline verification for Commonwealth stakeholder review.",
-          "action": "Authorize integrated schedule baseline and close residual action items."
+          "title": "Hospital Phase 1 Cutover Authorization",
+          "action": "Sign off formal executive go-ahead for scheduled weekend cutover."
         },
         {
           "num": 2,
           "type": "schedule",
           "tag": "\u26a1 Critical Schedule Alignment",
-          "ref": "1.10b Test/Dev",
-          "title": "Sovereign Enclave Hardware Interconnect Latency",
-          "impact": "Network validation window lead time compression prior to Phase 1 cutover.",
-          "action": "Complete redundant optical interconnect verification and dark fiber testing."
+          "ref": "C.2 Workforce",
+          "title": "Go-Live Weekend Command Center Activation",
+          "action": "Mobilize 24/7 technical and clinical support pods across participating hospitals."
         },
         {
           "num": 3,
           "type": "win",
           "tag": "\ud83d\ude80 Primary Delivery Win",
-          "ref": "1.7a DevSecOps",
-          "title": "CI/CD Pipeline Security Baseline Accreditation",
-          "impact": "Automated deployment pipelines and zero-trust IAP gates fully accredited.",
-          "action": "Maintain automated compliance gates and proceed to next milestone phase."
+          "ref": "B.1 Security",
+          "title": "Full Healthcare Cloud Accreditation Granted",
+          "action": "Independent clinical cybersecurity audit achieved 100% compliance score."
         }
       ],
       "sleeperOutlier": {
-        "ref": "1.14 SRR",
-        "title": "System Requirements Review Verification Window",
-        "warning": "Inter-team dependency handoffs may compress review window if pre-work packages are delayed."
+        "ref": "1.14 Interop",
+        "title": "Post-Cutover Historical Patient Record Ingestion",
+        "warning": "Monitor secondary background batch jobs to prevent interference with live real-time clinical telemetry."
       },
-      "podcastScript": [
-        {
-          "speaker": "Alex",
-          "role": "Program Delivery Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:00",
-          "text": "Welcome to the Executive Briefing for Week 28, ending August 14, 2026. I'm Alex, Program Delivery Analyst. This week, our delivery velocity remains highly active, with management focus locked tightly on our upcoming contractual milestones. Our primary objective today is to review our risk profile and align on critical path decisions to maintain this momentum."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "0:21",
-          "text": "Thanks, Alex. On the engineering front, our baseline across sovereign enclaves and network interconnects is exceptionally stable. We've seen excellent risk compression this week, with our residual exposure dropping from 14.6 down to 4.8\u2014a significant delta of minus 9.8 across our 28 active items. Crucially, both our IBR and SRR milestone gates are progressing with zero eventuated issues under active mitigation."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Delivery Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "0:47",
-          "text": "That risk reduction is a major win, Jordan. However, to keep pushing forward, we need immediate executive action on our top priority: Reference 1.13, the Contractual Milestone Gate 2 Alignment for the Integrated Baseline Review. To secure Commonwealth stakeholder approval and verify our critical path, leadership must formally authorize the integrated schedule baseline and close out the remaining residual action items today."
-        },
-        {
-          "speaker": "Jordan",
-          "role": "Technical Director",
-          "avatar": "\ud83e\udd16",
-          "time": "1:11",
-          "text": "Absolutely, that authorization is critical. On the technical side, we are also managing Reference 1.10b, addressing sovereign enclave hardware interconnect latency to prevent network validation window compression before the Phase 1 cutover. We're actively running redundant optical interconnect verification and dark fiber testing. Additionally, we are proactively monitoring our sleeper outlier, Reference 1.14, where we're streamlining inter-team dependency handoffs to ensure the System Requirements Review verification window isn't compressed."
-        },
-        {
-          "speaker": "Alex",
-          "role": "Program Delivery Analyst",
-          "avatar": "\ud83c\udf99\ufe0f",
-          "time": "1:43",
-          "text": "Excellent proactive management, Jordan. To wrap up, our governance posture is highly secure: the Joint Steering Committee has validated our controls, and our ATO accreditation and security audit artifacts remain perfectly aligned to target baseline dates with zero commercial blockers. Our primary delivery win this week is the full accreditation of our CI/CD pipeline security baseline under Reference 1.7a. Executives, please authorize the Gate 2 baseline so we can proceed smoothly into the next phase."
-        }
-      ],
-      "driveFileId": "sample-drive-doc-aurora-w28",
-      "driveFileName": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
-      "driveFile": {
-        "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
-        "id": "sample-drive-doc-aurora-w28",
-        "ingestedAt": "2026-09-01T17:57:24.189776"
-      },
+      "plans": [],
       "generatedBy": "gemini-3.5-flash",
-      "podcastGeneratedBy": "gemini-3.5-flash",
-      "podcastGeneratedAt": "2026-09-02T07:41:12.549468+00:00",
       "hasAudio": true,
       "audioFile": "data/sample/podcast_w28.mp3",
-      "audioDurationSeconds": 131.4,
-      "audioSizeBytes": 525696
+      "audioDurationSeconds": 131.4
     }
   },
+  "Week 21": {
+    "weekNumber": 21,
+    "weekLabel": "Week 21",
+    "week": "Week 21",
+    "date": "26 Jun 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w21",
+    "driveFileName": "Weekly Reporting - Week 21 - 26 Jun 2026.pdf",
+    "overallStatus": "\ud83d\udd34 CRITICAL ATTENTION",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udd34 DELAY RISK",
+      "fhirInteroperability": "\ud83d\udfe1 65% PASS",
+      "hipaaCompliance": "\ud83d\udfe1 AUDIT PREP",
+      "escalations": "\ud83d\udd34 7 ITEMS"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 16.8,
+      "residual_avg_score": 13.4,
+      "delta_compression": "-3.4",
+      "eventuated_issues_count": 4,
+      "total_issues": 11,
+      "report_week": "Week 21",
+      "report_date": "26 Jun 2026"
+    },
+    "synthesis": {
+      "executive": "Program posture for Week 21 reflects critical path pressure during Phase 1 hospital environment bring-up. Seven acute escalations require steering committee intervention, primarily regarding hospital ward optical fiber lead times and clinical telemetry VLAN isolation.",
+      "technical": "HL7 v2 legacy feeds from pathology systems are exhibiting 18% parsing failure rates against the central FHIR R4 converter. Acute ICU telemetry buffers drop packets under simulated surge load.",
+      "governance": "Clinical Data Governance Board has convened an emergency technical working group to accelerate Annex B.1 clinical compliance artefacts and formalize hospital data custodian delegations."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.6 Hospital LAN",
+        "title": "Hospital Optical Interconnect & Core Switch Upgrades",
+        "action": "Authorize capital expenditure for redundant fiber runs into acute surgical and ICU wards."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Clinical Schedule Risk",
+        "ref": "1.2b EHR Gateway",
+        "title": "Pathology Legacy Feed Schema Translation",
+        "action": "Deploy dedicated interface engineering squad to map non-standard HL7 v2 segments to FHIR R4 Observation profiles."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Delivery Win",
+        "ref": "1.10b Cloud Fabric",
+        "title": "Regional Cloud HSM & Key Vault Commissioned",
+        "action": "Dedicated Cloud HSM cluster operational with CMEK encryption keys initialized for EHR patient tables."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "1.14 PACS",
+      "title": "Diagnostic PACS Imaging Cloud Ingestion Throughput",
+      "warning": "Spike in radiological CT/MRI volumetric scans may exceed regional internet bandwidth if dedicated interconnect is delayed."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "RED",
+        "ref": "1.6 Hospital LAN",
+        "title": "Hospital Core Network Modernization",
+        "plan": "Complete redundant optical fiber cabling and VLAN testing across 4 metropolitan hospital sites.",
+        "owner": "Network Engineering Lead",
+        "target": "Jul 2026"
+      },
+      {
+        "num": 2,
+        "status": "RED",
+        "ref": "1.2b EHR Gateway",
+        "title": "FHIR Gateway Transformation Engine",
+        "plan": "Patch translation engine to support non-standard pathology lab test code mappings.",
+        "owner": "Integration Lead",
+        "target": "Jul 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
+  "Week 22": {
+    "weekNumber": 22,
+    "weekLabel": "Week 22",
+    "week": "Week 22",
+    "date": "03 Jul 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w22",
+    "driveFileName": "Weekly Reporting - Week 22 - 03 Jul 2026.pdf",
+    "overallStatus": "\ud83d\udfe1 AMBER (Mitigating)",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe1 14-DAY DRIFT",
+      "fhirInteroperability": "\ud83d\udfe1 72% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 PASSING",
+      "escalations": "\ud83d\udd34 5 ITEMS"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 16.4,
+      "residual_avg_score": 11.8,
+      "delta_compression": "-4.6",
+      "eventuated_issues_count": 3,
+      "total_issues": 11,
+      "report_week": "Week 22",
+      "report_date": "03 Jul 2026"
+    },
+    "synthesis": {
+      "executive": "Week 22 marks an improving trajectory with acute escalations reduced from 7 to 5. The primary delivery focus has transitioned to locking down interface agreements with medical imaging and laboratory providers.",
+      "technical": "Hospital LAN optical fiber terminations completed at the primary facility. Initial FHIR R4 transformation error rate dropped below 8% following deployment of the custom vocabulary translator.",
+      "governance": "Clinical Informatics liaison team initiated clinician workflow dry-runs in simulated outpatient clinics, receiving favorable ergonomic and usability feedback."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.2b EHR Gateway",
+        "title": "Laboratory Information System (LIS) Interface Contract",
+        "action": "Sign off interoperability SLA and data sharing memorandum of understanding with regional pathology provider."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Clinical Schedule Alignment",
+        "ref": "1.10b Test/Dev",
+        "title": "Clinical Workstation Image Deployment",
+        "action": "Roll out standardized dual-screen clinical workstation images with integrated biometric reader support."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Delivery Win",
+        "ref": "1.6 Hospital LAN",
+        "title": "Hospital Core Network Cutover Complete (Site A)",
+        "action": "Surgical and ICU wards successfully migrated to 10Gbps redundant fiber with zero clinical outage."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "1.14 PACS",
+      "title": "High-Resolution DICOM Cache Eviction Policy",
+      "warning": "Unoptimized local cache retention on local ward gateways could lead to disk exhaustion during peak diagnostic hours."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "AMBER",
+        "ref": "1.2b EHR Gateway",
+        "title": "Laboratory Information System Integration",
+        "plan": "Complete end-to-end integration testing for automated blood panel result routing into EHR.",
+        "owner": "Integration Lead",
+        "target": "Jul 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
+  "Week 23": {
+    "weekNumber": 23,
+    "weekLabel": "Week 23",
+    "week": "Week 23",
+    "date": "10 Jul 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w23",
+    "driveFileName": "Weekly Reporting - Week 23 - 10 Jul 2026.pdf",
+    "overallStatus": "\ud83d\udfe1 AMBER (Mitigating)",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe1 10-DAY DRIFT",
+      "fhirInteroperability": "\ud83d\udfe1 80% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 PASSING",
+      "escalations": "\ud83d\udd34 4 ITEMS"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 15.9,
+      "residual_avg_score": 10.2,
+      "delta_compression": "-5.7",
+      "eventuated_issues_count": 2,
+      "total_issues": 11,
+      "report_week": "Week 23",
+      "report_date": "10 Jul 2026"
+    },
+    "synthesis": {
+      "executive": "Week 23 demonstrates steady risk compression with net residual exposure falling to 10.2. Medical board leadership confirmed schedule baseline alignment for the September hospital go-live.",
+      "technical": "PACS cloud storage gateway deployed to pilot ward. Large 500MB volumetric MRI studies now upload in under 4.2 seconds, well within clinical operational targets.",
+      "governance": "Health record privacy audit confirmed zero unencrypted PHI columns across all Postgres databases and Cloud Storage buckets."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.14 PACS",
+        "title": "Diagnostic Radiology Bandwidth Reservation",
+        "action": "Approve QoS priority tags for DICOM transmission across hospital wide-area network."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Clinical Schedule Alignment",
+        "ref": "C.2 Workforce",
+        "title": "Clinical Informatics Super-User Training",
+        "action": "Schedule 40 hours of protected training time for 30 nurse unit managers ahead of system dry-run."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Delivery Win",
+        "ref": "B.1 Security",
+        "title": "Continuous HIPAA/Privacy Audit Prober Deployed",
+        "action": "Automated security prober scans 100% of cloud resources every 6 hours, streaming compliance logs to BigQuery."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "1.14 Interop",
+      "title": "Emergency Department Triage Hand-off Protocol",
+      "warning": "Paper-to-digital transition during ambulance arrivals requires streamlined barcode scanning to avoid triage bottlenecks."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "AMBER",
+        "ref": "C.2 Workforce",
+        "title": "Nurse Informatics Super-User Program",
+        "plan": "Complete train-the-trainer modules across emergency and intensive care departments.",
+        "owner": "Clinical Workforce Lead",
+        "target": "Aug 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
+  "Week 24": {
+    "weekNumber": 24,
+    "weekLabel": "Week 24",
+    "week": "Week 24",
+    "date": "17 Jul 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w24",
+    "driveFileName": "Weekly Reporting - Week 24 - 17 Jul 2026.pdf",
+    "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe1 7-DAY DRIFT",
+      "fhirInteroperability": "\ud83d\udfe2 88% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 PASSING",
+      "escalations": "\ud83d\udfe1 3 ITEMS"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 15.6,
+      "residual_avg_score": 8.9,
+      "delta_compression": "-6.7",
+      "eventuated_issues_count": 2,
+      "total_issues": 11,
+      "report_week": "Week 24",
+      "report_date": "17 Jul 2026"
+    },
+    "synthesis": {
+      "executive": "Delivery velocity accelerated in Week 24 as FHIR R4 interoperability reached 88% automated test pass rates. Hospital administration authorized the dry-run simulation date for early August.",
+      "technical": "SMART-on-FHIR clinical single sign-on (SSO) with biometric badge tap completed integration testing, achieving median authentication latencies of 1.1 seconds.",
+      "governance": "Joint Clinical Steering Committee reviewed Annex D.1 SLA terms with regional hospital network, resolving all outstanding liability and data custodianship clauses."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.13 IBR",
+        "title": "Integrated Clinical Rollout Schedule (ICRS) Baseline Sign-Off",
+        "action": "Formally baselines the 4-phase hospital cutover schedule for August-October 2026."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Clinical Schedule Alignment",
+        "ref": "1.2b EHR Gateway",
+        "title": "Outpatient Pharmacy Script Integration Verification",
+        "action": "Complete electronic prescribing and digital script routing tests with central pharmacy systems."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Delivery Win",
+        "ref": "1.2b EHR Gateway",
+        "title": "SMART-on-FHIR Biometric Badge Tap Verified",
+        "action": "Demonstrated seamless 1.1s clinician sign-on across mobile tablets and bedside workstations."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "1.10b Storage",
+      "title": "Bedside Telemetry Historical Database Retention",
+      "warning": "High-frequency vital sign time-series require partitioning strategy to avoid query slowdowns in historical charts."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "AMBER",
+        "ref": "1.13 IBR",
+        "title": "Milestone Gate 1 Final Acceptance",
+        "plan": "Complete joint review of 42 deliverable artifacts with hospital clinical board.",
+        "owner": "Program Director",
+        "target": "Aug 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
+  "Week 25": {
+    "weekNumber": 25,
+    "weekLabel": "Week 25",
+    "week": "Week 25",
+    "date": "24 Jul 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w25",
+    "driveFileName": "Weekly Reporting - Week 25 - 24 Jul 2026.pdf",
+    "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+      "fhirInteroperability": "\ud83d\udfe2 91% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 PASSING",
+      "escalations": "\ud83d\udfe1 2 ITEMS"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 15.2,
+      "residual_avg_score": 7.6,
+      "delta_compression": "-7.6",
+      "eventuated_issues_count": 1,
+      "total_issues": 11,
+      "report_week": "Week 25",
+      "report_date": "24 Jul 2026"
+    },
+    "synthesis": {
+      "executive": "Week 25 marks the transition of clinical go-live milestones back onto schedule. High-consequence clinical risks have been reduced to 2 active items, with strong mitigations locked in place.",
+      "technical": "High-throughput bedside telemetry ingestion tested successfully under 200% simulated patient load. Time-series partitioning eliminated query lag on historical ECG and oxygen saturation charts.",
+      "governance": "Chief Medical Officer completed formal walkthrough of emergency department clinical workflow, issuing formal endorsement for dry-run trials."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.13 IBR",
+        "title": "Hospital Dry-Run Simulation Protocol Approval",
+        "action": "Authorize 24-hour parallel hospital run in acute care ward scheduled for 10 August."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Clinical Schedule Alignment",
+        "ref": "1.7a DevSecOps",
+        "title": "Emergency Rollback Automation Scripting",
+        "action": "Complete automated 1-click fallback to secondary hospital data center in the event of primary link loss."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Delivery Win",
+        "ref": "1.10b Storage",
+        "title": "High-Volume Bedside Telemetry Benchmark Passed",
+        "action": "Processed 2.4 million telemetry events per minute with P99 database write latency < 45ms."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "C.2 Workforce",
+      "title": "Night Shift Clinical Informaticist Coverage",
+      "warning": "Ensure adequate on-site super-user staffing during overnight hours of initial go-live weekend."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "AMBER",
+        "ref": "1.13 IBR",
+        "title": "Hospital Dry-Run Readiness Verification",
+        "plan": "Run simulation pre-checks across all acute care ward endpoints.",
+        "owner": "Clinical Operations Lead",
+        "target": "Aug 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
+  "Week 26": {
+    "weekNumber": 26,
+    "weekLabel": "Week 26",
+    "week": "Week 26",
+    "date": "31 Jul 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w26",
+    "driveFileName": "Weekly Reporting - Week 26 - 31 Jul 2026.pdf",
+    "overallStatus": "\ud83d\udfe1 AMBER (Approaching Green)",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+      "fhirInteroperability": "\ud83d\udfe2 94% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 PASSING",
+      "escalations": "\ud83d\udfe2 1 ITEM"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 15.0,
+      "residual_avg_score": 6.8,
+      "delta_compression": "-8.2",
+      "eventuated_issues_count": 1,
+      "total_issues": 11,
+      "report_week": "Week 26",
+      "report_date": "31 Jul 2026"
+    },
+    "synthesis": {
+      "executive": "Week 26 closes out July with significant momentum. Residual risk compression reached -8.2, and only a single operational escalation remains open regarding overnight technical support rotas.",
+      "technical": "PACS radiological image retrieval latency benchmarked at 280ms P90 across regional WAN, exceeding the contractual Annex D.1 SLA requirement of 450ms.",
+      "governance": "Final draft of the Clinical Data Protection and HIPAA compliance dossier (Annex B.1) submitted to independent healthcare assessors for formal accreditation."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.13 IBR",
+        "title": "Sign-Off on Gate 2 Milestone Deliverables",
+        "action": "Executive authorization of milestone payment gate following completion of technical verification trials."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Clinical Schedule Alignment",
+        "ref": "C.2 Workforce",
+        "title": "24/7 Clinical Support Command Center Rota",
+        "action": "Finalize 3-shift roster for 24/7 technical and clinical support desk for go-live week."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Delivery Win",
+        "ref": "1.14 PACS",
+        "title": "Radiological DICOM Latency Beats SLA Target",
+        "action": "Median retrieval latency achieved 280ms, delivering instant scan availability to trauma surgeons."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "1.2b EHR Gateway",
+      "title": "External Specialist Clinic Referral Ingestion",
+      "warning": "Validate that non-hospital specialist clinics using legacy desktop software can successfully transmit referrals."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "GREEN",
+        "ref": "1.13 IBR",
+        "title": "Milestone Gate 2 Deliverables Sign-off",
+        "plan": "Present formal verification evidence to Health Transformation Board.",
+        "owner": "Delivery Lead",
+        "target": "Aug 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
+  "Week 27": {
+    "weekNumber": 27,
+    "weekLabel": "Week 27",
+    "week": "Week 27",
+    "date": "07 Aug 2026",
+    "isLatest": false,
+    "isCurrent": false,
+    "driveFileId": "sample-drive-doc-aurora-w27",
+    "driveFileName": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
+    "overallStatus": "\ud83d\udfe1 AMBER (Stable)",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+      "fhirInteroperability": "\ud83d\udfe2 95% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 PASSING",
+      "escalations": "\ud83d\udfe2 1 ITEM"
+    },
+    "metrics": {
+      "total_risks": 28,
+      "inherent_avg_score": 14.8,
+      "residual_avg_score": 5.8,
+      "delta_compression": "-9.0",
+      "eventuated_issues_count": 1,
+      "total_issues": 11,
+      "report_week": "Week 27",
+      "report_date": "07 Aug 2026"
+    },
+    "synthesis": {
+      "executive": "Delivery velocity remains active for Week 27 ending 07 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.8 to 5.8 (delta -9.0). Management focus remains locked on contractual clinical milestones.",
+      "technical": "Engineering baseline across hospital cloud infrastructure and network interconnects is stable. Critical path activities for clinical dry-run and FHIR interoperability gates are progressing with 1 eventuated issue under active mitigation.",
+      "governance": "Joint Clinical Governance Board controls are validated. HIPAA and digital health privacy accreditation artifacts remain aligned to target baseline dates with no commercial blockers."
+    },
+    "top3": [
+      {
+        "num": 1,
+        "type": "decision",
+        "tag": "\ud83d\udea8 Immediate Executive Action",
+        "ref": "1.13 IBR",
+        "title": "Contractual Milestone Gate 2 Alignment",
+        "action": "Authorize integrated clinical schedule baseline and close residual action items."
+      },
+      {
+        "num": 2,
+        "type": "schedule",
+        "tag": "\u26a1 Critical Schedule Alignment",
+        "ref": "1.10b Test/Dev",
+        "title": "Hospital Cluster Hardware Interconnect Latency",
+        "action": "Complete redundant optical interconnect verification and dark fiber testing."
+      },
+      {
+        "num": 3,
+        "type": "win",
+        "tag": "\ud83d\ude80 Primary Delivery Win",
+        "ref": "1.7a DevSecOps",
+        "title": "CI/CD Pipeline Clinical Security Baseline Accreditation",
+        "action": "Automated deployment pipelines and zero-trust IAP gates fully accredited."
+      }
+    ],
+    "sleeperOutlier": {
+      "ref": "1.14 SRR",
+      "title": "System Requirements Review Verification Window",
+      "warning": "Inter-team clinical validation handoffs may compress review window if pre-work packages are delayed."
+    },
+    "plans": [
+      {
+        "num": 1,
+        "status": "GREEN",
+        "ref": "1.13 IBR",
+        "title": "Milestone 2 Deliverables Acceptance",
+        "plan": "Complete sign-off with Hospital Board executive.",
+        "owner": "Delivery Lead",
+        "target": "Aug 2026"
+      }
+    ],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": false
+  },
   "Week 28": {
-    "date": "14 Aug 2026",
-    "week": "Week 28",
-    "weekLabel": "Week 28",
     "weekNumber": 28,
+    "weekLabel": "Week 28",
+    "week": "Week 28",
+    "date": "14 Aug 2026",
+    "isLatest": true,
+    "isCurrent": true,
+    "driveFileId": "sample-drive-doc-aurora-w28",
+    "driveFileName": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
+    "overallStatus": "\ud83d\udfe2 ON TRACK",
+    "kpis": {
+      "clinicalGoLive": "\ud83d\udfe2 ON TRACK",
+      "fhirInteroperability": "\ud83d\udfe2 98% PASS",
+      "hipaaCompliance": "\ud83d\udfe2 ACCREDITED",
+      "escalations": "\ud83d\udfe2 0 ITEMS"
+    },
     "metrics": {
       "total_risks": 28,
       "inherent_avg_score": 14.6,
@@ -818,10 +1185,10 @@
       "baseline_week": "Week 28",
       "baseline_date": "14 Aug 2026"
     },
-    "executiveSummary": {
-      "executive": "Delivery velocity remains active for Week 28 ending 14 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.6 to 4.8 (delta -9.8). Management focus remains locked on contractual milestones.",
-      "technical": "Engineering baseline across sovereign enclaves and network interconnects is stable. Critical path activities for IBR and SRR milestone gates are progressing with 0 eventuated issues under active mitigation.",
-      "governance": "Joint Steering Committee governance controls are validated. ATO accreditation and security audit artifacts remain aligned to target baseline dates with no catastrophic commercial blockers."
+    "synthesis": {
+      "executive": "Delivery velocity is fully green for Week 28 ending 14 Aug 2026. Residual risk compressed to a low 4.8 across all 28 items, with zero active escalations blocking deployment. Acute care ward dry-run passed with 100% telemetry fidelity.",
+      "technical": "All FHIR R4 clinical APIs, SMART-on-FHIR single sign-on, and PACS imaging pipelines have passed pre-flight accreditation. Automated end-to-end failover tests completed with sub-second recovery.",
+      "governance": "Health Transformation Board granted unconditional approval for Phase 1 acute go-live. Independent HIPAA and Australian Privacy Act accreditation certificates formally issued."
     },
     "top3": [
       {
@@ -829,179 +1196,35 @@
         "type": "decision",
         "tag": "\ud83d\udea8 Immediate Executive Action",
         "ref": "1.13 IBR",
-        "title": "Contractual Milestone Gate 2 Alignment",
-        "impact": "Critical path baseline verification for Commonwealth stakeholder review.",
-        "action": "Authorize integrated schedule baseline and close residual action items."
+        "title": "Hospital Phase 1 Cutover Authorization",
+        "action": "Sign off formal executive go-ahead for scheduled weekend cutover."
       },
       {
         "num": 2,
         "type": "schedule",
         "tag": "\u26a1 Critical Schedule Alignment",
-        "ref": "1.10b Test/Dev",
-        "title": "Sovereign Enclave Hardware Interconnect Latency",
-        "impact": "Network validation window lead time compression prior to Phase 1 cutover.",
-        "action": "Complete redundant optical interconnect verification and dark fiber testing."
+        "ref": "C.2 Workforce",
+        "title": "Go-Live Weekend Command Center Activation",
+        "action": "Mobilize 24/7 technical and clinical support pods across participating hospitals."
       },
       {
         "num": 3,
         "type": "win",
         "tag": "\ud83d\ude80 Primary Delivery Win",
-        "ref": "1.7a DevSecOps",
-        "title": "CI/CD Pipeline Security Baseline Accreditation",
-        "impact": "Automated deployment pipelines and zero-trust IAP gates fully accredited.",
-        "action": "Maintain automated compliance gates and proceed to next milestone phase."
+        "ref": "B.1 Security",
+        "title": "Full Healthcare Cloud Accreditation Granted",
+        "action": "Independent clinical cybersecurity audit achieved 100% compliance score."
       }
     ],
     "sleeperOutlier": {
-      "ref": "1.14 SRR",
-      "title": "System Requirements Review Verification Window",
-      "warning": "Inter-team dependency handoffs may compress review window if pre-work packages are delayed."
+      "ref": "1.14 Interop",
+      "title": "Post-Cutover Historical Patient Record Ingestion",
+      "warning": "Monitor secondary background batch jobs to prevent interference with live real-time clinical telemetry."
     },
-    "podcastScript": [
-      {
-        "speaker": "Alex",
-        "role": "Program Analyst",
-        "avatar": "\ud83c\udf99\ufe0f",
-        "time": "0:00",
-        "text": "Welcome to the Executive Decision Briefing for Week 28, ending 14 Aug 2026. I'm Alex, and with me is Jordan, our Technical Director."
-      },
-      {
-        "speaker": "Jordan",
-        "role": "Technical Director",
-        "avatar": "\ud83e\udd16",
-        "time": "0:15",
-        "text": "Thanks Alex. This week our primary focus is locked onto contractual delivery milestones and risk mitigation velocity."
-      },
-      {
-        "speaker": "Alex",
-        "role": "Program Analyst",
-        "avatar": "\ud83c\udf99\ufe0f",
-        "time": "0:32",
-        "text": "Looking at our Top Attention items, Contractual Milestone Gate 2 Alignment is currently on the critical path for leadership review."
-      },
-      {
-        "speaker": "Jordan",
-        "role": "Technical Director",
-        "avatar": "\ud83e\udd16",
-        "time": "0:48",
-        "text": "Exactly. On the engineering side, Sovereign Enclave Hardware Interconnect Latency is being actively managed to ensure full network validation ahead of cutover."
-      },
-      {
-        "speaker": "Alex",
-        "role": "Program Analyst",
-        "avatar": "\ud83c\udf99\ufe0f",
-        "time": "1:05",
-        "text": "Overall risk posture remains stable with clear treatment ownership across all key pillars. Back to you for executive decisions."
-      }
-    ],
-    "driveFileId": "sample-drive-doc-aurora-w28",
-    "driveFileName": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
-    "driveFile": {
-      "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
-      "id": "sample-drive-doc-aurora-w28",
-      "ingestedAt": "2026-09-01T10:52:38.447906"
-    }
-  },
-  "Week 27": {
-    "date": "07 Aug 2026",
-    "week": "Week 27",
-    "weekLabel": "Week 27",
-    "weekNumber": 27,
-    "metrics": {
-      "total_risks": 28,
-      "inherent_avg_score": 14.6,
-      "residual_avg_score": 4.8,
-      "delta_compression": "-9.8",
-      "eventuated_issues_count": 0,
-      "total_issues": 11,
-      "report_week": "Week 27",
-      "report_date": "07 Aug 2026",
-      "project_name": "sample",
-      "baseline_week": "Week 28",
-      "baseline_date": "14 Aug 2026"
-    },
-    "executiveSummary": {
-      "executive": "Delivery velocity remains active for Week 27 ending 07 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.6 to 4.8 (delta -9.8). Management focus remains locked on contractual milestones.",
-      "technical": "Engineering baseline across sovereign enclaves and network interconnects is stable. Critical path activities for IBR and SRR milestone gates are progressing with 0 eventuated issues under active mitigation.",
-      "governance": "Joint Steering Committee governance controls are validated. ATO accreditation and security audit artifacts remain aligned to target baseline dates with no catastrophic commercial blockers."
-    },
-    "top3": [
-      {
-        "num": 1,
-        "type": "decision",
-        "tag": "\ud83d\udea8 Immediate Executive Action",
-        "ref": "1.13 IBR",
-        "title": "Contractual Milestone Gate 2 Alignment",
-        "impact": "Critical path baseline verification for Commonwealth stakeholder review.",
-        "action": "Authorize integrated schedule baseline and close residual action items."
-      },
-      {
-        "num": 2,
-        "type": "schedule",
-        "tag": "\u26a1 Critical Schedule Alignment",
-        "ref": "1.10b Test/Dev",
-        "title": "Sovereign Enclave Hardware Interconnect Latency",
-        "impact": "Network validation window lead time compression prior to Phase 1 cutover.",
-        "action": "Complete redundant optical interconnect verification and dark fiber testing."
-      },
-      {
-        "num": 3,
-        "type": "win",
-        "tag": "\ud83d\ude80 Primary Delivery Win",
-        "ref": "1.7a DevSecOps",
-        "title": "CI/CD Pipeline Security Baseline Accreditation",
-        "impact": "Automated deployment pipelines and zero-trust IAP gates fully accredited.",
-        "action": "Maintain automated compliance gates and proceed to next milestone phase."
-      }
-    ],
-    "sleeperOutlier": {
-      "ref": "1.14 SRR",
-      "title": "System Requirements Review Verification Window",
-      "warning": "Inter-team dependency handoffs may compress review window if pre-work packages are delayed."
-    },
-    "podcastScript": [
-      {
-        "speaker": "Alex",
-        "role": "Program Analyst",
-        "avatar": "\ud83c\udf99\ufe0f",
-        "time": "0:00",
-        "text": "Welcome to the Executive Decision Briefing for Week 27, ending 07 Aug 2026. I'm Alex, and with me is Jordan, our Technical Director."
-      },
-      {
-        "speaker": "Jordan",
-        "role": "Technical Director",
-        "avatar": "\ud83e\udd16",
-        "time": "0:15",
-        "text": "Thanks Alex. This week our primary focus is locked onto contractual delivery milestones and risk mitigation velocity."
-      },
-      {
-        "speaker": "Alex",
-        "role": "Program Analyst",
-        "avatar": "\ud83c\udf99\ufe0f",
-        "time": "0:32",
-        "text": "Looking at our Top Attention items, Contractual Milestone Gate 2 Alignment is currently on the critical path for leadership review."
-      },
-      {
-        "speaker": "Jordan",
-        "role": "Technical Director",
-        "avatar": "\ud83e\udd16",
-        "time": "0:48",
-        "text": "Exactly. On the engineering side, Sovereign Enclave Hardware Interconnect Latency is being actively managed to ensure full network validation ahead of cutover."
-      },
-      {
-        "speaker": "Alex",
-        "role": "Program Analyst",
-        "avatar": "\ud83c\udf99\ufe0f",
-        "time": "1:05",
-        "text": "Overall risk posture remains stable with clear treatment ownership across all key pillars. Back to you for executive decisions."
-      }
-    ],
-    "driveFileId": "sample-drive-doc-aurora-w27",
-    "driveFileName": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
-    "driveFile": {
-      "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
-      "id": "sample-drive-doc-aurora-w27",
-      "ingestedAt": "2026-09-01T08:44:50.881919"
-    }
+    "plans": [],
+    "generatedBy": "gemini-3.5-flash",
+    "hasAudio": true,
+    "audioFile": "data/sample/podcast_w28.mp3",
+    "audioDurationSeconds": 131.4
   }
 }

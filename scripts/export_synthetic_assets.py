@@ -162,7 +162,9 @@ def generate_stream_3_weekly_reports():
 
     reports_generated = []
 
-    for week_key in ["w27", "w28"]:
+    # Generate reports for all weeks in snapshots (e.g. W21 through W28)
+    week_keys = sorted(snapshots.keys(), key=lambda k: int("".join(c for c in k if c.isdigit()) or "0"))
+    for week_key in week_keys:
         snap = snapshots.get(week_key, {})
         week_num = snap.get("weekNumber", 28)
         week_label = snap.get("weekLabel", f"Week {week_num}")

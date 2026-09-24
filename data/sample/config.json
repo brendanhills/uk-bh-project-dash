@@ -4,8 +4,8 @@
     "name": "Project Aurora",
     "title": "Clinical Cloud Modernization & Healthcare Intelligence",
     "organization": "Aurora Health Transformation Board",
-    "logoIcon": "🌌",
-    "heroTag": "Clinical Informatics • FHIR Data Platform Modernization",
+    "logoIcon": "\ud83c\udf0c",
+    "heroTag": "Clinical Informatics \u2022 FHIR Data Platform Modernization",
     "primaryRegisterName": "Joint Clinical Governance Register",
     "secondaryRegisterName": "Team Cloud Register",
     "links": {
@@ -40,6 +40,48 @@
           "date": "07 Aug 2026",
           "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
           "url": "https://drive.google.com/file/d/1Z33G7ix_ehAxJj2tGlbKot6N5HPbDgZJ/view"
+        },
+        {
+          "id": "local-doc-aurora-w26",
+          "week": "Week 26",
+          "date": "31 Jul 2026",
+          "name": "Weekly Reporting - Week 26 - 31 Jul 2026.pdf",
+          "url": "assets/synthetic/weekly_reports/Weekly_Reporting_Week_26_31_Jul_2026.pdf"
+        },
+        {
+          "id": "local-doc-aurora-w25",
+          "week": "Week 25",
+          "date": "24 Jul 2026",
+          "name": "Weekly Reporting - Week 25 - 24 Jul 2026.pdf",
+          "url": "assets/synthetic/weekly_reports/Weekly_Reporting_Week_25_24_Jul_2026.pdf"
+        },
+        {
+          "id": "local-doc-aurora-w24",
+          "week": "Week 24",
+          "date": "17 Jul 2026",
+          "name": "Weekly Reporting - Week 24 - 17 Jul 2026.pdf",
+          "url": "assets/synthetic/weekly_reports/Weekly_Reporting_Week_24_17_Jul_2026.pdf"
+        },
+        {
+          "id": "local-doc-aurora-w23",
+          "week": "Week 23",
+          "date": "10 Jul 2026",
+          "name": "Weekly Reporting - Week 23 - 10 Jul 2026.pdf",
+          "url": "assets/synthetic/weekly_reports/Weekly_Reporting_Week_23_10_Jul_2026.pdf"
+        },
+        {
+          "id": "local-doc-aurora-w22",
+          "week": "Week 22",
+          "date": "03 Jul 2026",
+          "name": "Weekly Reporting - Week 22 - 03 Jul 2026.pdf",
+          "url": "assets/synthetic/weekly_reports/Weekly_Reporting_Week_22_03_Jul_2026.pdf"
+        },
+        {
+          "id": "local-doc-aurora-w21",
+          "week": "Week 21",
+          "date": "26 Jun 2026",
+          "name": "Weekly Reporting - Week 21 - 26 Jun 2026.pdf",
+          "url": "assets/synthetic/weekly_reports/Weekly_Reporting_Week_21_26_Jun_2026.pdf"
         }
       ]
     },
