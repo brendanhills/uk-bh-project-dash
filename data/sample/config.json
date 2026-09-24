@@ -12,34 +12,34 @@
       "charter": "https://example.com/aurora/charter",
       "architecture": "https://example.com/aurora/architecture",
       "tracker": "https://example.com/aurora/jira",
-      "primaryRegisterSheet": "https://docs.google.com/spreadsheets/d/1AURORA_JOINT_CLINICAL_REGISTER_MOCK/edit?usp=sharing",
-      "teamGoogleSheet": "https://docs.google.com/spreadsheets/d/1AURORA_TEAM_CLOUD_REGISTER_MOCK/edit?usp=sharing",
-      "driveFolder": "https://drive.google.com/drive/folders/1AURORA_HEALTHCARE_DRIVE_FOLDER_MOCK",
+      "primaryRegisterSheet": "https://docs.google.com/spreadsheets/d/1iR0gBEn4cPQ5Y4UyOnsi9dA_NYrKpRsn-fMlvIbf3-E/edit?usp=sharing",
+      "teamGoogleSheet": "https://docs.google.com/spreadsheets/d/1m5gtNt2mFj5j4KmG6OHHA8HHL0NbdU9CBAlwHgTk9C8/edit?usp=sharing",
+      "driveFolder": "https://drive.google.com/drive/folders/1Se0tVV2TRYIagQYbkD4M4q2G6F1MHBg-",
       "notebookLm": "https://notebooklm.google.com/notebook/aurora-clinical-cloud-transformation"
     }
   },
   "sources": {
     "googleSheets": {
-      "enabled": false,
-      "sheetUrl": ""
+      "enabled": true,
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1iR0gBEn4cPQ5Y4UyOnsi9dA_NYrKpRsn-fMlvIbf3-E/edit?usp=sharing"
     },
     "googleDrive": {
-      "enabled": false,
-      "folderId": "sample-drive-folder-aurora",
+      "enabled": true,
+      "folderId": "1Se0tVV2TRYIagQYbkD4M4q2G6F1MHBg-",
       "knownReports": [
         {
-          "id": "mock-w28-id",
+          "id": "1F-6jLE2Umd_OAPVboXCY1sE0acZcWbaC",
           "week": "Week 28",
           "date": "14 Aug 2026",
           "name": "Weekly Reporting - Week 28 - 14 Aug 2026.pdf",
-          "url": "https://example.com/drive/mock-w28-id"
+          "url": "https://drive.google.com/file/d/1F-6jLE2Umd_OAPVboXCY1sE0acZcWbaC/view"
         },
         {
-          "id": "sample-drive-doc-aurora-w27",
+          "id": "1Z33G7ix_ehAxJj2tGlbKot6N5HPbDgZJ",
           "week": "Week 27",
           "date": "07 Aug 2026",
           "name": "Weekly Reporting - Week 27 - 07 Aug 2026.pdf",
-          "url": "https://example.com/drive/sample-drive-doc-aurora-w27"
+          "url": "https://drive.google.com/file/d/1Z33G7ix_ehAxJj2tGlbKot6N5HPbDgZJ/view"
         }
       ]
     },
