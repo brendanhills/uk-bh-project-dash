@@ -5,9 +5,9 @@
 
 ## 🎯 Immediate Starting Point
 *Where to pick up work when you return:*
-- **Next Command / Action**: `Verify sequential bug fixes #114, #115, #116, #112 in browser and test suite`
+- **Next Command / Action**: `Monitor Depot PR #4 for review approval and merge: https://depot.code.corp.goog/sovops-au/monaro-dash/pull/4`
 - **Primary File to Open**: [`src/js/modules/podcast_player.js`](file:///usr/local/google/home/brendanhills/dev/apps/project_dash/src/js/modules/podcast_player.js)
-- **Active State / Handover Notes**: Bug #112 (Time Machine podcast audio fallback & audio element cleanup) marked `"Fix Implemented"`. All 21 Vitest UX tests and 116 pytest backend tests pass (100%). Ready for user verification.
+- **Active State / Handover Notes**: Depot PR #4 (and GitHub origin) updated with commit `84866b1` containing GCS in-memory store, ES6 frontend modularization, Option A read-only security, and 5-layer test harness (116 pytest + 21 Vitest passing). Awaiting PR review approval.
 
 ## 📋 Actionable TODOs
 
