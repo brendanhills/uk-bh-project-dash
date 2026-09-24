@@ -50,16 +50,16 @@ export function renderResearchDocsCards() {
     const catalog = appState.NOTEBOOK_CATALOG || {};
     const sources = Array.isArray(catalog.sources) ? catalog.sources : [
         {
-            title: 'Contract Blueprint Annex B.2 — Sovereign Cloud & ISM Controls',
+            title: 'Contract Blueprint Annex B.1 — Clinical Data Protection & HIPAA/My Health Record Controls',
             type: 'Contract Annex',
             updated: '2026-09-15',
-            summary: 'High-Assurance Cryptographic Controls, Cross-Domain CDS Gateways, and ASD Essential Eight Maturity Level 3 compliance requirements.'
+            summary: 'High-Assurance Health Record Cryptographic Controls, FHIR Security Gateways, and Patient Data Sovereignty compliance.'
         },
         {
-            title: 'Integrated Master Schedule (IMS) & Gate 3 Readiness Criteria',
+            title: 'Integrated Clinical Rollout Schedule (ICRS) & Hospital Go-Live Criteria',
             type: 'Governance Baseline',
             updated: '2026-09-18',
-            summary: 'Milestone verification gates, critical path procurement dependencies, and ATO compliance evidence matrix.'
+            summary: 'Hospital deployment gates, critical path EHR integration dependencies, and clinical data custodianship evidence matrix.'
         }
     ];
 

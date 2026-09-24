@@ -20,14 +20,14 @@ export function getGeminiParagraphsForWeek(weekKey, tone = 'board') {
 
     if (tone === 'technical') {
         return [
-            `[${cycleLabel} — Technical Engineering Assessment] Sovereign landing zone controls and CDS cross-domain gateways remain on the critical path. Currently tracking ${openCount} active program risks (${extremeCount} rated Extreme ≥18), with primary technical bottlenecks concentrated in ISM Maturity Level 3 cryptographic attestation and hardware security module (HSM) key ceremonies.`,
-            `Engineering remediation is focused on automating Terraform compliance guardrails, completing security architecture Annex B.2 artefacts ahead of the IRAP assessment window, and decoupling high-side identity federation from legacy perimeter firewall dependencies.`
+            `[${cycleLabel} — Technical Engineering Assessment] Clinical FHIR API endpoints and hospital PACS imaging pipelines remain on the critical path. Currently tracking ${openCount} active program risks (${extremeCount} rated Extreme ≥18), with primary technical bottlenecks concentrated in HL7 v2-to-FHIR transformation latency and electronic health record (EHR) data connector validations.`,
+            `Engineering remediation is focused on automating cloud security guardrails, completing clinical data protection Annex B.1 artefacts ahead of the regional compliance audit, and decoupling clinical workstation identity federation from legacy hospital network dependencies.`
         ];
     }
 
     return [
-        `[${cycleLabel} — Board & Steering Committee Summary] Program delivery remains at AMBER-RED readiness heading into the upcoming Authority to Operate (ATO) gate. Across ${openCount} open Joint Register risks (${extremeCount} Extreme exposure), executive intervention is focused on closing inter-agency clearance bottlenecks and locking down sovereign supply chain commitments.`,
-        `All Critical Gap Close Plans have designated SES/Director owners and weekly burn-down milestones. Immediate steering committee attention is requested on commercial risk-sharing thresholds (Annex D.1) and AGSVA NV2/PV vetting fast-track allocations.`
+        `[${cycleLabel} — Board & Steering Committee Summary] Program delivery remains at AMBER-RED readiness heading into the upcoming Hospital Clinical Go-Live gate. Across ${openCount} open Joint Register risks (${extremeCount} Extreme exposure), executive intervention is focused on closing clinical informatics staffing bottlenecks and locking down healthcare provider integration commitments.`,
+        `All Critical Gap Close Plans have designated Clinical Director owners and weekly burn-down milestones. Immediate steering committee attention is requested on healthcare service level agreements (Annex D.1) and clinical workforce training allocations.`
     ];
 }
 

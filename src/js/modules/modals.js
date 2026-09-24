@@ -23,8 +23,8 @@ export function openItemDetailModal(type, id) {
     const headerTitle = item.riskName || item.riskTitle || item.issueName || item.issueDescription || item.riskDescription || item.title || 'Governance Item';
     const bundleName = item.contractBundle || item.blueprintBundle || 'Security Architecture & Zero Trust';
     const bundleMeta = (appState.BUNDLE_ANNEX_MAPPING && appState.BUNDLE_ANNEX_MAPPING[bundleName]) || {
-        annex: 'Annex B.2 — Sovereign Cloud & ISM Controls',
-        bundleDesc: 'Governs High-Assurance Cryptographic Controls, Cross-Domain CDS Gateways, and ASD Essential Eight Maturity Level 3 compliance.'
+        annex: 'Annex B.1 — Clinical Data Protection & HIPAA/My Health Record Controls',
+        bundleDesc: 'Governs High-Assurance Health Record Cryptographic Controls, FHIR Security Gateways, and Patient Data Sovereignty compliance.'
     };
     const mappedAnnex = bundleMeta.annex;
     const mappedBundleDesc = bundleMeta.bundleDesc;

@@ -2,11 +2,11 @@
   "project": {
     "slug": "sample",
     "name": "Project Aurora",
-    "title": "Enterprise AI & Sovereign Cloud Modernization",
-    "organization": "Global Enterprise Transformation Board",
-    "logoIcon": "\ud83c\udf0c",
-    "heroTag": "Enterprise Sovereign Enclave \u2022 AI Platform Modernization",
-    "primaryRegisterName": "Joint Program Register",
+    "title": "Clinical Cloud Modernization & Healthcare Intelligence",
+    "organization": "Aurora Health Transformation Board",
+    "logoIcon": "🌌",
+    "heroTag": "Clinical Informatics • FHIR Data Platform Modernization",
+    "primaryRegisterName": "Joint Clinical Governance Register",
     "secondaryRegisterName": "Team Cloud Register",
     "links": {
       "charter": "https://example.com/aurora/charter",

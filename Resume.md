@@ -1,13 +1,13 @@
 # 🚀 Work Handover & Launchpad
 
 > **Active Focus**: Project Dash (Executive Risk & Horizon Dashboard) | **Cycle Focus**: 🛡️ Robustness & Hardening
-> **Branch**: `feat/prompt-eval-and-ui-harness` | **Last Synced**: 2026-09-24 17:34
+> **Branch**: `feat/prompt-eval-and-ui-harness` | **Last Synced**: 2026-09-24 18:34
 
 ## 🎯 Immediate Starting Point
 *Where to pick up work when you return:*
-- **Next Command / Action**: `Monitor Depot PR #4 for review approval and merge: https://depot.code.corp.goog/sovops-au/monaro-dash/pull/4`
-- **Primary File to Open**: [`src/js/modules/podcast_player.js`](file:///usr/local/google/home/brendanhills/dev/apps/project_dash/src/js/modules/podcast_player.js)
-- **Active State / Handover Notes**: Depot PR #4 (and GitHub origin) updated with commit `84866b1` containing GCS in-memory store, ES6 frontend modularization, Option A read-only security, and 5-layer test harness (116 pytest + 21 Vitest passing). Awaiting PR review approval.
+- **Next Command / Action**: `python3 scripts/export_synthetic_assets.py` (Phase 3: Generate synthetic CSVs, PDFs, and Markdown annexes for Streams 1–4)
+- **Primary File to Open**: [`scripts/export_synthetic_assets.py`](file:///usr/local/google/home/brendanhills/dev/apps/project_dash/scripts/export_synthetic_assets.py)
+- **Active State / Handover Notes**: Conductor track `aurora_synthetic_data_sanitization_20260924` in progress. Phase 1 (confidentiality test expanded & passing) and Phase 2 (healthcare annexes redefined in state.js, knowledge.json, config.json, modals.js) complete. Both Pytest (116 passed) and Vitest (21 passed) 100% green. Starting Phase 3.
 
 ## 📋 Actionable TODOs
 

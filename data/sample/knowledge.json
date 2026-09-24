@@ -2,88 +2,88 @@
   "blueprints": [
     {
       "bundle": "Bundle A",
-      "annex": "Annex A (Architecture & V&V)",
-      "title": "Sovereign Enclave High-Level Architecture & V&V Matrix",
+      "annex": "Annex A.1 (Clinical Rollout Schedule)",
+      "title": "Integrated Clinical Rollout Schedule (ICRS) & Hospital Go-Live",
       "version": "v2.1",
       "driverTreeRefs": [
         "1.2b",
         "1.14",
         "1.15"
       ],
-      "summary": "End-to-end multi-tier architecture specification for sovereign compute and zero-trust perimeter control."
+      "summary": "Multi-phase hospital go-live schedule, clinical department cutovers, and electronic health record (EHR) verification matrix."
     },
     {
       "bundle": "Bundle B",
-      "annex": "Annex B (Security & ATO-C)",
-      "title": "System Security Plan & Continuous ATO-C Accreditation",
+      "annex": "Annex B.1 (Clinical Security & HIPAA)",
+      "title": "Clinical Data Protection & HIPAA / My Health Record Security Controls",
       "version": "v1.8",
       "driverTreeRefs": [
         "1.6 GFF",
         "1.12"
       ],
-      "summary": "OSCAL-mapped security control framework and automated eBPF compliance evidence collection probers."
+      "summary": "HIPAA and health data privacy control framework, FHIR access policies, and automated audit evidence probers."
     },
     {
       "bundle": "Bundle C",
-      "annex": "Annex C (Data Pipeline)",
-      "title": "High-Throughput Data Diode & CDC Streaming Lakehouse",
+      "annex": "Annex C.2 (Clinical Workforce)",
+      "title": "Clinical Informatics Workforce & FHIR Integration Team",
       "version": "v1.4",
       "driverTreeRefs": [
         "1.4c"
       ],
-      "summary": "Unidirectional optical diode ingestion pipeline with schema-enforced Avro serialization."
+      "summary": "Clinical informatics specialists, hospital nursing onboarding pipelines, and HL7/FHIR interface engineering staffing."
     },
     {
       "bundle": "Bundle D",
-      "annex": "Annex D (AI Platform)",
-      "title": "Vertex AI Foundation Model Enclave & Inference Serving",
+      "annex": "Annex D.1 (Healthcare SLAs)",
+      "title": "Healthcare Service Level Agreements (SLA) & Data Custodianship Ledger",
       "version": "v2.0",
       "driverTreeRefs": [
         "1.8b",
         "1.18"
       ],
-      "summary": "Air-gapped LLM fine-tuning, vLLM inference server optimization, and RAG vector search quantization."
+      "summary": "99.99% emergency department uptime guarantees, clinical data custodianship protocols, and regional health network MOUs."
     },
     {
       "bundle": "Bundle E",
-      "annex": "Annex E (Governance & Ops)",
-      "title": "Integrated Telemetry, Observability & Incident Response",
+      "annex": "Annex E.1 (Clinical Telemetry & Ops)",
+      "title": "Clinical Telemetry, Patient Monitoring & Incident Response",
       "version": "v1.5",
       "driverTreeRefs": [
         "1.12"
       ],
-      "summary": "Prometheus/Grafana telemetry mesh with automated anomaly detection and cold log tiering."
+      "summary": "End-to-end medical telemetry mesh, real-time vital stats ingestion monitoring, and clinical incident response."
     },
     {
       "bundle": "Bundle H",
-      "annex": "Annex H (Core Infrastructure)",
-      "title": "Managed Enclave Compute, NVMe Storage & Optical Interconnects",
+      "annex": "Annex H.1 (Hospital Platform Infra)",
+      "title": "Hospital Private Cloud Infrastructure & PACS Storage Fabric",
       "version": "v3.0",
       "driverTreeRefs": [
         "1.10b"
       ],
-      "summary": "High-density GPU compute chassis, redundant 400Gbps network fabric, and Stratum 1 PTP clock synchronization."
+      "summary": "High-availability clinical compute nodes, DICOM/PACS medical imaging archive, and redundant hospital LAN links."
     },
     {
       "bundle": "Bundle J",
-      "annex": "Annex J (Identity & Access)",
-      "title": "Zero-Trust Identity Federation & mTLS Service Mesh",
+      "annex": "Annex J.1 (Clinician Identity & IAM)",
+      "title": "Clinician Identity Federation & SMART-on-FHIR Single Sign-On",
       "version": "v1.2",
       "driverTreeRefs": [
         "1.6 GFF"
       ],
-      "summary": "SPIFFE/SPIRE workload identity and hardware HSM key management rotation."
+      "summary": "Hospital Active Directory federation, SMART-on-FHIR clinical app authorization, and biometric badge access."
     },
     {
       "bundle": "Bundle K",
-      "annex": "Annex K (Network Isolation)",
-      "title": "Multi-Domain Microsegmentation & Anycast Routing",
+      "annex": "Annex K.1 (Medical Network Isolation)",
+      "title": "Medical Device VLAN Microsegmentation & Biomedical Isolation",
       "version": "v1.3",
       "driverTreeRefs": [
         "1.6 GFF",
         "1.10b"
       ],
-      "summary": "Calico network security policies and dynamic BGP route withdrawal."
+      "summary": "Zero-trust network isolation for bedside monitors, infusion pumps, and clinical workstation VLANs."
     }
   ]
 }

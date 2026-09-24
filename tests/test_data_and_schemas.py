@@ -169,12 +169,24 @@ def test_sample_data_confidentiality_isolation(project_root: Path):
         "1kQiDQPF9DCUZ0vvbivToMoJWeZJoB0eREFnywRxpCHA",  # W22 Monaro Drive Doc ID
     ]
 
+    forbidden_terms = [
+        "monaro",
+        "f-dse",
+        "agsva",
+        "nv2/pv",
+        "ato-c",
+        "irap",
+        "cross-domain cds",
+        "asd essential eight",
+    ]
+
     for json_file in sample_dir.glob("*.json"):
         content = json_file.read_text(encoding="utf-8")
         for cid in confidential_ids:
             assert cid not in content, f"Confidential ID {cid} leaked in {json_file.name}"
-        assert "monaro" not in content.lower(), f"'Monaro' leaked in {json_file.name}"
-        assert "f-dse" not in content.lower(), f"'F-DSE' leaked in {json_file.name}"
+        content_lower = content.lower()
+        for term in forbidden_terms:
+            assert term not in content_lower, f"Forbidden defence term '{term}' leaked in {json_file.name}"
 
     html = (project_root / "index.html").read_text(encoding="utf-8")
     for cid in confidential_ids:
@@ -183,3 +195,14 @@ def test_sample_data_confidentiality_isolation(project_root: Path):
     for js_file in (project_root / "src" / "js").rglob("*.js"):
         js_content = js_file.read_text(encoding="utf-8")
         assert "monaro" not in js_content.lower(), f"Hardcoded 'monaro' reference found in {js_file}"
+        for cid in confidential_ids:
+            assert cid not in js_content, f"Confidential ID {cid} leaked in {js_file}"
+
+    # Verify config.json links are isolated synthetic URLs
+    config_data = json.loads((sample_dir / "config.json").read_text(encoding="utf-8"))
+    links = config_data.get("project", {}).get("links", {})
+    for link_name, url in links.items():
+        if isinstance(url, str):
+            for cid in confidential_ids:
+                assert cid not in url, f"Confidential ID {cid} found in config link {link_name}"
+            assert "monaro" not in url.lower(), f"Monaro reference found in config link {link_name}"

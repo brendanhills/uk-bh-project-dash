@@ -8,20 +8,20 @@ export const appState = {
     NOTEBOOK_CATALOG: null,
     BUNDLE_ANNEX_MAPPING: {
         'Security Architecture & Zero Trust': {
-            annex: 'Annex B.2 — Sovereign Cloud & ISM Controls',
-            bundleDesc: 'Governs High-Assurance Cryptographic Controls, Cross-Domain CDS Gateways, and ASD Essential Eight Maturity Level 3 compliance.'
+            annex: 'Annex B.1 — Clinical Data Protection & HIPAA/My Health Record Controls',
+            bundleDesc: 'Governs High-Assurance Health Record Cryptographic Controls, FHIR Security Gateways, and Patient Data Sovereignty compliance.'
         },
         'Program Delivery & Supply Chain': {
-            annex: 'Annex A.1 — Integrated Master Schedule (IMS)',
-            bundleDesc: 'Tracks Critical Path Milestones, Hardware Long-Lead Procurement, and Multi-Vendor Integration Dependencies.'
+            annex: 'Annex A.1 — Integrated Clinical Rollout Schedule (ICRS)',
+            bundleDesc: 'Tracks Critical Path Hospital Go-Lives, Clinical Workstation Hardware Procurement, and Multi-Vendor EHR Integration Dependencies.'
         },
         'Workforce & Clearances': {
-            annex: 'Annex C.4 — AGSVA NV2/PV Clearance Pipeline',
-            bundleDesc: 'Monitors Cleared Engineering Headcount, Sponsored Vetting Timelines, and Sovereign Operations Staffing.'
+            annex: 'Annex C.2 — Clinical Informatics Workforce & FHIR Integration Team',
+            bundleDesc: 'Monitors Clinical Informatics Specialists, Hospital Onboarding Timelines, and Digital Health Operations Staffing.'
         },
         'Commercial & Governance': {
-            annex: 'Annex D.1 — Contract Change & Risk Sharing Ledger',
-            bundleDesc: 'Addresses Liquidated Damages Exposure, Pain/Gain Share Thresholds, and Inter-Agency MOU Sign-offs.'
+            annex: 'Annex D.1 — Healthcare Service Level Agreements (SLA) & Data Custodianship',
+            bundleDesc: 'Addresses Clinical Availability Guarantees, SLA Penalty Thresholds, and Regional Health Network Data Sharing MOUs.'
         }
     },
     LIVE_RISKS: [],
