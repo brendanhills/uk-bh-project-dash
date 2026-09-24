@@ -346,12 +346,18 @@ def _get_gcs_auth_headers(content_type: Optional[str] = None, force_gcloud: bool
 
     if not force_gcloud and not _CACHED_GCLOUD_TOKEN:
         try:
-            creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+            creds, _ = google.auth.default()
             auth_req = google.auth.transport.requests.Request()
             creds.refresh(auth_req)
             token = creds.token
         except Exception:
-            token = None
+            try:
+                creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+                auth_req = google.auth.transport.requests.Request()
+                creds.refresh(auth_req)
+                token = creds.token
+            except Exception:
+                token = None
 
     if (force_gcloud or not token) or _CACHED_GCLOUD_TOKEN:
         if not _CACHED_GCLOUD_TOKEN or force_gcloud:

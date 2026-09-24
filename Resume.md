@@ -1,7 +1,7 @@
 # 🚀 Work Handover & Launchpad
 
 > **Active Focus**: Project Dash (Executive Risk & Horizon Dashboard) | **Cycle Focus**: 🛡️ Robustness & Hardening
-> **Branch**: `feat/prompt-eval-and-ui-harness` | **Last Synced**: 2026-09-24 10:16
+> **Branch**: `feat/prompt-eval-and-ui-harness` | **Last Synced**: 2026-09-24 17:34
 
 ## 🎯 Immediate Starting Point
 *Where to pick up work when you return:*
@@ -22,8 +22,9 @@
 - [ ] **#109 Stakeholder Views**: Implement tailored stakeholder views (Exec, PM, and Tech URL-driven views)
 
 ### Done Recently (Pruned on Next Checkpoint)
-None
-
+- [x] **#121 Add audio ended and timeupdate event listeners in podcast...**: Add audio ended and timeupdate event listeners in podcast_player.js to prevent animation interval leak
+- [x] **#122 Revoke Blob object URL in issue_register.js exportCSV to ...**: Revoke Blob object URL in issue_register.js exportCSV to prevent client memory leak
+- [x] **#123 Terraform apply 409 conflict: existing resources (artifac...**: Terraform apply 409 conflict: existing resources (artifact registry repo, github-deployer service account, state and data buckets) in monaro-risk-dev
 
 ## ⚠️ Watch-outs & Blockers
 - None

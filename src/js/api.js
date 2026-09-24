@@ -1,7 +1,7 @@
 // =============================================================================
 // Risk & Delivery Intelligence Platform — API, Workspace Sync & Data Loader Module
 // =============================================================================
-import { appState, store, updateSystemTimeBadges } from './state.js';
+import { appState, store, getLatestWeekKey, updateSystemTimeBadges } from './state.js';
 import { renderExecBriefing, renderDiffBaselineSelector } from './modules/exec_briefing.js';
 import { renderRiskHeatmap } from './modules/risk_heatmap.js';
 import { renderRiskExplorer } from './modules/risk_explorer.js';
@@ -59,6 +59,69 @@ export function renderProjectBranding() {
     if (logoEl && p.logoIcon) {
         logoEl.innerText = p.logoIcon;
     }
+    if (p.logoIcon && typeof document !== 'undefined') {
+        const faviconEl = document.querySelector('link[rel*="icon"]');
+        if (faviconEl) {
+            faviconEl.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${encodeURIComponent(p.logoIcon)}</text></svg>`;
+        }
+    }
+
+    // Dynamic header links configuration based on active project config
+    const jointUrl = p.links?.primaryRegisterSheet || cfg.sources?.googleSheets?.sheetUrl || '';
+    const teamGoogleUrl = p.links?.teamGoogleSheet || '';
+    const jointLabel = p.primaryRegisterName || 'Joint Program Register';
+    const teamGoogleLabel = p.secondaryRegisterName || 'Team Google Register';
+
+    const jointLinkEl = document.getElementById('headerJointSheetLink');
+    if (jointLinkEl) {
+        if (jointUrl) {
+            jointLinkEl.href = jointUrl;
+            jointLinkEl.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            jointLinkEl.removeAttribute('href');
+            jointLinkEl.classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+    const jointLabelEl = document.getElementById('headerJointSheetLabel');
+    if (jointLabelEl) {
+        jointLabelEl.innerText = `📊 ${jointLabel}`;
+    }
+
+    const tgLinkEl = document.getElementById('headerTeamGoogleSheetLink');
+    if (tgLinkEl) {
+        if (teamGoogleUrl) {
+            tgLinkEl.href = teamGoogleUrl;
+            tgLinkEl.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            tgLinkEl.removeAttribute('href');
+            tgLinkEl.classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+    const tgLabelEl = document.getElementById('headerTeamGoogleSheetLabel');
+    if (tgLabelEl) {
+        tgLabelEl.innerText = `🛡️ ${teamGoogleLabel}`;
+    }
+
+    // Dynamically update latest Drive Weekly Report pack link
+    const driveReportEl = document.getElementById('driveReportLink');
+    const driveReportTextEl = document.getElementById('driveReportLinkText');
+    const driveFolderUrl = p.links?.driveFolder || (cfg.sources?.googleDrive?.folderId ? `https://drive.google.com/drive/folders/${cfg.sources.googleDrive.folderId}` : '');
+    const latestSnap = appState.TIME_MACHINE_SNAPSHOTS && (appState.TIME_MACHINE_SNAPSHOTS[getLatestWeekKey()] || Object.values(appState.TIME_MACHINE_SNAPSHOTS)[0]);
+    const reportUrl = latestSnap?.driveFile?.url || p.links?.latestReport || driveFolderUrl || '';
+    const reportLabel = latestSnap?.week ? `${latestSnap.week} Pack` : 'Weekly Pack';
+
+    if (driveReportEl) {
+        if (reportUrl) {
+            driveReportEl.href = reportUrl;
+            driveReportEl.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            driveReportEl.removeAttribute('href');
+            driveReportEl.classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+    if (driveReportTextEl) {
+        driveReportTextEl.innerText = reportLabel;
+    }
 }
 
 export function renderFeatureTabs() {
@@ -95,6 +158,7 @@ export function checkUrlViewParameters() {
 
 export async function loadProjectData(projectSlug) {
     let slug = resolveInitialProjectSlug(projectSlug);
+    if (slug === 'aurora') slug = 'sample';
     try {
         if (!slug) {
             try {

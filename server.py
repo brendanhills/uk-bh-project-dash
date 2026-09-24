@@ -57,8 +57,12 @@ def get_default_project():
 def get_project_dir(project_slug=''):
     if not project_slug:
         project_slug = get_default_project()
+    if project_slug == 'aurora':
+        project_slug = 'sample'
     try:
         clean_slug = sanitize_slug(project_slug, default=get_default_project())
+        if clean_slug == 'aurora':
+            clean_slug = 'sample'
         p_dir = safe_join(DATA_BASE_DIR, clean_slug)
         store = get_project_data_store()
         if (
@@ -185,6 +189,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             data_match = re.match(r'^/data/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_.-]+\.json)$', parsed.path)
             if data_match:
                 req_proj, req_file = data_match.group(1), data_match.group(2)
+                if req_proj == 'aurora':
+                    req_proj = 'sample'
                 if '..' in req_file or req_file.startswith('/') or req_file.startswith('\\'):
                     self.send_json({'error': 'Invalid file path', 'status': 'bad_request'}, 400)
                     return
@@ -218,6 +224,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             audio_match = re.match(r'^/(?:data/([a-zA-Z0-9_-]+)|assets)/(podcast_w\d+\.mp3)$', parsed.path)
             if audio_match:
                 req_proj = audio_match.group(1) or get_default_project() or 'monaro'
+                if req_proj == 'aurora':
+                    req_proj = 'sample'
                 req_audio = audio_match.group(2)
                 store = get_project_data_store()
                 audio_bytes = store.get_audio_bytes(req_proj, req_audio)
@@ -246,6 +254,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         data_match = re.match(r'^/data/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_.-]+\.json)$', parsed.path)
         if data_match:
             req_proj, req_file = data_match.group(1), data_match.group(2)
+            if req_proj == 'aurora':
+                req_proj = 'sample'
             store = get_project_data_store()
             raw_bytes = store.get_json_bytes(req_proj, req_file)
             if raw_bytes is None and req_proj != 'monaro':
@@ -265,6 +275,8 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         audio_match = re.match(r'^/(?:data/([a-zA-Z0-9_-]+)|assets)/(podcast_w\d+\.mp3)$', parsed.path)
         if audio_match:
             req_proj = audio_match.group(1) or get_default_project() or 'monaro'
+            if req_proj == 'aurora':
+                req_proj = 'sample'
             req_audio = audio_match.group(2)
             store = get_project_data_store()
             audio_bytes = store.get_audio_bytes(req_proj, req_audio)
@@ -941,6 +953,7 @@ def get_startup_banner(port=PORT):
         f'  👉 Dashboard (Local):        {urls[0]}/',
         f'  👉 Dashboard (Loopback):     {urls[1]}/',
         f'  👉 Dashboard (Monaro):       {urls[0]}/?project=monaro',
+        f'  👉 Dashboard (Aurora):       {urls[0]}/?project=aurora',
         f'  👉 Dashboard (Sample):       {urls[0]}/?project=sample',
         f'  📡 REST Status Endpoint:     http://localhost:{port}/api/status?project={default_proj}',
         f'  📡 REST Sync Endpoint:       http://localhost:{port}/api/sync?project={default_proj}',

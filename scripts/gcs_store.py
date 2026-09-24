@@ -183,15 +183,23 @@ class ProjectDataStore:
             adapter = HTTPAdapter(pool_connections=16, pool_maxsize=16)
             if not force_gcloud:
                 try:
-                    creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
-                    client = gcs_storage.Client(project=quota_project, credentials=creds)
+                    client = gcs_storage.Client(project=quota_project)
                     if hasattr(client, "_http") and hasattr(client._http, "mount"):
                         client._http.mount("https://", adapter)
                     self._client = client
                     self._using_gcloud_fallback = False
                     return self._client
                 except Exception:
-                    pass
+                    try:
+                        creds, _ = google.auth.default()
+                        client = gcs_storage.Client(project=quota_project, credentials=creds)
+                        if hasattr(client, "_http") and hasattr(client._http, "mount"):
+                            client._http.mount("https://", adapter)
+                        self._client = client
+                        self._using_gcloud_fallback = False
+                        return self._client
+                    except Exception:
+                        pass
 
             tok = self._obtain_gcloud_token(force_refresh=False)
             if tok:
@@ -206,6 +214,15 @@ class ProjectDataStore:
 
     def _download_blob_bytes(self, bucket_name: str, blob_name: str) -> Optional[bytes]:
         """Downloads raw blob bytes from GCS via pooled storage.Client or pooled REST fallback."""
+        # 0. Check local filesystem mount (e.g. GCSFuse volume mount at /app/data on Cloud Run)
+        local_cand = os.path.join(DATA_BASE_DIR, blob_name)
+        if os.path.isfile(local_cand):
+            try:
+                with open(local_cand, "rb") as f:
+                    return f.read()
+            except OSError:
+                pass
+
         # 1. If a custom/mock storage_client was injected, use it directly
         if self._client is not None:
             bucket_obj = self._client.bucket(bucket_name)
@@ -414,7 +431,7 @@ class ProjectDataStore:
             self._cache_misses += 1
 
         # 1. Immutable sample dataset loads from local package data/sample/
-        if clean_proj == "sample":
+        if clean_proj in ("sample", "aurora"):
             return self._load_sample_dataset_into_cache(filename)
 
         # 2. Authoritative GCS fetch (Dev & Prod parity — never reads local disk for non-sample projects)
@@ -490,7 +507,7 @@ class ProjectDataStore:
                 except Exception as exc:
                     logger.debug(f"[GCS Store] Audio fetch failed for gs://{active_bucket}/{candidate_blob}: {exc}")
 
-        if clean_proj == "sample":
+        if clean_proj in ("sample", "aurora"):
             for local_cand in (
                 os.path.join(DATA_BASE_DIR, "sample", filename),
                 os.path.join(BASE_DIR, "assets", filename),
