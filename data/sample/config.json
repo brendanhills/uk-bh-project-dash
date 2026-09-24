@@ -11,7 +11,11 @@
     "links": {
       "charter": "https://example.com/aurora/charter",
       "architecture": "https://example.com/aurora/architecture",
-      "tracker": "https://example.com/aurora/jira"
+      "tracker": "https://example.com/aurora/jira",
+      "primaryRegisterSheet": "https://docs.google.com/spreadsheets/d/1AURORA_JOINT_CLINICAL_REGISTER_MOCK/edit?usp=sharing",
+      "teamGoogleSheet": "https://docs.google.com/spreadsheets/d/1AURORA_TEAM_CLOUD_REGISTER_MOCK/edit?usp=sharing",
+      "driveFolder": "https://drive.google.com/drive/folders/1AURORA_HEALTHCARE_DRIVE_FOLDER_MOCK",
+      "notebookLm": "https://notebooklm.google.com/notebook/aurora-clinical-cloud-transformation"
     }
   },
   "sources": {

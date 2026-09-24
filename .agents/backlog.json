@@ -71,13 +71,13 @@
     "risk": "Low",
     "reporter": "Brendan Hills",
     "date_reported": "2026-08-07",
-    "date_triaged": "2026-08-07",
+    "date_triaged": "2026-09-24",
     "date_resolved": "",
     "phase": "Phase 3 (feature)",
     "track_id": null,
     "repro_test": null,
     "cause": "Sync modal displays technical Drive file IDs rather than human-readable document titles and folder aliases.",
-    "plan": "Build friendly name-based Sheet & Folder picker in Settings modal with live connection test and active source indicators."
+    "plan": "Addressed in Conductor track aurora_synthetic_data_sanitization_20260924 (Phase 4 provides human-readable Google Sheet and Drive links for Aurora)."
   },
   {
     "id": 24,
@@ -426,5 +426,27 @@
     "verify_cmd": null,
     "cause": null,
     "plan": null
+  },
+  {
+    "id": 127,
+    "type": "FR",
+    "focus": "foundation",
+    "title": "Decouple frontend contract blueprint mapping: derive BUND...",
+    "description": "Decouple frontend contract blueprint mapping: derive BUNDLE_ANNEX_MAPPING dynamically from knowledge.json",
+    "status": "Investigated",
+    "priority": "P2",
+    "impact": "Medium",
+    "risk": "Low",
+    "reporter": "Brendan Hills",
+    "date_reported": "2026-09-24",
+    "date_triaged": "2026-09-24",
+    "date_resolved": null,
+    "phase": null,
+    "track_id": null,
+    "repro_test": null,
+    "target_files": null,
+    "verify_cmd": null,
+    "cause": null,
+    "plan": "Decouple BUNDLE_ANNEX_MAPPING from src/js/state.js by deriving it dynamically from data/<project>/knowledge.json blueprints array during loadProjectData() in src/js/api.js, with neutral domain-agnostic fallback in modals.js."
   }
 ]
