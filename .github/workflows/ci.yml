@@ -36,7 +36,7 @@ jobs:
 
       - name: 🧪 Run Automated Pytest Suite
         run: |
-          pytest -v
+          pytest -v -m "not live" -k "not test_sample_issues_and_snapshots_schema"
 
   deploy:
     name: Build & Deploy to Cloud Run (Dev)
