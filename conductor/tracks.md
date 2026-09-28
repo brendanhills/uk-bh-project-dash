@@ -71,6 +71,9 @@
 ---
 - [~] **[ROBUSTNESS] Track: Project Aurora Synthetic Assets & Healthcare Modernization Pivot**
   *Link: [./tracks/aurora_synthetic_data_sanitization_20260924/index.md](./tracks/aurora_synthetic_data_sanitization_20260924/index.md)*
+---
+- [ ] **[DEMO_PREP] Track: Consolidate Depot CI/CD, Folder Structure & Isolated Project Aurora Demo**
+  *Link: [./tracks/consolidate_depot_and_aurora_demo_20260928/index.md](./tracks/consolidate_depot_and_aurora_demo_20260928/index.md)*
 
 
 

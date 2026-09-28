@@ -22,7 +22,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_SAMPLE_DIR = PROJECT_ROOT / "data" / "sample"
 OUTPUT_DIR = PROJECT_ROOT / "assets" / "synthetic"
 REPORTS_DIR = OUTPUT_DIR / "weekly_reports"

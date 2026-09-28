@@ -50,41 +50,23 @@ def run_gcloud_cmd(cmd_list):
         sys.exit(1)
 
 
-def resolve_default_project(env=None):
-    """Resolve target GCP project ID dynamically from env vars, gcloud config, or environment suffix."""
-    env_proj = (
-        os.environ.get("GCP_PROJECT_ID")
-        or os.environ.get("GOOGLE_CLOUD_PROJECT")
-        or os.environ.get("CLOUDSDK_CORE_PROJECT")
-    )
-    if env_proj and not env:
-        return env_proj
-
-    if not env_proj:
-        stdout, code, _ = run_gcloud_cmd(["gcloud", "config", "get-value", "project", "--quiet"])
-        if code == 0 and stdout.strip() and stdout.strip() != "(unset)":
-            env_proj = stdout.strip()
-
-    target_env = env or os.environ.get("ENV_TARGET", "dev")
-    if env_proj:
-        if env_proj.endswith("-dev") or env_proj.endswith("-prod"):
-            base_prefix = env_proj.rsplit("-", 1)[0]
-            return f"{base_prefix}-{target_env}"
-        if not env:
-            return env_proj
-
-    base_prefix = os.environ.get("GCP_PROJECT_PREFIX", "monaro-risk")
-    return f"{base_prefix}-{target_env}"
-
-
-def resolve_default_region():
-    """Resolve target GCP region dynamically from environment variables or default."""
-    return (
-        os.environ.get("GCP_REGION")
-        or os.environ.get("GOOGLE_CLOUD_REGION")
-        or os.environ.get("CLOUDSDK_COMPUTE_REGION")
-        or "australia-southeast1"
-    )
+def _query_cloud_logging_build(build_id, project, tail_lines):
+    """Query Cloud Logging for build container log entries."""
+    log_cmd = [
+        "gcloud", "logging", "read",
+        f'resource.type="build" AND resource.labels.build_id="{build_id}"',
+        f"--project={project}",
+        f"--billing-project={project}",
+        "--freshness=30d",
+        f"--limit={tail_lines}",
+        "--order=desc",
+        "--format=value(textPayload)"
+    ]
+    stdout, code, _ = run_gcloud_cmd(log_cmd)
+    if code == 0 and stdout.strip():
+        lines = [line for line in reversed(stdout.strip().splitlines()) if line.strip()]
+        return "\n".join(lines[-tail_lines:])
+    return None
 
 
 def get_recent_builds(project=None, region=None, limit=1):
@@ -103,7 +85,7 @@ def get_recent_builds(project=None, region=None, limit=1):
     if code != 0:
         print(f"{RED}Failed to query Cloud Build API:{RESET}\n{stderr.strip()}")
         sys.exit(code)
-    
+
     try:
         return json.loads(stdout)
     except json.JSONDecodeError:
@@ -122,7 +104,7 @@ def get_build_details(build_id, project=None, region=None):
         f"--region={region}",
         "--format=json"
     ]
-    stdout, code, stderr = run_gcloud_cmd(cmd)
+    stdout, code, _ = run_gcloud_cmd(cmd)
     if code != 0:
         return None
     try:
@@ -147,23 +129,10 @@ def get_build_logs(build_id, project=None, region=None, tail_lines=40, build=Non
     logging_mode = (build or {}).get("options", {}).get("logging", "") if isinstance(build, dict) else ""
     logs_bucket = (build or {}).get("logsBucket", "") if isinstance(build, dict) else ""
 
-    # Use Cloud Logging when CLOUD_LOGGING_ONLY is set or logsBucket is absent
     if logging_mode == "CLOUD_LOGGING_ONLY" or (isinstance(build, dict) and not logs_bucket):
-        log_cmd = [
-            "gcloud", "logging", "read",
-            f'resource.type="build" AND resource.labels.build_id="{build_id}"',
-            f"--project={project}",
-            f"--billing-project={project}",
-            "--freshness=30d",
-            f"--limit={tail_lines}",
-            "--order=desc",
-            "--format=value(textPayload)"
-        ]
-        stdout, code, stderr = run_gcloud_cmd(log_cmd)
-        if code == 0 and stdout.strip():
-            # Reverse desc-ordered lines so tail reads in chronological order
-            lines = [line for line in reversed(stdout.strip().splitlines()) if line.strip()]
-            return "\n".join(lines[-tail_lines:])
+        cl_logs = _query_cloud_logging_build(build_id, project, tail_lines)
+        if cl_logs:
+            return cl_logs
         if isinstance(build, dict) and build.get("statusDetail"):
             return f"No container log entries in Cloud Logging.\nStatus Detail: {build.get('statusDetail')}"
 
@@ -176,28 +145,15 @@ def get_build_logs(build_id, project=None, region=None, tail_lines=40, build=Non
     stdout, _, stderr = run_gcloud_cmd(cmd)
     output = stdout or stderr or ""
     if "Build does not specify logsBucket" in output:
-        log_cmd = [
-            "gcloud", "logging", "read",
-            f'resource.type="build" AND resource.labels.build_id="{build_id}"',
-            f"--project={project}",
-            f"--billing-project={project}",
-            "--freshness=30d",
-            f"--limit={tail_lines}",
-            "--order=desc",
-            "--format=value(textPayload)"
-        ]
-        cl_stdout, cl_code, _ = run_gcloud_cmd(log_cmd)
-        if cl_code == 0 and cl_stdout.strip():
-            lines = [line for line in reversed(cl_stdout.strip().splitlines()) if line.strip()]
-            return "\n".join(lines[-tail_lines:])
+        cl_logs = _query_cloud_logging_build(build_id, project, tail_lines)
+        if cl_logs:
+            return cl_logs
         if isinstance(build, dict) and build.get("statusDetail"):
             return f"Build failed prior to container log creation.\nStatus Detail: {build.get('statusDetail')}"
         return "No Cloud Logging entries found for this build ID."
 
     lines = output.strip().splitlines()
-    if len(lines) > tail_lines:
-        return "\n".join(lines[-tail_lines:])
-    return output.strip()
+    return "\n".join(lines[-tail_lines:]) if len(lines) > tail_lines else output.strip()
 
 
 def format_timestamp(iso_str):

@@ -81,6 +81,9 @@ steps:
       - '--rm'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_IMAGE_NAME}:${_COMMIT_SHA}'
       - 'pytest'
+      - '-v'
+      - '-m'
+      - 'not live'
 
   # 5. Push container image to Artifact Registry (runs only after unit tests pass)
   - name: 'gcr.io/cloud-builders/docker'

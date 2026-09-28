@@ -204,3 +204,78 @@ def test_audio_studio_and_sync_contracts(project_root: Path, full_html: str):
     # Time Machine chronological descending sort
     assert "wnB - wnA" in full_html or "entries.sort" in full_html
 
+
+# --- Frontend V8 Syntax, ESLint & Vitest UX Suite ---
+
+def test_frontend_javascript_syntax_check(project_root: Path):
+    """Validates that all JavaScript files in src/js and src/js/modules parse cleanly in Node V8."""
+    node_bin = shutil.which("node")
+    if not node_bin:
+        pytest.skip("Node.js runtime not installed in environment; skipping AST syntax check.")
+
+    js_dirs = [project_root / "src" / "js", project_root / "src" / "js" / "modules"]
+    js_files = []
+    for js_dir in js_dirs:
+        if js_dir.exists():
+            js_files.extend(sorted(js_dir.glob("*.js")))
+
+    assert len(js_files) > 0, f"No JavaScript files found in {js_dirs}"
+
+    checker_script = (
+        "const fs = require('fs'), vm = require('vm');\n"
+        "for (const f of process.argv.slice(1)) {\n"
+        "  const src = fs.readFileSync(f, 'utf8')\n"
+        "    .replace(/^\\s*import\\s+[^;]+;/gm, '')\n"
+        "    .replace(/^\\s*export\\s+(default\\s+)?/gm, '');\n"
+        "  try { new vm.Script(src, { filename: f }); } catch (e) {\n"
+        "    console.error(`Syntax error in ${f}:\\n`, e);\n"
+        "    process.exit(1);\n"
+        "  }\n"
+        "}"
+    )
+    result = subprocess.run(
+        [node_bin, "-e", checker_script, *[str(f) for f in js_files]],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"JavaScript syntax check failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    )
+
+
+def test_frontend_eslint_and_vitest_suite(project_root: Path):
+    """Executes ESLint (with incremental cache) and Vitest UX suite concurrently."""
+    eslint_bin = project_root / "node_modules" / ".bin" / "eslint"
+    vitest_bin = project_root / "node_modules" / ".bin" / "vitest"
+
+    if not eslint_bin.exists() or not vitest_bin.exists():
+        pytest.skip("eslint or vitest not present in node_modules; skipping verification.")
+
+    eslint_proc = subprocess.Popen(
+        [
+            str(eslint_bin),
+            "--cache",
+            "--cache-location",
+            str(project_root / ".pytest_cache" / "eslintcache"),
+            "src/js",
+        ],
+        cwd=str(project_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    vitest_proc = subprocess.Popen(
+        [str(vitest_bin), "run"],
+        cwd=str(project_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    eslint_out, eslint_err = eslint_proc.communicate()
+    vitest_out, vitest_err = vitest_proc.communicate()
+
+    assert eslint_proc.returncode == 0, f"ESLint verification failed:\nSTDOUT: {eslint_out}\nSTDERR: {eslint_err}"
+    assert vitest_proc.returncode == 0, f"Vitest UX suite failed:\nSTDOUT: {vitest_out}\nSTDERR: {vitest_err}"
+
+

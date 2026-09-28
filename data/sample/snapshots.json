@@ -84,6 +84,43 @@
           "target": "Jul 2026"
         }
       ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 21 (26 Jun 2026). Overall program status is \ud83d\udd34 CRITICAL ATTENTION."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Program posture for Week 21 reflects critical path pressure during Phase 1 hospital environment bring-up. Seven acute escalations require steering committee intervention, primarily regarding hospital ward optical fiber lead times and clinical telemetry VLAN isolation. Our primary focus this week is Hospital Optical Interconnect & Core Switch Upgrades."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "HL7 v2 legacy feeds from pathology systems are exhibiting 18% parsing failure rates against the central FHIR R4 converter. Acute ICU telemetry buffers drop packets under simulated surge load. On the watchlist: Diagnostic PACS Imaging Cloud Ingestion Throughput \u2014 Spike in radiological CT/MRI volumetric scans may exceed regional internet bandwidth if dedicated interconnect is delayed."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Clinical Data Governance Board has convened an emergency technical working group to accelerate Annex B.1 clinical compliance artefacts and formalize hospital data custodian delegations."
+        }
+      ],
       "generatedBy": "gemini-3.5-flash",
       "hasAudio": false
     },
@@ -158,6 +195,43 @@
           "plan": "Complete end-to-end integration testing for automated blood panel result routing into EHR.",
           "owner": "Integration Lead",
           "target": "Jul 2026"
+        }
+      ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 22 (03 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Mitigating)."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Week 22 marks an improving trajectory with acute escalations reduced from 7 to 5. The primary delivery focus has transitioned to locking down interface agreements with medical imaging and laboratory providers. Our primary focus this week is Laboratory Information System (LIS) Interface Contract."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "Hospital LAN optical fiber terminations completed at the primary facility. Initial FHIR R4 transformation error rate dropped below 8% following deployment of the custom vocabulary translator. On the watchlist: High-Resolution DICOM Cache Eviction Policy \u2014 Unoptimized local cache retention on local ward gateways could lead to disk exhaustion during peak diagnostic hours."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Clinical Informatics liaison team initiated clinician workflow dry-runs in simulated outpatient clinics, receiving favorable ergonomic and usability feedback."
         }
       ],
       "generatedBy": "gemini-3.5-flash",
@@ -236,6 +310,43 @@
           "target": "Aug 2026"
         }
       ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 23 (10 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Mitigating)."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Week 23 demonstrates steady risk compression with net residual exposure falling to 10.2. Medical board leadership confirmed schedule baseline alignment for the September hospital go-live. Our primary focus this week is Diagnostic Radiology Bandwidth Reservation."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "PACS cloud storage gateway deployed to pilot ward. Large 500MB volumetric MRI studies now upload in under 4.2 seconds, well within clinical operational targets. On the watchlist: Emergency Department Triage Hand-off Protocol \u2014 Paper-to-digital transition during ambulance arrivals requires streamlined barcode scanning to avoid triage bottlenecks."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Health record privacy audit confirmed zero unencrypted PHI columns across all Postgres databases and Cloud Storage buckets."
+        }
+      ],
       "generatedBy": "gemini-3.5-flash",
       "hasAudio": false
     },
@@ -310,6 +421,43 @@
           "plan": "Complete joint review of 42 deliverable artifacts with hospital clinical board.",
           "owner": "Program Director",
           "target": "Aug 2026"
+        }
+      ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 24 (17 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Stable)."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Delivery velocity accelerated in Week 24 as FHIR R4 interoperability reached 88% automated test pass rates. Hospital administration authorized the dry-run simulation date for early August. Our primary focus this week is Integrated Clinical Rollout Schedule (ICRS) Baseline Sign-Off."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "SMART-on-FHIR clinical single sign-on (SSO) with biometric badge tap completed integration testing, achieving median authentication latencies of 1.1 seconds. On the watchlist: Bedside Telemetry Historical Database Retention \u2014 High-frequency vital sign time-series require partitioning strategy to avoid query slowdowns in historical charts."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Joint Clinical Steering Committee reviewed Annex D.1 SLA terms with regional hospital network, resolving all outstanding liability and data custodianship clauses."
         }
       ],
       "generatedBy": "gemini-3.5-flash",
@@ -388,6 +536,43 @@
           "target": "Aug 2026"
         }
       ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 25 (24 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Stable)."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Week 25 marks the transition of clinical go-live milestones back onto schedule. High-consequence clinical risks have been reduced to 2 active items, with strong mitigations locked in place. Our primary focus this week is Hospital Dry-Run Simulation Protocol Approval."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "High-throughput bedside telemetry ingestion tested successfully under 200% simulated patient load. Time-series partitioning eliminated query lag on historical ECG and oxygen saturation charts. On the watchlist: Night Shift Clinical Informaticist Coverage \u2014 Ensure adequate on-site super-user staffing during overnight hours of initial go-live weekend."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Chief Medical Officer completed formal walkthrough of emergency department clinical workflow, issuing formal endorsement for dry-run trials."
+        }
+      ],
       "generatedBy": "gemini-3.5-flash",
       "hasAudio": false
     },
@@ -462,6 +647,43 @@
           "plan": "Present formal verification evidence to Health Transformation Board.",
           "owner": "Delivery Lead",
           "target": "Aug 2026"
+        }
+      ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 26 (31 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Approaching Green)."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Week 26 closes out July with significant momentum. Residual risk compression reached -8.2, and only a single operational escalation remains open regarding overnight technical support rotas. Our primary focus this week is Sign-Off on Gate 2 Milestone Deliverables."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "PACS radiological image retrieval latency benchmarked at 280ms P90 across regional WAN, exceeding the contractual Annex D.1 SLA requirement of 450ms. On the watchlist: External Specialist Clinic Referral Ingestion \u2014 Validate that non-hospital specialist clinics using legacy desktop software can successfully transmit referrals."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Final draft of the Clinical Data Protection and HIPAA compliance dossier (Annex B.1) submitted to independent healthcare assessors for formal accreditation."
         }
       ],
       "generatedBy": "gemini-3.5-flash",
@@ -540,6 +762,43 @@
           "target": "Aug 2026"
         }
       ],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 27 (07 Aug 2026). Overall program status is \ud83d\udfe1 AMBER (Stable)."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Delivery velocity remains active for Week 27 ending 07 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.8 to 5.8 (delta -9.0). Management focus remains locked on contractual clinical milestones. Our primary focus this week is Contractual Milestone Gate 2 Alignment."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "Engineering baseline across hospital cloud infrastructure and network interconnects is stable. Critical path activities for clinical dry-run and FHIR interoperability gates are progressing with 1 eventuated issue under active mitigation. On the watchlist: System Requirements Review Verification Window \u2014 Inter-team clinical validation handoffs may compress review window if pre-work packages are delayed."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Joint Clinical Governance Board controls are validated. HIPAA and digital health privacy accreditation artifacts remain aligned to target baseline dates with no commercial blockers."
+        }
+      ],
       "generatedBy": "gemini-3.5-flash",
       "hasAudio": false
     },
@@ -609,6 +868,43 @@
         "warning": "Monitor secondary background batch jobs to prevent interference with live real-time clinical telemetry."
       },
       "plans": [],
+      "podcastScript": [
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:00",
+          "text": "Welcome to the Project Aurora Executive Briefing for Week 28 (14 Aug 2026). Overall program status is \ud83d\udfe2 ON TRACK."
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:18",
+          "text": "Delivery velocity is fully green for Week 28 ending 14 Aug 2026. Residual risk compressed to a low 4.8 across all 28 items, with zero active escalations blocking deployment. Acute care ward dry-run passed with 100% telemetry fidelity. Our primary focus this week is Hospital Phase 1 Cutover Authorization."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "0:42",
+          "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+        },
+        {
+          "speaker": "Jordan",
+          "role": "Lead Healthcare Architect",
+          "avatar": "\ud83e\ude7a",
+          "time": "0:55",
+          "text": "All FHIR R4 clinical APIs, SMART-on-FHIR single sign-on, and PACS imaging pipelines have passed pre-flight accreditation. Automated end-to-end failover tests completed with sub-second recovery. On the watchlist: Post-Cutover Historical Patient Record Ingestion \u2014 Monitor secondary background batch jobs to prevent interference with live real-time clinical telemetry."
+        },
+        {
+          "speaker": "Alex",
+          "role": "Host",
+          "avatar": "\ud83c\udf99\ufe0f",
+          "time": "1:22",
+          "text": "Thanks Jordan. Health Transformation Board granted unconditional approval for Phase 1 acute go-live. Independent HIPAA and Australian Privacy Act accreditation certificates formally issued."
+        }
+      ],
       "generatedBy": "gemini-3.5-flash",
       "hasAudio": true,
       "audioFile": "data/sample/podcast_w28.mp3",
@@ -697,6 +993,43 @@
         "target": "Jul 2026"
       }
     ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 21 (26 Jun 2026). Overall program status is \ud83d\udd34 CRITICAL ATTENTION."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Program posture for Week 21 reflects critical path pressure during Phase 1 hospital environment bring-up. Seven acute escalations require steering committee intervention, primarily regarding hospital ward optical fiber lead times and clinical telemetry VLAN isolation. Our primary focus this week is Hospital Optical Interconnect & Core Switch Upgrades."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "HL7 v2 legacy feeds from pathology systems are exhibiting 18% parsing failure rates against the central FHIR R4 converter. Acute ICU telemetry buffers drop packets under simulated surge load. On the watchlist: Diagnostic PACS Imaging Cloud Ingestion Throughput \u2014 Spike in radiological CT/MRI volumetric scans may exceed regional internet bandwidth if dedicated interconnect is delayed."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Clinical Data Governance Board has convened an emergency technical working group to accelerate Annex B.1 clinical compliance artefacts and formalize hospital data custodian delegations."
+      }
+    ],
     "generatedBy": "gemini-3.5-flash",
     "hasAudio": false
   },
@@ -771,6 +1104,43 @@
         "plan": "Complete end-to-end integration testing for automated blood panel result routing into EHR.",
         "owner": "Integration Lead",
         "target": "Jul 2026"
+      }
+    ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 22 (03 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Mitigating)."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Week 22 marks an improving trajectory with acute escalations reduced from 7 to 5. The primary delivery focus has transitioned to locking down interface agreements with medical imaging and laboratory providers. Our primary focus this week is Laboratory Information System (LIS) Interface Contract."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "Hospital LAN optical fiber terminations completed at the primary facility. Initial FHIR R4 transformation error rate dropped below 8% following deployment of the custom vocabulary translator. On the watchlist: High-Resolution DICOM Cache Eviction Policy \u2014 Unoptimized local cache retention on local ward gateways could lead to disk exhaustion during peak diagnostic hours."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Clinical Informatics liaison team initiated clinician workflow dry-runs in simulated outpatient clinics, receiving favorable ergonomic and usability feedback."
       }
     ],
     "generatedBy": "gemini-3.5-flash",
@@ -849,6 +1219,43 @@
         "target": "Aug 2026"
       }
     ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 23 (10 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Mitigating)."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Week 23 demonstrates steady risk compression with net residual exposure falling to 10.2. Medical board leadership confirmed schedule baseline alignment for the September hospital go-live. Our primary focus this week is Diagnostic Radiology Bandwidth Reservation."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "PACS cloud storage gateway deployed to pilot ward. Large 500MB volumetric MRI studies now upload in under 4.2 seconds, well within clinical operational targets. On the watchlist: Emergency Department Triage Hand-off Protocol \u2014 Paper-to-digital transition during ambulance arrivals requires streamlined barcode scanning to avoid triage bottlenecks."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Health record privacy audit confirmed zero unencrypted PHI columns across all Postgres databases and Cloud Storage buckets."
+      }
+    ],
     "generatedBy": "gemini-3.5-flash",
     "hasAudio": false
   },
@@ -923,6 +1330,43 @@
         "plan": "Complete joint review of 42 deliverable artifacts with hospital clinical board.",
         "owner": "Program Director",
         "target": "Aug 2026"
+      }
+    ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 24 (17 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Stable)."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Delivery velocity accelerated in Week 24 as FHIR R4 interoperability reached 88% automated test pass rates. Hospital administration authorized the dry-run simulation date for early August. Our primary focus this week is Integrated Clinical Rollout Schedule (ICRS) Baseline Sign-Off."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "SMART-on-FHIR clinical single sign-on (SSO) with biometric badge tap completed integration testing, achieving median authentication latencies of 1.1 seconds. On the watchlist: Bedside Telemetry Historical Database Retention \u2014 High-frequency vital sign time-series require partitioning strategy to avoid query slowdowns in historical charts."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Joint Clinical Steering Committee reviewed Annex D.1 SLA terms with regional hospital network, resolving all outstanding liability and data custodianship clauses."
       }
     ],
     "generatedBy": "gemini-3.5-flash",
@@ -1001,6 +1445,43 @@
         "target": "Aug 2026"
       }
     ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 25 (24 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Stable)."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Week 25 marks the transition of clinical go-live milestones back onto schedule. High-consequence clinical risks have been reduced to 2 active items, with strong mitigations locked in place. Our primary focus this week is Hospital Dry-Run Simulation Protocol Approval."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "High-throughput bedside telemetry ingestion tested successfully under 200% simulated patient load. Time-series partitioning eliminated query lag on historical ECG and oxygen saturation charts. On the watchlist: Night Shift Clinical Informaticist Coverage \u2014 Ensure adequate on-site super-user staffing during overnight hours of initial go-live weekend."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Chief Medical Officer completed formal walkthrough of emergency department clinical workflow, issuing formal endorsement for dry-run trials."
+      }
+    ],
     "generatedBy": "gemini-3.5-flash",
     "hasAudio": false
   },
@@ -1075,6 +1556,43 @@
         "plan": "Present formal verification evidence to Health Transformation Board.",
         "owner": "Delivery Lead",
         "target": "Aug 2026"
+      }
+    ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 26 (31 Jul 2026). Overall program status is \ud83d\udfe1 AMBER (Approaching Green)."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Week 26 closes out July with significant momentum. Residual risk compression reached -8.2, and only a single operational escalation remains open regarding overnight technical support rotas. Our primary focus this week is Sign-Off on Gate 2 Milestone Deliverables."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "PACS radiological image retrieval latency benchmarked at 280ms P90 across regional WAN, exceeding the contractual Annex D.1 SLA requirement of 450ms. On the watchlist: External Specialist Clinic Referral Ingestion \u2014 Validate that non-hospital specialist clinics using legacy desktop software can successfully transmit referrals."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Final draft of the Clinical Data Protection and HIPAA compliance dossier (Annex B.1) submitted to independent healthcare assessors for formal accreditation."
       }
     ],
     "generatedBy": "gemini-3.5-flash",
@@ -1153,6 +1671,43 @@
         "target": "Aug 2026"
       }
     ],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 27 (07 Aug 2026). Overall program status is \ud83d\udfe1 AMBER (Stable)."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Delivery velocity remains active for Week 27 ending 07 Aug 2026. Risk portfolio tracks 28 active items with residual exposure compressing from 14.8 to 5.8 (delta -9.0). Management focus remains locked on contractual clinical milestones. Our primary focus this week is Contractual Milestone Gate 2 Alignment."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "Engineering baseline across hospital cloud infrastructure and network interconnects is stable. Critical path activities for clinical dry-run and FHIR interoperability gates are progressing with 1 eventuated issue under active mitigation. On the watchlist: System Requirements Review Verification Window \u2014 Inter-team clinical validation handoffs may compress review window if pre-work packages are delayed."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Joint Clinical Governance Board controls are validated. HIPAA and digital health privacy accreditation artifacts remain aligned to target baseline dates with no commercial blockers."
+      }
+    ],
     "generatedBy": "gemini-3.5-flash",
     "hasAudio": false
   },
@@ -1222,6 +1777,43 @@
       "warning": "Monitor secondary background batch jobs to prevent interference with live real-time clinical telemetry."
     },
     "plans": [],
+    "podcastScript": [
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:00",
+        "text": "Welcome to the Project Aurora Executive Briefing for Week 28 (14 Aug 2026). Overall program status is \ud83d\udfe2 ON TRACK."
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:18",
+        "text": "Delivery velocity is fully green for Week 28 ending 14 Aug 2026. Residual risk compressed to a low 4.8 across all 28 items, with zero active escalations blocking deployment. Acute care ward dry-run passed with 100% telemetry fidelity. Our primary focus this week is Hospital Phase 1 Cutover Authorization."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "0:42",
+        "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+      },
+      {
+        "speaker": "Jordan",
+        "role": "Lead Healthcare Architect",
+        "avatar": "\ud83e\ude7a",
+        "time": "0:55",
+        "text": "All FHIR R4 clinical APIs, SMART-on-FHIR single sign-on, and PACS imaging pipelines have passed pre-flight accreditation. Automated end-to-end failover tests completed with sub-second recovery. On the watchlist: Post-Cutover Historical Patient Record Ingestion \u2014 Monitor secondary background batch jobs to prevent interference with live real-time clinical telemetry."
+      },
+      {
+        "speaker": "Alex",
+        "role": "Host",
+        "avatar": "\ud83c\udf99\ufe0f",
+        "time": "1:22",
+        "text": "Thanks Jordan. Health Transformation Board granted unconditional approval for Phase 1 acute go-live. Independent HIPAA and Australian Privacy Act accreditation certificates formally issued."
+      }
+    ],
     "generatedBy": "gemini-3.5-flash",
     "hasAudio": true,
     "audioFile": "data/sample/podcast_w28.mp3",

@@ -28,23 +28,17 @@ from scripts.security_utils import (
 
 # --- Helper Functions & Authoritative GCS Storage ---
 
+from scripts.gcs_store import resolve_configured_projects, resolve_default_data_bucket
+
+
 def get_active_data_bucket() -> Optional[str]:
-    """
-    Resolves the active GCS data bucket name (`DATA_BUCKET` or `<GCP_PROJECT_ID>-data`).
-    Returns None when running inside hermetic pytest runs (unless DATA_BUCKET is explicitly set).
-    """
+    """Resolves the active GCS data bucket name (`DATA_BUCKET` or `<GCP_PROJECT_ID>-data`)."""
     explicit_bucket = os.getenv('DATA_BUCKET')
     if explicit_bucket:
-        if explicit_bucket.lower() in ('none', 'false', 'local', '0'):
-            return None
-        return explicit_bucket.strip()
-
-    # In hermetic pytest runs, do not hit remote cloud buckets unless DATA_BUCKET is explicitly set
+        return None if explicit_bucket.lower() in ('none', 'false', 'local', '0') else explicit_bucket.strip()
     if 'PYTEST_CURRENT_TEST' in os.environ or 'pytest' in sys.modules:
         return None
-
-    quota_proj = resolve_default_project()
-    return f"{quota_proj}-data"
+    return resolve_default_data_bucket()
 
 
 resolve_data_bucket = get_active_data_bucket

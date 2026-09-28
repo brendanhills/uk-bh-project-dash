@@ -25,7 +25,7 @@ Outputs:
 import json
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_SAMPLE_DIR = PROJECT_ROOT / "data" / "sample"
 SNAPS_FILE = DATA_SAMPLE_DIR / "snapshots.json"
 
@@ -603,6 +603,44 @@ def update_snapshots_json():
 
     for w in WEEKS_DATA:
         key = f"w{w['weekNumber']}"
+        top_title = (w["top3"][0]["title"] if w.get("top3") else "Clinical Integration")
+        podcast_script = w.get("podcastScript") or [
+            {
+                "speaker": "Alex",
+                "role": "Host",
+                "avatar": "🎙️",
+                "time": "0:00",
+                "text": f"Welcome to the Project Aurora Executive Briefing for {w['weekLabel']} ({w['date']}). Overall program status is {w['overallStatus']}."
+            },
+            {
+                "speaker": "Jordan",
+                "role": "Lead Healthcare Architect",
+                "avatar": "🩺",
+                "time": "0:18",
+                "text": f"{w['synthesis']['executive']} Our primary focus this week is {top_title}."
+            },
+            {
+                "speaker": "Alex",
+                "role": "Host",
+                "avatar": "🎙️",
+                "time": "0:42",
+                "text": "How are our clinical workstreams and sleeper risks tracking across the hospital rollout?"
+            },
+            {
+                "speaker": "Jordan",
+                "role": "Lead Healthcare Architect",
+                "avatar": "🩺",
+                "time": "0:55",
+                "text": f"{w['synthesis']['technical']} On the watchlist: {w['sleeperOutlier']['title']} — {w['sleeperOutlier']['warning']}"
+            },
+            {
+                "speaker": "Alex",
+                "role": "Host",
+                "avatar": "🎙️",
+                "time": "1:22",
+                "text": f"Thanks Jordan. {w['synthesis']['governance']}"
+            }
+        ]
         snaps_dict[key] = {
             "weekNumber": w["weekNumber"],
             "weekLabel": w["weekLabel"],
@@ -619,6 +657,7 @@ def update_snapshots_json():
             "top3": w["top3"],
             "sleeperOutlier": w["sleeperOutlier"],
             "plans": w.get("plans", []),
+            "podcastScript": podcast_script,
             "generatedBy": "gemini-3.5-flash",
             "hasAudio": (w["weekNumber"] == 28)
         }

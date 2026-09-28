@@ -1,0 +1,11 @@
+{
+  "track_id": "consolidate_depot_and_aurora_demo_20260928",
+  "name": "Consolidate Depot CI/CD, Folder Structure & Isolated Project Aurora Demo",
+  "type": "feature",
+  "focus": "demo_prep",
+  "status": "open",
+  "created_at": "2026-09-28T13:13:00+10:00",
+  "updated_at": "2026-09-28T13:13:00+10:00",
+  "bug_id": null,
+  "related_backlog_ids": [105, 106, 126, 127, 129]
+}
